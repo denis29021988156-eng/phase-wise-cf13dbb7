@@ -23,19 +23,35 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: 'Ошибка авторизации',
+        description: 'Пользователь не найден. Попробуйте войти заново.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    console.log('Attempting to save cycle data for user:', user.id);
+    console.log('Form data:', formData);
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_cycles')
         .insert({
           user_id: user.id,
           start_date: formData.start_date,
           cycle_length: formData.cycle_length,
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      console.log('Supabase response:', { data, error });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Настройки сохранены',
@@ -43,11 +59,11 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
       });
       
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving cycle data:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось сохранить данные',
+        title: 'Ошибка сохранения',
+        description: error.message || 'Не удалось сохранить данные о цикле',
         variant: 'destructive',
       });
     } finally {

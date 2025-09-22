@@ -31,13 +31,17 @@ const Index = () => {
           .from('user_cycles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code === 'PGRST116') {
+        if (error) {
+          console.error('Error checking cycle data:', error);
+          setCheckingCycle(false);
+          return;
+        }
+
+        if (!data) {
           // No cycle data found
           setNeedsCycleSetup(true);
-        } else if (error) {
-          console.error('Error checking cycle data:', error);
         }
       } catch (error) {
         console.error('Error checking cycle setup:', error);
