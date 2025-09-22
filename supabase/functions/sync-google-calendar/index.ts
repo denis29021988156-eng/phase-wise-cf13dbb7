@@ -37,7 +37,13 @@ serve(async (req) => {
 
     if (tokenError || !tokenData) {
       console.error('No Google token found for user:', tokenError);
-      throw new Error('Google Calendar не подключен. Войдите заново через Google.');
+      
+      // More specific error messages
+      if (tokenError?.code === 'PGRST116') {
+        throw new Error('Google Calendar не подключен. Войдите заново через Google для синхронизации календаря.');
+      } else {
+        throw new Error('Ошибка доступа к Google Calendar. Попробуйте войти заново через Google.');
+      }
     }
 
     // Check if token needs refresh
@@ -81,8 +87,16 @@ serve(async (req) => {
     );
 
     if (!calendarResponse.ok) {
-      console.error('Google Calendar API error:', await calendarResponse.text());
-      throw new Error('Ошибка при загрузке событий из Google Calendar');
+      const errorText = await calendarResponse.text();
+      console.error('Google Calendar API error:', errorText);
+      
+      if (calendarResponse.status === 401) {
+        throw new Error('Токен Google Calendar истек. Войдите заново через Google.');
+      } else if (calendarResponse.status === 403) {
+        throw new Error('Нет доступа к Google Calendar. Проверьте разрешения.');
+      } else {
+        throw new Error('Ошибка загрузки событий из Google Calendar. Попробуйте позже.');
+      }
     }
 
     const calendarData = await calendarResponse.json();

@@ -52,7 +52,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',  
       options: {
         redirectTo: redirectUrl,
-        scopes: 'https://www.googleapis.com/auth/calendar'
+        scopes: 'https://www.googleapis.com/auth/calendar',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     });
     

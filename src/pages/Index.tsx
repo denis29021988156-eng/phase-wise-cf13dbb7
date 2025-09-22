@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useGoogleTokens } from '@/hooks/useGoogleTokens';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/layout/Navigation';
@@ -11,6 +12,9 @@ import CycleSetup from './CycleSetup';
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  
+  // Store Google tokens when available
+  useGoogleTokens();
   const [activeTab, setActiveTab] = useState('calendar');
   const [needsCycleSetup, setNeedsCycleSetup] = useState(false);
   const [checkingCycle, setCheckingCycle] = useState(true);

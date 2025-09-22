@@ -97,19 +97,34 @@ const Calendar = () => {
         body: { userId: user.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sync error:', error);
+        toast({
+          title: "Ошибка синхронизации",
+          description: error.message || "Не удалось загрузить события из Google Календаря",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      toast({
-        title: 'Календарь синхронизирован',
-        description: `Загружено ${data?.eventsCount || 0} событий с ИИ-советами`,
-      });
-
-      loadEvents(); // Refresh events
-    } catch (error) {
+      if (data?.success) {
+        toast({
+          title: 'Календарь синхронизирован',
+          description: data.message || `Загружено ${data?.eventsCount || 0} событий`,
+        });
+        loadEvents(); // Refresh events
+      } else {
+        toast({
+          title: "Ошибка",
+          description: data?.error || "Произошла ошибка при синхронизации",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
       console.error('Error syncing Google Calendar:', error);
       toast({
         title: 'Ошибка синхронизации',
-        description: 'Не удалось загрузить события из Google Календаря',
+        description: error?.message || 'Не удалось загрузить события из Google Календаря',
         variant: 'destructive',
       });
     } finally {
