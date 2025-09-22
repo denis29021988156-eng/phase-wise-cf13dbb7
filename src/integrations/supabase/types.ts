@@ -14,7 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      event_ai_suggestions: {
+        Row: {
+          created_at: string | null
+          decision: string | null
+          event_id: string | null
+          id: string
+          justification: string | null
+          suggestion: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          decision?: string | null
+          event_id?: string | null
+          id?: string
+          justification?: string | null
+          suggestion?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          decision?: string | null
+          event_id?: string | null
+          id?: string
+          justification?: string | null
+          suggestion?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ai_suggestions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          source: string | null
+          start_time: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          source?: string | null
+          start_time: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          source?: string | null
+          start_time?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_cycles: {
+        Row: {
+          created_at: string | null
+          cycle_length: number | null
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          cycle_length?: number | null
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          cycle_length?: number | null
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tokens: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          expires_at: string | null
+          provider: string | null
+          refresh_token: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          provider?: string | null
+          refresh_token?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          provider?: string | null
+          refresh_token?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
