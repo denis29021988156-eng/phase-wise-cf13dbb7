@@ -1,1 +1,7 @@
 project_id = "pytefsexxwtlropzkmxi"
+
+[functions.generate-ai-suggestion]
+verify_jwt = true
+
+[functions.sync-google-calendar]
+verify_jwt = true
