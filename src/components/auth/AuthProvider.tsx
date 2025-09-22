@@ -46,10 +46,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signInWithGoogle = async () => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'google',  
       options: {
         redirectTo: redirectUrl,
         scopes: 'https://www.googleapis.com/auth/calendar'
