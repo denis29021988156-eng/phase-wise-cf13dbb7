@@ -136,7 +136,7 @@ const Profile = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Settings className="h-5 w-5 text-primary" />
-            <span>Настройки цикла</span>
+            <span>Данные о цикле</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

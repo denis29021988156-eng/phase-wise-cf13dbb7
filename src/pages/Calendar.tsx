@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import AddEventDialog from '@/components/dialogs/AddEventDialog';
 
 interface Event {
   id: string;
@@ -13,12 +15,20 @@ interface Event {
   source: string;
 }
 
+interface EventWithSuggestion extends Event {
+  suggestion?: string;
+  justification?: string;
+}
+
 const Calendar = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventWithSuggestion[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date());
   const [loading, setLoading] = useState(false);
+  const [addEventOpen, setAddEventOpen] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Generate 7 days starting from currentWeekStart
   const generateWeekDates = () => {
@@ -51,20 +61,59 @@ const Calendar = () => {
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const { data, error } = await supabase
+      const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          event_ai_suggestions(suggestion, justification)
+        `)
         .eq('user_id', user.id)
         .gte('start_time', startOfDay.toISOString())
         .lte('start_time', endOfDay.toISOString())
         .order('start_time');
 
-      if (error) throw error;
-      setEvents(data || []);
+      if (eventsError) throw eventsError;
+      
+      const eventsWithSuggestions = (eventsData || []).map(event => ({
+        ...event,
+        suggestion: event.event_ai_suggestions?.[0]?.suggestion,
+        justification: event.event_ai_suggestions?.[0]?.justification
+      }));
+      
+      setEvents(eventsWithSuggestions);
     } catch (error) {
       console.error('Error loading events:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConnectGoogleCalendar = async () => {
+    if (!user) return;
+    
+    setGoogleLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-calendar', {
+        body: { userId: user.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Календарь синхронизирован',
+        description: `Загружено ${data?.eventsCount || 0} событий с ИИ-советами`,
+      });
+
+      loadEvents(); // Refresh events
+    } catch (error) {
+      console.error('Error syncing Google Calendar:', error);
+      toast({
+        title: 'Ошибка синхронизации',
+        description: 'Не удалось загрузить события из Google Календаря',
+        variant: 'destructive',
+      });
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -102,14 +151,41 @@ const Calendar = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Календарь</h1>
-        <Button
-          size="sm"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-          style={{ boxShadow: 'var(--wellness-glow)' }}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Добавить
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => setAddEventOpen(true)}
+            size="sm"
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary/10"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Добавить
+          </Button>
+          <Button
+            onClick={handleConnectGoogleCalendar}
+            disabled={googleLoading}
+            size="sm"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+            style={{ boxShadow: 'var(--wellness-glow)' }}
+          >
+            {googleLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
+                <span>Синхронизация...</span>
+              </div>
+            ) : (
+              <>
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Подключить Google Календарь
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Week Navigation */}
@@ -177,25 +253,43 @@ const Calendar = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : events.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {events.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors"
+                  className="p-4 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors"
                 >
-                  <div>
-                    <h3 className="font-medium text-foreground">{event.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                    </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-medium text-foreground">{event.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                      </p>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs ${
+                      event.source === 'google' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-purple-100 text-purple-800'
+                    }`}>
+                      {event.source === 'google' ? 'Google' : 'Ручной'}
+                    </div>
                   </div>
-                  <div className={`px-2 py-1 rounded-full text-xs ${
-                    event.source === 'google' 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    {event.source === 'google' ? 'Google' : 'Ручной'}
-                  </div>
+                  
+                  {event.suggestion && (
+                    <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-start space-x-2">
+                        <div className="p-1 rounded-full bg-primary/10 mt-0.5">
+                          <svg className="h-3 w-3 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-primary mb-1">ИИ-совет:</p>
+                          <p className="text-sm text-muted-foreground">{event.suggestion}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -205,7 +299,12 @@ const Calendar = () => {
                 <CalendarDays className="h-12 w-12 opacity-50" />
               </div>
               <p>На этот день событий нет</p>
-              <Button variant="outline" size="sm" className="mt-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+                onClick={() => setAddEventOpen(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Добавить событие
               </Button>
@@ -213,6 +312,13 @@ const Calendar = () => {
           )}
         </CardContent>
       </Card>
+
+      <AddEventDialog 
+        open={addEventOpen}
+        onOpenChange={setAddEventOpen}
+        selectedDate={selectedDate}
+        onEventAdded={loadEvents}
+      />
     </div>
   );
 };
