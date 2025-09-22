@@ -132,7 +132,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_ai_suggestion_content: {
+        Args: {
+          cycle_day: number
+          cycle_length: number
+          event_description?: string
+          event_title: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
