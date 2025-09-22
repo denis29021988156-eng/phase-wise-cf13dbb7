@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,17 +13,23 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    );
 
     const { event, cycleData } = await req.json();
-    
-    console.log('Generating AI suggestion for event:', event);
+
+    console.log('Generating AI suggestion for event:', event.title);
     console.log('Cycle data:', cycleData);
 
     // Use the database function to generate suggestion
-    const { data: suggestionData, error: suggestionError } = await supabase
+    const { data: suggestionData, error: suggestionError } = await supabaseClient
       .rpc('generate_ai_suggestion_content', {
         event_title: event.title,
         cycle_day: cycleData.cycleDay,
@@ -37,25 +43,29 @@ serve(async (req) => {
     }
 
     const suggestion = suggestionData;
-    const justification = `На основе ${cycleData.cycleDay} дня цикла (из ${cycleData.cycleLength} дней)`;
+    const justification = `Совет основан на ${cycleData.cycleDay} дне цикла (продолжительность ${cycleData.cycleLength} дней)`;
 
     console.log('Generated suggestion:', suggestion);
 
-    return new Response(JSON.stringify({ 
-      suggestion,
-      justification
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
-
+    return new Response(
+      JSON.stringify({ 
+        suggestion, 
+        justification,
+        cycleDay: cycleData.cycleDay,
+        cycleLength: cycleData.cycleLength
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('Error in generate-ai-suggestion function:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to generate suggestion'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
