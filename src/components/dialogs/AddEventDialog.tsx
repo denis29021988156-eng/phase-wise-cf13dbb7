@@ -67,25 +67,34 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
 
         try {
-          const { data: suggestionData, error: suggestionError } = await supabase
-            .rpc('generate_ai_suggestion_content', {
-              event_title: formData.title,
-              cycle_day: adjustedCycleDay,
-              cycle_length: cycleData.cycle_length,
-              event_description: formData.description || null
-            });
+          const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
+            body: {
+              event: {
+                title: formData.title,
+                description: formData.description,
+                start_time: startDateTime.toISOString()
+              },
+              cycleData: {
+                cycleDay: adjustedCycleDay,
+                cycleLength: cycleData.cycle_length,
+                startDate: cycleData.start_date
+              }
+            }
+          });
 
-          if (!suggestionError && suggestionData) {
+          if (!suggestionError && suggestionData?.suggestion) {
             await supabase
               .from('event_ai_suggestions')
               .insert({
                 event_id: eventData.id,
-                suggestion: suggestionData,
-                justification: `ИИ-совет для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
+                suggestion: suggestionData.suggestion,
+                justification: suggestionData.justification || `ИИ-совет для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
                 decision: 'generated'
               });
 
             console.log('AI suggestion created for manual event:', formData.title);
+          } else if (suggestionError) {
+            console.error('AI suggestion error:', suggestionError);
           }
         } catch (aiError) {
           console.error('Error generating AI suggestion:', aiError);
