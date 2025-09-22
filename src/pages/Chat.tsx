@@ -3,8 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MessageCircle, Send, Brain, Sparkles } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Chat = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
     {
@@ -17,7 +22,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !user) return;
 
     const userMessage = {
       id: Date.now().toString(),
@@ -27,21 +32,54 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = message;
     setMessage('');
     setLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = {
+    try {
+      const { data: aiResponseData, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: currentMessage,
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (aiResponseData?.response) {
+        const aiResponse = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: aiResponseData.response,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, aiResponse]);
+      } else {
+        throw new Error('Не удалось получить ответ от ИИ');
+      }
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      const errorResponse = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: 'Спасибо за ваше сообщение! Это демо-версия ИИ-чата. В полной версии здесь будут персонализированные советы на основе вашего цикла и самочувствия.',
+        content: 'Извините, произошла ошибка. Попробуйте задать вопрос еще раз.',
         timestamp: new Date(),
       };
       
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorResponse]);
+      
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось получить ответ от ИИ-помощника',
+        variant: 'destructive',
+      });
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
