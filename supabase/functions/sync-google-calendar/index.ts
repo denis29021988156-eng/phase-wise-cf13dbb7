@@ -152,21 +152,28 @@ serve(async (req) => {
 
         // Generate AI suggestion for the event
         try {
-          const { data: suggestionData, error: suggestionError } = await supabaseClient
-            .rpc('generate_ai_suggestion_content', {
-              event_title: newEvent.title,
-              cycle_day: currentCycleDay,
-              cycle_length: cycleData.cycle_length,
-              event_description: googleEvent.description || null
-            });
+          const { data: suggestionData, error: suggestionError } = await supabaseClient.functions.invoke('generate-ai-suggestion', {
+            body: {
+              event: {
+                title: newEvent.title,
+                start_time: startTime.toISOString(),
+                description: googleEvent.description || ''
+              },
+              cycleData: {
+                cycleDay: currentCycleDay,
+                cycleLength: cycleData.cycle_length,
+                startDate: cycleData.start_date
+              }
+            }
+          });
 
-          if (!suggestionError && suggestionData) {
+          if (!suggestionError && suggestionData?.suggestion) {
             await supabaseClient
               .from('event_ai_suggestions')
               .insert({
                 event_id: newEvent.id,
-                suggestion: suggestionData,
-                justification: `Совет основан на ${currentCycleDay} дне цикла (продолжительность ${cycleData.cycle_length} дней)`,
+                suggestion: suggestionData.suggestion,
+                justification: suggestionData.justification || `ИИ-совет для ${suggestionData.phase || 'текущей фазы'} цикла`,
                 decision: 'generated'
               });
 

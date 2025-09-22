@@ -56,13 +56,13 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         .from('user_cycles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      // Generate AI suggestion
+      // Generate AI suggestion if cycle data exists
       if (cycleData && eventData) {
-        const today = new Date();
+        const eventDate = new Date(formData.date);
         const startDate = new Date(cycleData.start_date);
-        const diffInDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        const diffInDays = Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         const cycleDay = (diffInDays % cycleData.cycle_length) + 1;
 
         try {
@@ -71,7 +71,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               event: {
                 title: formData.title,
                 description: formData.description,
-                date: formData.date
+                start_time: startDateTime.toISOString()
               },
               cycleData: {
                 cycleDay: cycleDay > 0 ? cycleDay : cycleData.cycle_length + cycleDay,
