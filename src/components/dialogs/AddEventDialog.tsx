@@ -51,45 +51,41 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
 
       if (eventError) throw eventError;
 
-      // Get user cycle data for AI suggestions
+      // Get user cycle data for AI suggestions  
       const { data: cycleData } = await supabase
         .from('user_cycles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Generate AI suggestion if cycle data exists
+      // Generate AI suggestion if cycle data exists (calculate cycle day for this specific event date)
       if (cycleData && eventData) {
         const eventDate = new Date(formData.date);
         const startDate = new Date(cycleData.start_date);
         const diffInDays = Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        const cycleDay = (diffInDays % cycleData.cycle_length) + 1;
+        const eventCycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+        const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
 
         try {
-          const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
-            body: {
-              event: {
-                title: formData.title,
-                description: formData.description,
-                start_time: startDateTime.toISOString()
-              },
-              cycleData: {
-                cycleDay: cycleDay > 0 ? cycleDay : cycleData.cycle_length + cycleDay,
-                cycleLength: cycleData.cycle_length,
-                startDate: cycleData.start_date
-              }
-            }
-          });
+          const { data: suggestionData, error: suggestionError } = await supabase
+            .rpc('generate_ai_suggestion_content', {
+              event_title: formData.title,
+              cycle_day: adjustedCycleDay,
+              cycle_length: cycleData.cycle_length,
+              event_description: formData.description || null
+            });
 
-          if (!suggestionError && suggestionData?.suggestion) {
+          if (!suggestionError && suggestionData) {
             await supabase
               .from('event_ai_suggestions')
               .insert({
                 event_id: eventData.id,
-                suggestion: suggestionData.suggestion,
-                justification: suggestionData.justification || '',
+                suggestion: suggestionData,
+                justification: `ИИ-совет для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
                 decision: 'generated'
               });
+
+            console.log('AI suggestion created for manual event:', formData.title);
           }
         } catch (aiError) {
           console.error('Error generating AI suggestion:', aiError);

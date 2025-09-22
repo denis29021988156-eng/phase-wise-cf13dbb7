@@ -150,34 +150,38 @@ serve(async (req) => {
 
         eventsProcessed++;
 
-        // Generate AI suggestion for the event
+        // Generate AI suggestion for the event (calculate cycle day for this specific event)
         try {
-          const { data: suggestionData, error: suggestionError } = await supabaseClient.functions.invoke('generate-ai-suggestion', {
-            body: {
-              event: {
-                title: newEvent.title,
-                start_time: startTime.toISOString(),
-                description: googleEvent.description || ''
-              },
-              cycleData: {
-                cycleDay: currentCycleDay,
-                cycleLength: cycleData.cycle_length,
-                startDate: cycleData.start_date
-              }
-            }
-          });
+          const eventDate = new Date(startTime);
+          const startDate = new Date(cycleData.start_date);
+          const diffInDays = Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const eventCycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+          const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
 
-          if (!suggestionError && suggestionData?.suggestion) {
+          console.log(`Generating AI suggestion for event "${newEvent.title}" on cycle day ${adjustedCycleDay}`);
+
+          const { data: suggestionData, error: suggestionError } = await supabaseClient
+            .rpc('generate_ai_suggestion_content', {
+              event_title: newEvent.title,
+              cycle_day: adjustedCycleDay,
+              cycle_length: cycleData.cycle_length,
+              event_description: googleEvent.description || null
+            });
+
+          if (!suggestionError && suggestionData) {
             await supabaseClient
               .from('event_ai_suggestions')
               .insert({
                 event_id: newEvent.id,
-                suggestion: suggestionData.suggestion,
-                justification: suggestionData.justification || `ИИ-совет для ${suggestionData.phase || 'текущей фазы'} цикла`,
+                suggestion: suggestionData,
+                justification: `ИИ-совет для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
                 decision: 'generated'
               });
 
             eventsWithSuggestions++;
+            console.log(`AI suggestion created for event: ${newEvent.title}`);
+          } else {
+            console.error('Error with AI suggestion:', suggestionError);
           }
         } catch (aiError) {
           console.error('Error generating AI suggestion for event:', newEvent.title, aiError);
