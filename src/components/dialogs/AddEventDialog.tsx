@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,8 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [syncToGoogle, setSyncToGoogle] = useState(false);
+  const [hasGoogleToken, setHasGoogleToken] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     date: selectedDate,
@@ -27,6 +30,24 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
     endTime: '10:00',
     description: '',
   });
+
+  // Check if user has Google token when dialog opens
+  useEffect(() => {
+    const checkGoogleToken = async () => {
+      if (open && user) {
+        const { data } = await supabase
+          .from('user_tokens')
+          .select('access_token')
+          .eq('user_id', user.id)
+          .eq('provider', 'google')
+          .maybeSingle();
+        
+        setHasGoogleToken(!!data?.access_token);
+      }
+    };
+
+    checkGoogleToken();
+  }, [open, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,10 +122,50 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         }
       }
 
-      toast({
-        title: 'Событие добавлено',
-        description: 'Событие успешно добавлено в календарь',
-      });
+      // Add to Google Calendar if sync is enabled
+      if (syncToGoogle && hasGoogleToken) {
+        try {
+          console.log('Adding event to Google Calendar...');
+          
+          const { data: googleResult, error: googleError } = await supabase.functions.invoke('add-to-google-calendar', {
+            body: {
+              userId: user.id,
+              eventData: {
+                title: formData.title,
+                description: formData.description,
+                startTime: startDateTime.toISOString(),
+                endTime: endDateTime.toISOString()
+              }
+            }
+          });
+
+          if (googleError) {
+            console.error('Google Calendar sync error:', googleError);
+            toast({
+              title: 'Событие добавлено',
+              description: 'Событие создано, но не удалось синхронизировать с Google Calendar',
+              variant: "default",
+            });
+          } else if (googleResult?.success) {
+            toast({
+              title: 'Событие добавлено',
+              description: 'Событие успешно добавлено и синхронизировано с Google Calendar',
+            });
+          }
+        } catch (googleError) {
+          console.error('Error syncing with Google Calendar:', googleError);
+          toast({
+            title: 'Событие добавлено',
+            description: 'Событие создано, но не удалось синхронизировать с Google Calendar',
+            variant: "default",
+          });
+        }
+      } else {
+        toast({
+          title: 'Событие добавлено',
+          description: 'Событие успешно добавлено в календарь',
+        });
+      }
 
       setFormData({
         title: '',
@@ -194,6 +255,19 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               rows={3}
             />
           </div>
+
+          {hasGoogleToken && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="syncToGoogle"
+                checked={syncToGoogle}
+                onCheckedChange={setSyncToGoogle}
+              />
+              <Label htmlFor="syncToGoogle" className="text-sm">
+                Синхронизировать с Google Calendar
+              </Label>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button
