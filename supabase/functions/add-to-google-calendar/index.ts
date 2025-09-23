@@ -46,12 +46,18 @@ serve(async (req) => {
       }
     }
 
-    // Check if token needs refresh
-    let accessToken = tokenData.access_token;
-    if (tokenData.expires_at && new Date(tokenData.expires_at) <= new Date()) {
-      console.log('Token expired, need to refresh...');
-      throw new Error('Токен Google Calendar истек. Войдите заново через Google.');
+    // Get fresh access token (automatically refreshes if needed)
+    console.log('Getting fresh access token...');
+    const refreshResponse = await supabaseClient.functions.invoke('refresh-google-token', {
+      body: { user_id: userId }
+    });
+
+    if (refreshResponse.error) {
+      console.error('Token refresh failed:', refreshResponse.error);
+      throw new Error('Не удалось обновить токен Google Calendar. Войдите заново через Google.');
     }
+
+    const accessToken = refreshResponse.data.access_token;
 
     // Prepare event data for Google Calendar
     const googleEvent = {
