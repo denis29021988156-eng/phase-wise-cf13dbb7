@@ -107,6 +107,7 @@ export type Database = {
           expires_at: string | null
           provider: string | null
           refresh_token: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -115,6 +116,7 @@ export type Database = {
           expires_at?: string | null
           provider?: string | null
           refresh_token?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -123,6 +125,7 @@ export type Database = {
           expires_at?: string | null
           provider?: string | null
           refresh_token?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
