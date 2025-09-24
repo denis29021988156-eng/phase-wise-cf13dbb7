@@ -68,7 +68,7 @@ const Auth = () => {
               </div>
               <div className="flex flex-col items-center space-y-2">
                 <Brain className="h-8 w-8 text-primary" />
-                <span className="text-xs text-muted-foreground">ИИ-советы</span>
+                <span className="text-xs text-muted-foreground">Ева AI</span>
               </div>
             </div>
 
@@ -111,7 +111,7 @@ const Auth = () => {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Вход позволит синхронизировать данные с Google Календарем и получить персональные ИИ-советы
+              Вход позволит синхронизировать данные с Google Календарем и получить персональные советы Ева AI
             </p>
           </CardContent>
         </Card>

@@ -379,7 +379,7 @@ const Calendar = () => {
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-primary mb-1">ИИ-совет:</p>
+                          <p className="text-sm font-medium text-primary mb-1">Ева AI:</p>
                           <p className="text-sm text-muted-foreground">{event.suggestion}</p>
                         </div>
                       </div>
