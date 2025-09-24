@@ -55,7 +55,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
 
       toast({
         title: 'Настройки сохранены',
-        description: 'Добро пожаловать в Wellness Calendar!',
+        description: 'Добро пожаловать в CycleON!',
       });
       
       onComplete();

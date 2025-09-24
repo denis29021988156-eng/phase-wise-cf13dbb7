@@ -48,7 +48,7 @@ const Auth = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-card-foreground">
-                Wellness Calendar
+                CycleON
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
                 Ваш персональный менструальный календарь с Ева AI
