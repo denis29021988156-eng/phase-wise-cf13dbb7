@@ -74,7 +74,7 @@ const Chat = () => {
       
       toast({
         title: 'Ошибка',
-        description: 'Не удалось получить ответ от ИИ-помощника',
+        description: 'Не удалось получить ответ от Ева AI',
         variant: 'destructive',
       });
     } finally {
@@ -97,7 +97,7 @@ const Chat = () => {
           <Brain className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">ИИ-помощник</h1>
+          <h1 className="text-2xl font-bold text-foreground">Ева AI</h1>
           <p className="text-muted-foreground">Персональные советы и поддержка</p>
         </div>
       </div>

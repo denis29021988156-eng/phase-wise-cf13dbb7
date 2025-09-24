@@ -31,7 +31,7 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const tabs = [
     { id: 'calendar', label: 'Календарь', icon: Calendar },
     { id: 'profile', label: 'Профиль', icon: User },
-    { id: 'chat', label: 'ИИ-чат', icon: MessageCircle },
+    { id: 'chat', label: 'Ева AI', icon: MessageCircle },
   ];
 
   return (

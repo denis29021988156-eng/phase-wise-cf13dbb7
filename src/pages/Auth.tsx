@@ -51,7 +51,7 @@ const Auth = () => {
                 Wellness Calendar
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Ваш персональный менструальный календарь с ИИ-помощником
+                Ваш персональный менструальный календарь с Ева AI
               </CardDescription>
             </div>
           </CardHeader>
