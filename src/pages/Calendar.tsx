@@ -20,6 +20,12 @@ interface EventWithSuggestion extends Event {
   justification?: string;
 }
 
+interface UserCycle {
+  cycle_length: number;
+  start_date: string;
+  menstrual_length: number;
+}
+
 const Calendar = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -29,6 +35,7 @@ const Calendar = () => {
   const [loading, setLoading] = useState(false);
   const [addEventOpen, setAddEventOpen] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [userCycle, setUserCycle] = useState<UserCycle | null>(null);
 
   // Generate 7 days starting from currentWeekStart
   const generateWeekDates = () => {
@@ -43,12 +50,31 @@ const Calendar = () => {
 
   const weekDates = generateWeekDates();
 
-  // Load events for the selected date
+  // Load user cycle data and events
   useEffect(() => {
     if (user) {
+      loadUserCycle();
       loadEvents();
     }
   }, [user, selectedDate]);
+
+  const loadUserCycle = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: cycleData } = await supabase
+        .from('user_cycles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (cycleData) {
+        setUserCycle(cycleData);
+      }
+    } catch (error) {
+      console.error('Error loading user cycle:', error);
+    }
+  };
 
   const loadEvents = async () => {
     if (!user) return;
@@ -161,6 +187,49 @@ const Calendar = () => {
     return date.toISOString().split('T')[0] === selectedDate;
   };
 
+  // Calculate cycle phase for a given date
+  const getCyclePhaseForDate = (date: Date) => {
+    if (!userCycle) return null;
+
+    const startDate = new Date(userCycle.start_date);
+    const diffInDays = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const cycleDay = ((diffInDays % userCycle.cycle_length) + 1);
+    const adjustedCycleDay = cycleDay > 0 ? cycleDay : userCycle.cycle_length + cycleDay;
+
+    const ovulationDay = Math.round(userCycle.cycle_length / 2);
+    const ovulationLength = 2;
+    const follicularStart = userCycle.menstrual_length + 1;
+    const follicularEnd = ovulationDay - 1;
+    const ovulationStart = ovulationDay;
+    const ovulationEnd = ovulationDay + ovulationLength - 1;
+
+    if (adjustedCycleDay >= 1 && adjustedCycleDay <= userCycle.menstrual_length) {
+      return 'menstrual';
+    } else if (adjustedCycleDay >= follicularStart && adjustedCycleDay <= follicularEnd) {
+      return 'follicular';
+    } else if (adjustedCycleDay >= ovulationStart && adjustedCycleDay <= ovulationEnd) {
+      return 'ovulation';
+    } else {
+      return 'luteal';
+    }
+  };
+
+  // Get phase color classes
+  const getPhaseColor = (phase: string | null) => {
+    switch (phase) {
+      case 'menstrual':
+        return 'border-red-400 bg-red-50';
+      case 'follicular':
+        return 'border-blue-400 bg-blue-50';
+      case 'ovulation':
+        return 'border-yellow-400 bg-yellow-50';
+      case 'luteal':
+        return 'border-purple-400 bg-purple-50';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="p-4 space-y-6">
       {/* Header */}
@@ -225,25 +294,36 @@ const Calendar = () => {
               const dateString = date.toISOString().split('T')[0];
               const selected = isSelected(date);
               const today = isToday(date);
+              const phase = getCyclePhaseForDate(date);
+              const phaseColors = getPhaseColor(phase);
               
               return (
                 <button
                   key={index}
                   onClick={() => setSelectedDate(dateString)}
-                  className={`flex flex-col items-center p-3 rounded-lg transition-all duration-200 ${
+                  className={`flex flex-col items-center p-3 rounded-lg transition-all duration-200 border-2 relative ${
                     selected 
-                      ? 'bg-primary text-primary-foreground shadow-md scale-105'
+                      ? 'bg-primary text-primary-foreground shadow-md scale-105 border-primary'
                       : today
-                      ? 'bg-accent text-accent-foreground font-medium'
-                      : 'hover:bg-muted text-foreground'
+                      ? 'bg-accent text-accent-foreground font-medium border-accent'
+                      : `hover:bg-muted text-foreground border-transparent ${phaseColors}`
                   }`}
                 >
-                  <span className="text-xs text-muted-foreground uppercase">
+                  <span className="text-xs uppercase mb-1">
                     {date.toLocaleDateString('ru-RU', { weekday: 'short' })}
                   </span>
                   <span className={`text-lg font-semibold ${selected ? 'text-primary-foreground' : ''}`}>
                     {date.getDate()}
                   </span>
+                  {phase && !selected && (
+                    <div className="absolute bottom-1 right-1 w-2 h-2 rounded-full opacity-60" 
+                         style={{
+                           backgroundColor: phase === 'menstrual' ? '#ef4444' : 
+                                          phase === 'follicular' ? '#3b82f6' :
+                                          phase === 'ovulation' ? '#eab308' : '#a855f7'
+                         }}>
+                    </div>
+                  )}
                 </button>
               );
             })}

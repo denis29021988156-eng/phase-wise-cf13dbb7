@@ -15,7 +15,7 @@ const Chat = () => {
     {
       id: '1',
       type: 'ai',
-      content: 'Привет! Я ваш ИИ-помощник по женскому здоровью. Как дела сегодня? Расскажите о своем самочувствии.',
+      content: 'Привет, дорогая! Меня зовут Ева, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
       timestamp: new Date(),
     }
   ]);
@@ -120,7 +120,7 @@ const Chat = () => {
                 {msg.type === 'ai' && (
                   <div className="flex items-center space-x-2 mb-2">
                     <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">ИИ-помощник</span>
+                    <span className="text-sm font-medium text-primary">Ева</span>
                   </div>
                 )}
                 <p className="text-sm">{msg.content}</p>
@@ -139,7 +139,7 @@ const Chat = () => {
               <div className="bg-muted p-3 rounded-lg max-w-[80%]">
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <span className="text-sm text-muted-foreground">ИИ печатает...</span>
+                  <span className="text-sm text-muted-foreground">Ева печатает...</span>
                 </div>
               </div>
             </div>
