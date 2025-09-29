@@ -60,23 +60,62 @@ serve(async (req) => {
     console.log('Generating AI suggestion for event:', event.title);
     console.log('Cycle data:', cycleData);
 
+    // Get user from auth
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('Пользователь не аутентифицирован');
+    }
+
+    // Get user profile for name
+    const { data: profile } = await supabaseClient
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Get recent chat history to understand user's health context (last 10 messages)
+    const { data: recentMessages } = await supabaseClient
+      .from('chat_messages')
+      .select('content, created_at')
+      .eq('user_id', user.id)
+      .eq('role', 'user')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // Build health context from recent messages
+    let healthContext = '';
+    if (recentMessages && recentMessages.length > 0) {
+      const healthKeywords = ['болею', 'болит', 'устала', 'плохо', 'больно', 'недомогание', 'головная боль', 'спина', 'живот', 'тошнит', 'слабость'];
+      const relevantMessages = recentMessages.filter(msg => 
+        healthKeywords.some(keyword => msg.content.toLowerCase().includes(keyword))
+      );
+      
+      if (relevantMessages.length > 0) {
+        healthContext = `\nКонтекст самочувствия из недавних сообщений:\n${relevantMessages.map(msg => `- ${msg.content}`).join('\n')}\n`;
+      }
+    }
+
     const { phase, description } = getCyclePhase(cycleData.cycleDay, cycleData.cycleLength);
     const eventTime = new Date(event.start_time).toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit'
     });
 
+    const userName = profile?.name ? profile.name : 'дорогая';
+
     const prompt = `
-Ты — помощник по женскому здоровью. Дай краткую деловую оценку события с учетом менструального цикла.
+Ты — заботливый помощник по женскому здоровью. Дай краткую деловую оценку события с учетом менструального цикла и самочувствия.
 
 Контекст:
 - ${cycleData.cycleDay}-й день цикла (${phase})
 - Особенности: ${description}
 - Событие: «${event.title}»
-- Время: ${eventTime}
+- Время: ${eventTime}${healthContext}
 
-Напиши короткую деловую оценку (2-3 предложения):
-"У тебя ${phase.toLowerCase()}. У тебя сейчас [краткое описание энергии/состояния]. Это [отличное/хорошее/не лучшее] время для [тип события] чтобы [конкретные деловые активности подходящие для этой фазы]."
+Напиши короткую персональную оценку для ${userName} (2-3 предложения):
+"${userName}, у тебя ${phase.toLowerCase()}. У тебя сейчас [краткое описание энергии/состояния]. Это [отличное/хорошее/не лучшее] время для [тип события] чтобы [конкретные деловые активности подходящие для этой фазы]."
+
+${healthContext ? 'ВАЖНО: Учти информацию о самочувствии при составлении рекомендации!' : ''}
 
 Фокусируйся на работоспособности, энергии, концентрации и подходящести для деловых задач.
 `;

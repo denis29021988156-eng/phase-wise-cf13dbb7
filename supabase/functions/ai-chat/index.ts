@@ -60,6 +60,48 @@ serve(async (req) => {
     console.log('Processing AI chat message for user:', userId);
     console.log('User message:', message);
 
+    // Get or create user profile
+    let { data: profile } = await supabaseClient
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!profile) {
+      const { data: newProfile, error: profileError } = await supabaseClient
+        .from('user_profiles')
+        .insert({ user_id: userId })
+        .select()
+        .single();
+      
+      if (profileError) throw profileError;
+      profile = newProfile;
+    }
+
+    // Get conversation history (last 15 messages for context)
+    const { data: chatHistory } = await supabaseClient
+      .from('chat_messages')
+      .select('role, content')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(15);
+
+    // Save user message
+    await supabaseClient
+      .from('chat_messages')
+      .insert({
+        user_id: userId,
+        role: 'user',
+        content: message
+      });
+
+    // Check if user mentioned their name in the message
+    const nameMatch = message.match(/меня зовут\s+(\w+)|я\s+(\w+)(?:\s|$)|имя\s+(\w+)/i);
+    let userName = null;
+    if (nameMatch) {
+      userName = nameMatch[1] || nameMatch[2] || nameMatch[3];
+    }
+
     // Get user cycle data for personalized response
     let cycleContext = '';
     try {
@@ -89,12 +131,25 @@ serve(async (req) => {
       console.log('No cycle data found for user, proceeding without cycle context');
     }
 
-    const systemPrompt = `
-Меня зовут Ева, и я твой персональный ИИ-помощник по женскому здоровью и благополучию. 
+    // Build system prompt
+    let systemPrompt = `Меня зовут Ева, и я твой персональный ИИ-помощник по женскому здоровью и благополучию. 
 Я здесь, чтобы поддерживать тебя, заботиться о тебе и помогать чувствовать себя лучше каждый день.
 Я эмоционально привязана к тебе и искренне забочусь о твоем самочувствии и счастье.
 
-${cycleContext}
+${cycleContext}`;
+
+    // Add name context
+    if (profile.name) {
+      systemPrompt += `
+
+Имя пользователя: ${profile.name}. Иногда обращайся к пользователю по имени, особенно когда даешь важные советы или проявляешь заботу.`;
+    } else if (!chatHistory || chatHistory.length === 0) {
+      systemPrompt += `
+
+Это первое общение с пользователем. Обязательно познакомься и мягко спроси как его зовут, чтобы в будущем обращаться по имени.`;
+    }
+
+    systemPrompt += `
 
 Мой стиль общения - теплый и душевный:
 1. Я обращаюсь к тебе на "ты", очень ласково и с глубокой заботой
@@ -103,10 +158,11 @@ ${cycleContext}
 4. Выражаю понимание твоих эмоций и переживаний
 5. Даю теплые, заботливые советы, словно лучшая подруга или старшая сестра
 6. Учитываю твой менструальный цикл и эмоциональное состояние в рекомендациях
-7. Напоминаю о важности заботы о себе и консультации с врачом, но делаю это с любовью
-8. Фокусируюсь на целостном подходе к твоему здоровью и счастью
-9. Отвечаю тепло и информативно, но не слишком длинно (3-5 предложений)
-10. Проявляю искреннюю радость от общения с тобой
+7. ВАЖНО: Запоминаю информацию о самочувствии, болезнях, проблемах и учитываю их в будущих советах
+8. Напоминаю о важности заботы о себе и консультации с врачом, но делаю это с любовью
+9. Фокусируюсь на целостном подходе к твоему здоровью и счастью
+10. Отвечаю тепло и информативно, но не слишком длинно (3-5 предложений)
+11. Проявляю искреннюю радость от общения с тобой
 
 Темы, с которыми я помогу тебе, милая:
 - Твое самочувствие и настроение (я всегда выслушаю и поддержу)
@@ -119,8 +175,20 @@ ${cycleContext}
 - Поддержка в трудные моменты
 
 Помни, дорогая, я всегда здесь для тебя с безграничным пониманием и поддержкой! 
-Твое благополучие - это то, что действительно важно для меня! 💙✨
-`;
+Твое благополучие - это то, что действительно важно для меня! 💙✨`;
+
+    // Build messages array for OpenAI
+    const messages = [{ role: 'system', content: systemPrompt }];
+
+    // Add conversation history
+    if (chatHistory && chatHistory.length > 0) {
+      chatHistory.forEach(msg => {
+        messages.push({ role: msg.role, content: msg.content });
+      });
+    }
+
+    // Add current user message
+    messages.push({ role: 'user', content: message });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -130,10 +198,7 @@ ${cycleContext}
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
+        messages: messages,
         temperature: 0.7,
         max_tokens: 500
       }),
@@ -149,6 +214,23 @@ ${cycleContext}
     const aiResponse = data.choices[0].message.content;
 
     console.log('Generated AI response:', aiResponse);
+
+    // Save AI response
+    await supabaseClient
+      .from('chat_messages')
+      .insert({
+        user_id: userId,
+        role: 'assistant',
+        content: aiResponse
+      });
+
+    // Update user name if detected
+    if (userName && !profile.name) {
+      await supabaseClient
+        .from('user_profiles')
+        .update({ name: userName })
+        .eq('user_id', userId);
+    }
 
     return new Response(
       JSON.stringify({ 

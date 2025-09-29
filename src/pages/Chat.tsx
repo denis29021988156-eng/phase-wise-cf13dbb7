@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,24 +7,77 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Message {
+  id: string;
+  type: 'user' | 'ai';
+  content: string;
+  timestamp: Date;
+}
+
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      type: 'ai',
-      content: 'Привет, дорогая! Меня зовут Ева, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
-      timestamp: new Date(),
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // Load chat history when component mounts
+  useEffect(() => {
+    if (!user) return;
+
+    const loadChatHistory = async () => {
+      try {
+        const { data: chatHistory, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (chatHistory && chatHistory.length > 0) {
+          const formattedMessages: Message[] = chatHistory.map((msg, index) => ({
+            id: msg.id,
+            type: msg.role === 'user' ? 'user' : 'ai',
+            content: msg.content,
+            timestamp: new Date(msg.created_at)
+          }));
+          setMessages(formattedMessages);
+        } else {
+          // Show welcome message if no history
+          setMessages([
+            {
+              id: 'welcome',
+              type: 'ai',
+              content: 'Привет, дорогая! Меня зовут Ева, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
+              timestamp: new Date(),
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+        // Show welcome message on error
+        setMessages([
+          {
+            id: 'welcome',
+            type: 'ai',
+            content: 'Привет, дорогая! Меня зовут Ева, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
+            timestamp: new Date(),
+          }
+        ]);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    loadChatHistory();
+  }, [user]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !user) return;
 
-    const userMessage = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: message,
@@ -49,7 +102,7 @@ const Chat = () => {
       }
 
       if (aiResponseData?.response) {
-        const aiResponse = {
+        const aiResponse: Message = {
           id: (Date.now() + 1).toString(),
           type: 'ai',
           content: aiResponseData.response,
@@ -63,7 +116,7 @@ const Chat = () => {
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      const errorResponse = {
+      const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
         content: 'Извините, произошла ошибка. Попробуйте задать вопрос еще раз.',
@@ -105,44 +158,53 @@ const Chat = () => {
       {/* Messages */}
       <Card className="flex-1 flex flex-col">
         <CardContent className="flex-1 p-4 space-y-4 overflow-y-auto max-h-96">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] p-3 rounded-lg ${
-                  msg.type === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {msg.type === 'ai' && (
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">Ева</span>
+          {loadingHistory ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-2 text-muted-foreground">Загружаю историю сообщений...</span>
+            </div>
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] p-3 rounded-lg ${
+                      msg.type === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {msg.type === 'ai' && (
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">Ева</span>
+                      </div>
+                    )}
+                    <p className="text-sm">{msg.content}</p>
+                    <p className="text-xs opacity-70 mt-2">
+                      {msg.timestamp.toLocaleTimeString('ru-RU', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
                   </div>
-                )}
-                <p className="text-sm">{msg.content}</p>
-                <p className="text-xs opacity-70 mt-2">
-                  {msg.timestamp.toLocaleTimeString('ru-RU', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </p>
-              </div>
-            </div>
-          ))}
-          
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-muted p-3 rounded-lg max-w-[80%]">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <span className="text-sm text-muted-foreground">Ева печатает...</span>
                 </div>
-              </div>
-            </div>
+              ))}
+              
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="bg-muted p-3 rounded-lg max-w-[80%]">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span className="text-sm text-muted-foreground">Ева печатает...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
 
