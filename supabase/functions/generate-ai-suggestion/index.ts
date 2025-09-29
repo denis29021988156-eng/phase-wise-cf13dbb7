@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY_NEW');
 
 // Определяем фазы цикла и их описания
 const getCyclePhase = (cycleDay: number, cycleLength: number = 28) => {
@@ -124,11 +124,11 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
-    } catch (error) {
-      console.error('Error in generate-ai-suggestion function:', error);
-      return new Response(
-        JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-        {
+  } catch (error) {
+    console.error('Error in generate-ai-suggestion function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
