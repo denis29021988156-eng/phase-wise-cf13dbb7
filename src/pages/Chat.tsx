@@ -20,6 +20,7 @@ const Chat = () => {
     }
   ]);
   const [loading, setLoading] = useState(false);
+  const [apiTest, setApiTest] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !user) return;
@@ -89,16 +90,68 @@ const Chat = () => {
     }
   };
 
+  const testAPI = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    setApiTest(null);
+    
+    try {
+      const { data: aiResponseData, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: 'Тест API - привет Ева!',
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (aiResponseData?.response) {
+        setApiTest({ success: true, message: 'API работает! Ответ получен.' });
+      } else {
+        throw new Error('Нет ответа от API');
+      }
+    } catch (error) {
+      console.error('API Test Error:', error);
+      setApiTest({ success: false, message: 'Ошибка API: ' + (error instanceof Error ? error.message : 'Неизвестная ошибка') });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-4">
       {/* Header */}
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 rounded-full bg-primary/10">
-          <Brain className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-full bg-primary/10">
+            <Brain className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Ева AI</h1>
+            <p className="text-muted-foreground">Персональные советы и поддержка</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Ева AI</h1>
-          <p className="text-muted-foreground">Персональные советы и поддержка</p>
+        
+        {/* API Test Button */}
+        <div className="flex flex-col items-end space-y-2">
+          <Button
+            onClick={testAPI}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            {loading ? 'Тестирую...' : 'Тест API'}
+          </Button>
+          {apiTest && (
+            <div className={`text-xs px-2 py-1 rounded ${
+              apiTest.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {apiTest.message}
+            </div>
+          )}
         </div>
       </div>
 
