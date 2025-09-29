@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY_NEW');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 // Определяем фазы цикла и их описания
 const getCyclePhase = (cycleDay: number, cycleLength: number = 28) => {
