@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/layout/Navigation';
 import Calendar from './Calendar';
+import AllEvents from './AllEvents';
 import Profile from './Profile';
 import Chat from './Chat';
 import CycleSetup from './CycleSetup';
@@ -88,6 +89,8 @@ const Index = () => {
     switch (activeTab) {
       case 'calendar':
         return <Calendar />;
+      case 'all-events':
+        return <AllEvents />;
       case 'profile':
         return <Profile />;
       case 'chat':
