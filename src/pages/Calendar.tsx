@@ -505,7 +505,7 @@ const Calendar = () => {
                   // Days of month
                   for (let day = 1; day <= daysInMonth; day++) {
                     const date = new Date(year, month, day);
-                    const dateStr = date.toISOString().split('T')[0];
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isSelectedDate = dateStr === selectedDate;
                     const isTodayDate = isToday(date);
                     const bgColor = getPhaseColorWithIntensity(date);
