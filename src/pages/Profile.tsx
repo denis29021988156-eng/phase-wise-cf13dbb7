@@ -92,7 +92,35 @@ const Profile = () => {
     return cycleDay > 0 ? cycleDay : formData.cycle_length + cycleDay;
   };
 
+  const getCyclePhase = (cycleDay: number) => {
+    if (cycleDay >= 1 && cycleDay <= 5) {
+      return { name: 'Менструация', color: 'text-red-500' };
+    } else if (cycleDay >= 6 && cycleDay <= 13) {
+      return { name: 'Фолликулярная фаза', color: 'text-green-500' };
+    } else if (cycleDay >= 14 && cycleDay <= 16) {
+      return { name: 'Овуляция', color: 'text-purple-500' };
+    } else {
+      return { name: 'Лютеиновая фаза', color: 'text-blue-500' };
+    }
+  };
+
+  const getNextPeriodDate = () => {
+    if (!formData.start_date) return null;
+    
+    const startDate = new Date(formData.start_date);
+    const nextPeriod = new Date(startDate);
+    nextPeriod.setDate(startDate.getDate() + formData.cycle_length);
+    
+    return nextPeriod.toLocaleDateString('ru-RU', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
   const currentDay = calculateCurrentDay();
+  const currentPhase = currentDay ? getCyclePhase(currentDay) : null;
+  const nextPeriod = getNextPeriodDate();
 
   return (
     <div className="p-4 space-y-6">
@@ -127,6 +155,26 @@ const Profile = () => {
                 <div className="text-sm text-muted-foreground">Длительность</div>
               </div>
             </div>
+            
+            {/* Current Phase */}
+            {currentPhase && (
+              <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-muted">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Текущая фаза:</span>
+                  <span className={`font-semibold ${currentPhase.color}`}>{currentPhase.name}</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Next Period Date */}
+            {nextPeriod && (
+              <div className="mt-3 p-4 rounded-lg bg-muted/30 border border-muted">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Следующие месячные:</span>
+                  <span className="font-semibold text-foreground">{nextPeriod}</span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
