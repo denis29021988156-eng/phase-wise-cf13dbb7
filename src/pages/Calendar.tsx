@@ -543,10 +543,10 @@ const Calendar = () => {
                         {day}
                         {hasEvents && (
                           <div 
-                            className="w-1.5 h-1.5 rounded-full mt-1" 
+                            className="w-2 h-2 rounded-full mt-1" 
                             style={{ 
-                              backgroundColor: bgColor || 'currentColor',
-                              boxShadow: '0 0 0 2px white',
+                              backgroundColor: isSelectedDate ? (bgColor || '#8B5CF6') : (bgColor || '#8B5CF6'),
+                              boxShadow: isSelectedDate ? '0 0 0 2px white, 0 0 6px rgba(255,255,255,0.8)' : '0 0 0 2px white',
                               border: '1px solid white'
                             }}
                           />
