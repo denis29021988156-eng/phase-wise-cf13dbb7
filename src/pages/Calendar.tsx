@@ -510,6 +510,9 @@ const Calendar = () => {
                     const isTodayDate = isToday(date);
                     const bgColor = getPhaseColorWithIntensity(date);
                     const phase = getCyclePhaseForDate(date);
+                    const hasEvents = events.some(event => 
+                      new Date(event.start_time).toISOString().split('T')[0] === dateStr
+                    );
                     
                     days.push(
                       <button
@@ -524,7 +527,7 @@ const Calendar = () => {
                             }
                           }, 100);
                         }}
-                        className={`aspect-square rounded-md flex items-center justify-center text-sm transition-all hover:scale-105 ${
+                        className={`aspect-square rounded-md flex flex-col items-center justify-center text-sm transition-all hover:scale-105 relative ${
                           isSelectedDate
                             ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary ring-offset-2'
                             : isTodayDate
@@ -538,6 +541,15 @@ const Calendar = () => {
                         }}
                       >
                         {day}
+                        {hasEvents && (
+                          <div 
+                            className="w-1 h-1 rounded-full mt-0.5" 
+                            style={{ 
+                              backgroundColor: bgColor || 'currentColor',
+                              opacity: 0.8
+                            }}
+                          />
+                        )}
                       </button>
                     );
                   }
