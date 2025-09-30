@@ -126,7 +126,6 @@ const Profile = () => {
     return nextPeriod.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric',
     });
   };
 
