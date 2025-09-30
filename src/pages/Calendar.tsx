@@ -543,10 +543,11 @@ const Calendar = () => {
                         {day}
                         {hasEvents && (
                           <div 
-                            className="w-1 h-1 rounded-full mt-0.5" 
+                            className="w-1.5 h-1.5 rounded-full mt-1" 
                             style={{ 
                               backgroundColor: bgColor || 'currentColor',
-                              opacity: 0.8
+                              boxShadow: '0 0 0 2px white',
+                              border: '1px solid white'
                             }}
                           />
                         )}
