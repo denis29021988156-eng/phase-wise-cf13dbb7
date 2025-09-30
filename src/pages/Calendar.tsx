@@ -38,6 +38,7 @@ const Calendar = () => {
   const [userCycle, setUserCycle] = useState<UserCycle | null>(null);
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const eventsRef = useState<HTMLDivElement | null>(null)[0];
 
   // Generate 7 days starting from currentWeekStart
   const generateWeekDates = () => {
@@ -513,7 +514,16 @@ const Calendar = () => {
                     days.push(
                       <button
                         key={day}
-                        onClick={() => setSelectedDate(dateStr)}
+                        onClick={() => {
+                          setSelectedDate(dateStr);
+                          // Scroll to events section after a short delay
+                          setTimeout(() => {
+                            const eventsCard = document.getElementById('events-section');
+                            if (eventsCard) {
+                              eventsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }, 100);
+                        }}
                         className={`aspect-square rounded-md flex items-center justify-center text-sm transition-all hover:scale-105 ${
                           isSelectedDate
                             ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary ring-offset-2'
@@ -561,7 +571,7 @@ const Calendar = () => {
       )}
 
       {/* Events for Selected Date */}
-      <Card>
+      <Card id="events-section">
         <CardHeader>
           <CardTitle className="text-lg">
             События на {new Date(selectedDate).toLocaleDateString('ru-RU', { 
