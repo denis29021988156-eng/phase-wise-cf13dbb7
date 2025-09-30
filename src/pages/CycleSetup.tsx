@@ -19,6 +19,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
   const [formData, setFormData] = useState({
     start_date: '',
     cycle_length: 28,
+    menstrual_length: 5,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,6 +44,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
           user_id: user.id,
           start_date: formData.start_date,
           cycle_length: formData.cycle_length,
+          menstrual_length: formData.menstrual_length,
         })
         .select();
 
@@ -120,6 +122,23 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                 />
                 <p className="text-sm text-muted-foreground mt-1">
                   Обычно от 21 до 35 дней
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="menstrual_length">Длительность менструации (дни)</Label>
+                <Input
+                  id="menstrual_length"
+                  type="number"
+                  min="3"
+                  max="7"
+                  value={formData.menstrual_length}
+                  onChange={(e) => setFormData({ ...formData, menstrual_length: parseInt(e.target.value) })}
+                  className="mt-2"
+                  required
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Обычно от 3 до 7 дней
                 </p>
               </div>
 
