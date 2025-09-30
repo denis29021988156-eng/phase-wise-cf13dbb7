@@ -346,36 +346,66 @@ const Calendar = () => {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <CardTitle className="text-lg">
-              {weekDates[0].toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
+              {(() => {
+                // Show month and year for the selected date if it's different from the first week date
+                const selectedDateObj = new Date(selectedDate);
+                const firstWeekDate = weekDates[0];
+                
+                if (selectedDateObj.getMonth() !== firstWeekDate.getMonth() || 
+                    selectedDateObj.getFullYear() !== firstWeekDate.getFullYear()) {
+                  return selectedDateObj.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+                }
+                
+                return firstWeekDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+              })()}
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
-        
         <CardContent>
-          <div className="grid grid-cols-7 gap-2">
-            {weekDates.map((date, index) => {
-              const dateString = date.toISOString().split('T')[0];
-              const selected = isSelected(date);
+          <div className="flex justify-around space-x-2">
+            {weekDates.map((date) => {
+              const dateStr = date.toISOString().split('T')[0];
+              const selected = dateStr === selectedDate;
               const today = isToday(date);
+              const bgColor = getPhaseColorWithIntensity(date);
               const phase = getCyclePhaseForDate(date);
-              const phaseColors = getPhaseColor(phase);
               
               return (
                 <button
-                  key={index}
-                  onClick={() => setSelectedDate(dateString)}
-                  className={`flex flex-col items-center p-3 rounded-lg transition-all duration-200 border-2 relative ${
+                  key={dateStr}
+                  onClick={() => {
+                    setSelectedDate(dateStr);
+                    // Update the week view if clicking on a date from a different week
+                    const clickedDate = new Date(date);
+                    const currentWeekStartDate = new Date(currentWeekStart);
+                    
+                    // Check if clicked date is outside current week
+                    const daysDiff = Math.floor((clickedDate.getTime() - currentWeekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysDiff < 0 || daysDiff >= 7) {
+                      // Move to the week containing the clicked date
+                      const newWeekStart = new Date(clickedDate);
+                      const dayOfWeek = newWeekStart.getDay();
+                      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                      newWeekStart.setDate(newWeekStart.getDate() - daysToSubtract);
+                      setCurrentWeekStart(newWeekStart);
+                    }
+                  }}
+                  className={`flex-1 py-4 rounded-lg transition-all flex flex-col items-center relative ${
                     selected 
-                      ? 'bg-primary text-primary-foreground shadow-md scale-105 border-primary'
+                      ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
                       : today
-                      ? 'bg-accent text-accent-foreground font-medium border-accent'
-                      : `hover:bg-muted text-foreground border-transparent ${phaseColors}`
+                      ? 'bg-accent/50 text-accent-foreground'
+                      : 'hover:bg-muted'
                   }`}
+                  style={{
+                    backgroundColor: !selected && bgColor ? bgColor : undefined
+                  }}
                 >
-                  <span className="text-xs uppercase mb-1">
+                  <span className={`text-xs mb-1 ${selected ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
                     {date.toLocaleDateString('ru-RU', { weekday: 'short' })}
                   </span>
                   <span className={`text-lg font-semibold ${selected ? 'text-primary-foreground' : ''}`}>
@@ -419,145 +449,100 @@ const Calendar = () => {
         </CardContent>
       </Card>
 
-      {/* Full Calendar with Cycle Phases */}
+      {/* Full Calendar with Cycle Phases - 30 days from today */}
       {showFullCalendar && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => {
-                  const newMonth = new Date(calendarMonth);
-                  newMonth.setMonth(newMonth.getMonth() - 1);
-                  setCalendarMonth(newMonth);
-                }}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <CardTitle className="text-lg">
-                {calendarMonth.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
-              </CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  const newMonth = new Date(calendarMonth);
-                  newMonth.setMonth(newMonth.getMonth() + 1);
-                  setCalendarMonth(newMonth);
-                }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <CardTitle className="text-lg text-center">
+              Следующие 30 дней
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="calendar-wrapper">
-              <style>{`
-                .calendar-wrapper .rdp-day {
-                  position: relative;
-                  border-radius: 0.375rem;
+            <div className="grid grid-cols-7 gap-2 text-center text-sm mb-4">
+              {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day) => (
+                <div key={day} className="font-medium text-muted-foreground py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const days = [];
+                
+                // Get first day to display (start of current week)
+                const startDate = new Date(today);
+                const dayOfWeek = startDate.getDay();
+                const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                startDate.setDate(startDate.getDate() - adjustedDay);
+                
+                // Display 5 weeks (35 days) to ensure we show at least 30 days from today
+                for (let i = 0; i < 35; i++) {
+                  const date = new Date(startDate);
+                  date.setDate(startDate.getDate() + i);
+                  
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                  const isSelectedDate = dateStr === selectedDate;
+                  const isTodayDate = isToday(date);
+                  const bgColor = getPhaseColorWithIntensity(date);
+                  const phase = getCyclePhaseForDate(date);
+                  const hasEvents = events.some(event => 
+                    new Date(event.start_time).toISOString().split('T')[0] === dateStr
+                  );
+                  
+                  // Calculate if this date is within 30 days from today
+                  const daysDiff = Math.floor((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  const isWithin30Days = daysDiff >= 0 && daysDiff < 30;
+                  const isPast = date < today;
+                  
+                  days.push(
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setSelectedDate(dateStr);
+                        setTimeout(() => {
+                          const eventsCard = document.getElementById('events-section');
+                          if (eventsCard) {
+                            eventsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }, 100);
+                      }}
+                      disabled={isPast}
+                      className={`aspect-square rounded-md flex flex-col items-center justify-center text-sm transition-all hover:scale-105 relative ${
+                        isSelectedDate
+                          ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary ring-offset-2'
+                          : isTodayDate
+                          ? 'ring-2 ring-accent font-semibold'
+                          : isPast
+                          ? 'opacity-30 cursor-not-allowed'
+                          : !isWithin30Days
+                          ? 'opacity-50'
+                          : phase
+                          ? 'font-medium'
+                          : 'hover:bg-muted'
+                      }`}
+                      style={{
+                        backgroundColor: !isSelectedDate && bgColor && !isPast ? bgColor : undefined
+                      }}
+                    >
+                      {date.getDate()}
+                      {hasEvents && !isPast && (
+                        <div 
+                          className="w-2 h-2 rounded-full mt-1" 
+                          style={{ 
+                            backgroundColor: isSelectedDate ? (bgColor || '#8B5CF6') : (bgColor || '#8B5CF6'),
+                            boxShadow: isSelectedDate ? '0 0 0 2px white, 0 0 6px rgba(255,255,255,0.8)' : '0 0 0 2px white',
+                            border: '1px solid white'
+                          }}
+                        />
+                      )}
+                    </button>
+                  );
                 }
-                ${(() => {
-                  const styles = [];
-                  const year = calendarMonth.getFullYear();
-                  const month = calendarMonth.getMonth();
-                  const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  
-                  for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(year, month, day);
-                    const color = getPhaseColorWithIntensity(date);
-                    const phase = getCyclePhaseForDate(date);
-                    if (color && phase) {
-                      styles.push(`
-                        .calendar-wrapper [data-day="${day}"][data-month="${month}"] {
-                          background-color: ${color} !important;
-                          font-weight: 500;
-                        }
-                      `);
-                    }
-                  }
-                  return styles.join('\n');
-                })()}
-              `}</style>
-              <div className="grid grid-cols-7 gap-2 text-center text-sm">
-                {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day) => (
-                  <div key={day} className="font-medium text-muted-foreground py-2">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-2 mt-2">
-                {(() => {
-                  const year = calendarMonth.getFullYear();
-                  const month = calendarMonth.getMonth();
-                  const firstDay = new Date(year, month, 1).getDay();
-                  const daysInMonth = new Date(year, month + 1, 0).getDate();
-                  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-                  
-                  const days = [];
-                  
-                  // Empty cells before first day
-                  for (let i = 0; i < adjustedFirstDay; i++) {
-                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
-                  }
-                  
-                  // Days of month
-                  for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(year, month, day);
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const isSelectedDate = dateStr === selectedDate;
-                    const isTodayDate = isToday(date);
-                    const bgColor = getPhaseColorWithIntensity(date);
-                    const phase = getCyclePhaseForDate(date);
-                    const hasEvents = events.some(event => 
-                      new Date(event.start_time).toISOString().split('T')[0] === dateStr
-                    );
-                    
-                    days.push(
-                      <button
-                        key={day}
-                        onClick={() => {
-                          setSelectedDate(dateStr);
-                          // Scroll to events section after a short delay
-                          setTimeout(() => {
-                            const eventsCard = document.getElementById('events-section');
-                            if (eventsCard) {
-                              eventsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                          }, 100);
-                        }}
-                        className={`aspect-square rounded-md flex flex-col items-center justify-center text-sm transition-all hover:scale-105 relative ${
-                          isSelectedDate
-                            ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary ring-offset-2'
-                            : isTodayDate
-                            ? 'ring-2 ring-accent font-semibold'
-                            : phase
-                            ? 'font-medium'
-                            : 'hover:bg-muted'
-                        }`}
-                        style={{
-                          backgroundColor: !isSelectedDate && bgColor ? bgColor : undefined
-                        }}
-                      >
-                        {day}
-                        {hasEvents && (
-                          <div 
-                            className="w-2 h-2 rounded-full mt-1" 
-                            style={{ 
-                              backgroundColor: isSelectedDate ? (bgColor || '#8B5CF6') : (bgColor || '#8B5CF6'),
-                              boxShadow: isSelectedDate ? '0 0 0 2px white, 0 0 6px rgba(255,255,255,0.8)' : '0 0 0 2px white',
-                              border: '1px solid white'
-                            }}
-                          />
-                        )}
-                      </button>
-                    );
-                  }
-                  
-                  return days;
-                })()}
-              </div>
+                
+                return days;
+              })()}
             </div>
             
             {/* Phase Legend */}
