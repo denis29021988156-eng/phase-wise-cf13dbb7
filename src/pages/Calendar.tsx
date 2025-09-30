@@ -597,64 +597,73 @@ const Calendar = () => {
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : events.length > 0 ? (
-            <div className="space-y-4">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="p-4 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-medium text-foreground">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                      </p>
-                    </div>
-                    <div className={`px-2 py-1 rounded-full text-xs ${
-                      event.source === 'google' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-purple-100 text-purple-800'
-                    }`}>
-                      {event.source === 'google' ? 'Google' : 'Ручной'}
-                    </div>
-                  </div>
-                  
-                  {event.suggestion && (
-                    <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                      <div className="flex items-start space-x-2">
-                        <div className="p-1 rounded-full bg-primary/10 mt-0.5">
-                          <svg className="h-3 w-3 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-primary mb-1">Ева:</p>
-                          <p className="text-sm text-muted-foreground">{event.suggestion}</p>
-                        </div>
+          ) : (() => {
+            // Filter events for the selected date
+            const selectedEvents = events.filter((event) => {
+              const eventDate = new Date(event.start_time);
+              const eventDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+              return eventDateStr === selectedDate;
+            });
+            
+            return selectedEvents.length > 0 ? (
+              <div className="space-y-4">
+                {selectedEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="p-4 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="font-medium text-foreground">{event.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full text-xs ${
+                        event.source === 'google' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {event.source === 'google' ? 'Google' : 'Ручной'}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <div className="flex justify-center mb-4">
-                <CalendarDays className="h-12 w-12 opacity-50" />
+                    
+                    {event.suggestion && (
+                      <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                        <div className="flex items-start space-x-2">
+                          <div className="p-1 rounded-full bg-primary/10 mt-0.5">
+                            <svg className="h-3 w-3 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-primary mb-1">Ева:</p>
+                            <p className="text-sm text-muted-foreground">{event.suggestion}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <p>На этот день событий нет</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4"
-                onClick={() => setAddEventOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить событие
-              </Button>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="flex justify-center mb-4">
+                  <CalendarDays className="h-12 w-12 opacity-50" />
+                </div>
+                <p>На этот день событий нет</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => setAddEventOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить событие
+                </Button>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
