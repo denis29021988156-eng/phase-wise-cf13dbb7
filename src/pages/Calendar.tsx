@@ -84,11 +84,18 @@ const Calendar = () => {
     
     setLoading(true);
     try {
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
+      // Load events for the visible full calendar range: from start of current week to +35 days
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startRange = new Date(today);
+      const dayOfWeek = startRange.getDay();
+      const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday as first day
+      startRange.setDate(startRange.getDate() - adjustedDay);
+      startRange.setHours(0, 0, 0, 0);
       
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      const endRange = new Date(startRange);
+      endRange.setDate(endRange.getDate() + 35);
+      endRange.setHours(23, 59, 59, 999);
 
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
@@ -97,26 +104,24 @@ const Calendar = () => {
           event_ai_suggestions(suggestion, justification)
         `)
         .eq('user_id', user.id)
-        .gte('start_time', startOfDay.toISOString())
-        .lte('start_time', endOfDay.toISOString())
-        .order('start_time');
+        .gte('start_time', startRange.toISOString())
+        .lte('start_time', endRange.toISOString())
+        .order('start_time', { ascending: true });
 
       if (eventsError) throw eventsError;
-      
-      const eventsWithSuggestions = (eventsData || []).map(event => ({
-        ...event,
-        suggestion: event.event_ai_suggestions?.[0]?.suggestion,
-        justification: event.event_ai_suggestions?.[0]?.justification
-      }));
-      
-      setEvents(eventsWithSuggestions);
+
+      setEvents(eventsData || []);
     } catch (error) {
       console.error('Error loading events:', error);
+      toast({
+        title: 'Ошибка загрузки событий',
+        description: 'Попробуйте обновить страницу или повторить позже',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
-
   const handleConnectGoogleCalendar = async () => {
     if (!user) return;
     
@@ -487,9 +492,12 @@ const Calendar = () => {
                   const isTodayDate = isToday(date);
                   const bgColor = getPhaseColorWithIntensity(date);
                   const phase = getCyclePhaseForDate(date);
-                  const hasEvents = events.some(event => 
-                    new Date(event.start_time).toISOString().split('T')[0] === dateStr
-                  );
+                  const eventsForDate = events.filter(event => {
+                    const ev = new Date(event.start_time);
+                    const evStr = `${ev.getFullYear()}-${String(ev.getMonth() + 1).padStart(2, '0')}-${String(ev.getDate()).padStart(2, '0')}`;
+                    return evStr === dateStr;
+                  });
+                  const eventCount = eventsForDate.length;
                   
                   // Calculate if this date is within 30 days from today
                   const daysDiff = Math.floor((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -508,14 +516,14 @@ const Calendar = () => {
                           }
                         }, 100);
                       }}
-                      disabled={isPast}
+                      
                       className={`aspect-square rounded-md flex flex-col items-center justify-center text-sm transition-all hover:scale-105 relative ${
                         isSelectedDate
                           ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary ring-offset-2'
                           : isTodayDate
                           ? 'ring-2 ring-accent font-semibold'
                           : isPast
-                          ? 'opacity-30 cursor-not-allowed'
+                          ? 'ring-1 ring-border'
                           : !isWithin30Days
                           ? 'opacity-50'
                           : phase
@@ -523,19 +531,24 @@ const Calendar = () => {
                           : 'hover:bg-muted'
                       }`}
                       style={{
-                        backgroundColor: !isSelectedDate && bgColor && !isPast ? bgColor : undefined
+                        backgroundColor: !isSelectedDate && bgColor ? bgColor : undefined
                       }}
                     >
                       {date.getDate()}
-                      {hasEvents && !isPast && (
-                        <div 
-                          className="w-2 h-2 rounded-full mt-1" 
-                          style={{ 
-                            backgroundColor: isSelectedDate ? (bgColor || '#8B5CF6') : (bgColor || '#8B5CF6'),
-                            boxShadow: isSelectedDate ? '0 0 0 2px white, 0 0 6px rgba(255,255,255,0.8)' : '0 0 0 2px white',
-                            border: '1px solid white'
-                          }}
-                        />
+                      {eventCount > 0 && (
+                        <div className="mt-1 flex gap-0.5 justify-center flex-wrap">
+                          {Array.from({ length: eventCount }).map((_, idx) => (
+                            <span
+                              key={idx}
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{
+                                backgroundColor: bgColor || '#8B5CF6',
+                                boxShadow: '0 0 0 2px white',
+                                border: '1px solid white'
+                              }}
+                            />
+                          ))}
+                        </div>
                       )}
                     </button>
                   );
