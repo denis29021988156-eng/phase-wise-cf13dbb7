@@ -106,15 +106,27 @@ const Profile = () => {
 
   const getNextPeriodDate = () => {
     if (!formData.start_date) return null;
-    
+
     const startDate = new Date(formData.start_date);
+    const today = new Date();
+
+    const diffInDays = Math.floor(
+      (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    const cycles = diffInDays >= 0
+      ? Math.floor(diffInDays / formData.cycle_length) + 1
+      : 0;
+
     const nextPeriod = new Date(startDate);
-    nextPeriod.setDate(startDate.getDate() + formData.cycle_length);
-    
-    return nextPeriod.toLocaleDateString('ru-RU', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
+    if (cycles > 0) {
+      nextPeriod.setDate(startDate.getDate() + cycles * formData.cycle_length);
+    }
+
+    return nextPeriod.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
   };
 
