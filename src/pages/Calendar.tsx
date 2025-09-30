@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +36,8 @@ const Calendar = () => {
   const [addEventOpen, setAddEventOpen] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [userCycle, setUserCycle] = useState<UserCycle | null>(null);
+  const [showFullCalendar, setShowFullCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   // Generate 7 days starting from currentWeekStart
   const generateWeekDates = () => {
@@ -230,6 +232,69 @@ const Calendar = () => {
     }
   };
 
+  // Get phase intensity for gradient (0-1)
+  const getPhaseIntensity = (date: Date) => {
+    if (!userCycle) return 0;
+
+    const startDate = new Date(userCycle.start_date);
+    const diffInDays = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const cycleDay = ((diffInDays % userCycle.cycle_length) + 1);
+    const adjustedCycleDay = cycleDay > 0 ? cycleDay : userCycle.cycle_length + cycleDay;
+
+    const ovulationDay = Math.round(userCycle.cycle_length / 2);
+    const ovulationLength = 2;
+    const follicularStart = userCycle.menstrual_length + 1;
+    const follicularEnd = ovulationDay - 1;
+    const ovulationStart = ovulationDay;
+    const ovulationEnd = ovulationDay + ovulationLength - 1;
+
+    if (adjustedCycleDay >= 1 && adjustedCycleDay <= userCycle.menstrual_length) {
+      // Menstrual phase - intensity increases then decreases
+      const mid = Math.ceil(userCycle.menstrual_length / 2);
+      if (adjustedCycleDay <= mid) {
+        return adjustedCycleDay / mid; // 0 to 1
+      } else {
+        return (userCycle.menstrual_length - adjustedCycleDay + 1) / (userCycle.menstrual_length - mid + 1); // 1 to 0
+      }
+    } else if (adjustedCycleDay >= follicularStart && adjustedCycleDay <= follicularEnd) {
+      // Follicular phase - gradually increasing
+      const dayInPhase = adjustedCycleDay - follicularStart;
+      const phaseLength = follicularEnd - follicularStart + 1;
+      return 0.3 + (dayInPhase / phaseLength) * 0.7; // 0.3 to 1
+    } else if (adjustedCycleDay >= ovulationStart && adjustedCycleDay <= ovulationEnd) {
+      // Ovulation - peak intensity
+      return 1;
+    } else {
+      // Luteal phase - gradually decreasing
+      const dayInPhase = adjustedCycleDay - ovulationEnd - 1;
+      const phaseLength = userCycle.cycle_length - ovulationEnd;
+      return 1 - (dayInPhase / phaseLength) * 0.5; // 1 to 0.5
+    }
+  };
+
+  // Get background color with intensity
+  const getPhaseColorWithIntensity = (date: Date) => {
+    const phase = getCyclePhaseForDate(date);
+    const intensity = getPhaseIntensity(date);
+
+    if (!phase) return '';
+
+    const alpha = Math.max(0.1, intensity * 0.5); // 0.1 to 0.5
+    
+    switch (phase) {
+      case 'menstrual':
+        return `rgba(239, 68, 68, ${alpha})`; // red
+      case 'follicular':
+        return `rgba(59, 130, 246, ${alpha})`; // blue
+      case 'ovulation':
+        return `rgba(234, 179, 8, ${alpha})`; // yellow
+      case 'luteal':
+        return `rgba(168, 85, 247, ${alpha})`; // purple
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="p-4 space-y-6">
       {/* Header */}
@@ -328,8 +393,172 @@ const Calendar = () => {
               );
             })}
           </div>
+
+          {/* Toggle Full Calendar Button */}
+          <div className="flex justify-center mt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFullCalendar(!showFullCalendar)}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              {showFullCalendar ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-2" />
+                  Свернуть календарь
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                  Развернуть календарь
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Full Calendar with Cycle Phases */}
+      {showFullCalendar && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  const newMonth = new Date(calendarMonth);
+                  newMonth.setMonth(newMonth.getMonth() - 1);
+                  setCalendarMonth(newMonth);
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-lg">
+                {calendarMonth.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  const newMonth = new Date(calendarMonth);
+                  newMonth.setMonth(newMonth.getMonth() + 1);
+                  setCalendarMonth(newMonth);
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="calendar-wrapper">
+              <style>{`
+                .calendar-wrapper .rdp-day {
+                  position: relative;
+                  border-radius: 0.375rem;
+                }
+                ${(() => {
+                  const styles = [];
+                  const year = calendarMonth.getFullYear();
+                  const month = calendarMonth.getMonth();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const color = getPhaseColorWithIntensity(date);
+                    const phase = getCyclePhaseForDate(date);
+                    if (color && phase) {
+                      styles.push(`
+                        .calendar-wrapper [data-day="${day}"][data-month="${month}"] {
+                          background-color: ${color} !important;
+                          font-weight: 500;
+                        }
+                      `);
+                    }
+                  }
+                  return styles.join('\n');
+                })()}
+              `}</style>
+              <div className="grid grid-cols-7 gap-2 text-center text-sm">
+                {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day) => (
+                  <div key={day} className="font-medium text-muted-foreground py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-2 mt-2">
+                {(() => {
+                  const year = calendarMonth.getFullYear();
+                  const month = calendarMonth.getMonth();
+                  const firstDay = new Date(year, month, 1).getDay();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+                  
+                  const days = [];
+                  
+                  // Empty cells before first day
+                  for (let i = 0; i < adjustedFirstDay; i++) {
+                    days.push(<div key={`empty-${i}`} className="aspect-square" />);
+                  }
+                  
+                  // Days of month
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const isSelectedDate = dateStr === selectedDate;
+                    const isTodayDate = isToday(date);
+                    const bgColor = getPhaseColorWithIntensity(date);
+                    const phase = getCyclePhaseForDate(date);
+                    
+                    days.push(
+                      <button
+                        key={day}
+                        onClick={() => setSelectedDate(dateStr)}
+                        className={`aspect-square rounded-md flex items-center justify-center text-sm transition-all hover:scale-105 ${
+                          isSelectedDate
+                            ? 'bg-primary text-primary-foreground font-bold ring-2 ring-primary ring-offset-2'
+                            : isTodayDate
+                            ? 'ring-2 ring-accent font-semibold'
+                            : phase
+                            ? 'font-medium'
+                            : 'hover:bg-muted'
+                        }`}
+                        style={{
+                          backgroundColor: !isSelectedDate && bgColor ? bgColor : undefined
+                        }}
+                      >
+                        {day}
+                      </button>
+                    );
+                  }
+                  
+                  return days;
+                })()}
+              </div>
+            </div>
+            
+            {/* Phase Legend */}
+            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.4)' }}></div>
+                <span className="text-muted-foreground">Менструация</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(59, 130, 246, 0.4)' }}></div>
+                <span className="text-muted-foreground">Фолликулярная</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(234, 179, 8, 0.4)' }}></div>
+                <span className="text-muted-foreground">Овуляция</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(168, 85, 247, 0.4)' }}></div>
+                <span className="text-muted-foreground">Лютеиновая</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Events for Selected Date */}
       <Card>
