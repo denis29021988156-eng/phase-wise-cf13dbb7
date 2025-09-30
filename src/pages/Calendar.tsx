@@ -110,7 +110,13 @@ const Calendar = () => {
 
       if (eventsError) throw eventsError;
 
-      setEvents(eventsData || []);
+      const eventsWithSuggestions = (eventsData || []).map(event => ({
+        ...event,
+        suggestion: event.event_ai_suggestions?.[0]?.suggestion,
+        justification: event.event_ai_suggestions?.[0]?.justification
+      }));
+
+      setEvents(eventsWithSuggestions);
     } catch (error) {
       console.error('Error loading events:', error);
       toast({
