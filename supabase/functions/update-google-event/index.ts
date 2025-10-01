@@ -5,6 +5,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to find Google event ID by title and time
+async function findGoogleEventId(supabase: any, userId: string, title: string, startTime: string) {
+  try {
+    const { data: tokenData } = await supabase
+      .from('user_tokens')
+      .select('access_token')
+      .eq('user_id', userId)
+      .eq('provider', 'google')
+      .maybeSingle();
+
+    if (!tokenData?.access_token) return null;
+
+    const startDate = new Date(startTime);
+    const timeMin = new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString(); // 1 day before
+    const timeMax = new Date(startDate.getTime() + 24 * 60 * 60 * 1000).toISOString(); // 1 day after
+
+    const calendarResponse = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`,
+      {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+        },
+      }
+    );
+
+    if (!calendarResponse.ok) return null;
+
+    const calendarData = await calendarResponse.json();
+    const events = calendarData.items || [];
+
+    // Find event by title and approximate time (within 1 hour)
+    for (const event of events) {
+      if (event.summary === title && event.start?.dateTime) {
+        const eventStartTime = new Date(event.start.dateTime);
+        const timeDiff = Math.abs(eventStartTime.getTime() - startDate.getTime());
+        if (timeDiff < 60 * 60 * 1000) { // Within 1 hour
+          console.log(`Found Google event by title and time: ${event.id}`);
+          return event.id;
+        }
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error finding Google event ID:', error);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -28,7 +77,7 @@ Deno.serve(async (req) => {
     // Get the event and its Google event ID
     const { data: eventRecord, error: getEventError } = await supabase
       .from('events')
-      .select('google_event_id')
+      .select('google_event_id, title, start_time, source')
       .eq('id', eventId)
       .eq('user_id', userId)
       .single();
@@ -41,7 +90,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const googleEventId = eventRecord.google_event_id;
+    let foundGoogleEventId = eventRecord.google_event_id;
+    
+    // If no google_event_id but event source is google, try to find by title and time
+    if (!foundGoogleEventId && eventRecord.source === 'google') {
+      console.log('No google_event_id found, but event is from google. Searching by title and time...');
+      foundGoogleEventId = await findGoogleEventId(supabase, userId, eventRecord.title, eventRecord.start_time);
+    }
 
     // Update local database first
     const { error: updateError } = await supabase
@@ -60,7 +115,7 @@ Deno.serve(async (req) => {
     }
 
     // If event has Google event ID, update it in Google Calendar too
-    if (googleEventId) {
+    if (foundGoogleEventId) {
       const { data: tokenData } = await supabase
         .from('user_tokens')
         .select('access_token, refresh_token')
@@ -84,7 +139,7 @@ Deno.serve(async (req) => {
           };
 
           const updateResponse = await fetch(
-            `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events/${foundGoogleEventId}`,
             {
               method: 'PATCH',
               headers: {
@@ -103,7 +158,7 @@ Deno.serve(async (req) => {
 
             if (refreshed.data?.access_token) {
               const retryResponse = await fetch(
-                `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
+                `https://www.googleapis.com/calendar/v3/calendars/primary/events/${foundGoogleEventId}`,
                 {
                   method: 'PATCH',
                   headers: {
