@@ -11,8 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userId, eventId, googleEventId, eventData } = await req.json();
-    console.log('Update Google event request:', { userId, eventId, googleEventId });
+    const { userId, eventId, eventData } = await req.json();
+    console.log('Update Google event request:', { userId, eventId });
 
     if (!userId || !eventId || !eventData) {
       return new Response(
@@ -24,6 +24,24 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get the event and its Google event ID
+    const { data: eventRecord, error: getEventError } = await supabase
+      .from('events')
+      .select('google_event_id')
+      .eq('id', eventId)
+      .eq('user_id', userId)
+      .single();
+
+    if (getEventError || !eventRecord) {
+      console.error('Event not found or access denied:', getEventError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Event not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    const googleEventId = eventRecord.google_event_id;
 
     // Update local database first
     const { error: updateError } = await supabase
@@ -41,7 +59,7 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    // If event came from Google Calendar, update it there too
+    // If event has Google event ID, update it in Google Calendar too
     if (googleEventId) {
       const { data: tokenData } = await supabase
         .from('user_tokens')

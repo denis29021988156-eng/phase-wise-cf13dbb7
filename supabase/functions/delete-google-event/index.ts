@@ -25,24 +25,39 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user's Google token
-    const { data: tokenData } = await supabase
-      .from('user_tokens')
-      .select('access_token, refresh_token')
+    // Get the event and its Google event ID
+    const { data: eventData, error: eventError } = await supabase
+      .from('events')
+      .select('google_event_id')
+      .eq('id', eventId)
       .eq('user_id', userId)
-      .eq('provider', 'google')
-      .maybeSingle();
+      .single();
 
-    if (!tokenData?.access_token) {
-      console.log('No Google token found for user');
+    if (eventError || !eventData) {
+      console.error('Event not found or access denied:', eventError);
       return new Response(
-        JSON.stringify({ success: false, error: 'No Google Calendar connection' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ success: false, error: 'Event not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
-    // If googleEventId is provided, delete from Google Calendar
+    const googleEventId = eventData.google_event_id;
+
+    // Get user's Google token only if we have a Google event to delete
+    let tokenData = null;
     if (googleEventId) {
+      const { data: tokens } = await supabase
+        .from('user_tokens')
+        .select('access_token, refresh_token')
+        .eq('user_id', userId)
+        .eq('provider', 'google')
+        .maybeSingle();
+
+      tokenData = tokens;
+    }
+
+    // If googleEventId is provided and we have a token, delete from Google Calendar
+    if (googleEventId && tokenData?.access_token) {
       try {
         const deleteResponse = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,

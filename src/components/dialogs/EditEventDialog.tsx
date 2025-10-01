@@ -58,16 +58,15 @@ const EditEventDialog = ({ open, onOpenChange, event, onEventUpdated }: EditEven
       const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
       const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
 
-      // Check if event came from Google Calendar
-      const isGoogleEvent = event.source === 'google';
+      // Check if event has Google Calendar sync
+      const hasGoogleEventId = !!event.source && event.source === 'google';
 
-      if (isGoogleEvent) {
+      if (hasGoogleEventId) {
         // Update via edge function to sync with Google Calendar
         const { data, error } = await supabase.functions.invoke('update-google-event', {
           body: {
             userId: user.id,
             eventId: event.id,
-            googleEventId: event.id, // For Google events, we use the event ID
             eventData: {
               title: formData.title,
               description: formData.description,

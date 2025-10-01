@@ -147,6 +147,14 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               variant: "default",
             });
           } else if (googleResult?.success) {
+            // Update the event with Google Calendar ID
+            if (googleResult.googleEventId) {
+              await supabase
+                .from('events')
+                .update({ google_event_id: googleResult.googleEventId })
+                .eq('id', eventData.id);
+            }
+
             toast({
               title: 'Событие добавлено',
               description: 'Событие успешно добавлено и синхронизировано с Google Calendar',

@@ -181,15 +181,14 @@ const Calendar = () => {
     if (!confirm(`Удалить событие "${event.title}"?`)) return;
     
     try {
-      const isGoogleEvent = event.source === 'google';
+      const hasGoogleEventId = !!event.source && event.source === 'google';
       
-      if (isGoogleEvent) {
+      if (hasGoogleEventId) {
         // Delete via edge function to sync with Google Calendar
         const { data, error } = await supabase.functions.invoke('delete-google-event', {
           body: {
             userId: user.id,
             eventId: event.id,
-            googleEventId: event.id,
           }
         });
 

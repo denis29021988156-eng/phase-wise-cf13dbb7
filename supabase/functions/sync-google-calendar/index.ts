@@ -144,7 +144,8 @@ serve(async (req) => {
             title: googleEvent.summary || 'Событие из Google Calendar',
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
-            source: 'google'
+            source: 'google',
+            google_event_id: googleEvent.id
           })
           .select()
           .single();
