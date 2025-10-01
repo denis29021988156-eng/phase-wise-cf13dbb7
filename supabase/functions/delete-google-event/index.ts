@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
           console.log('Token expired, attempting refresh');
           // Token expired, try refresh
           const refreshed = await supabase.functions.invoke('refresh-google-token', {
-            body: { userId }
+            body: { user_id: userId }
           });
 
           if (refreshed.data?.access_token) {
