@@ -8,3 +8,15 @@ verify_jwt = true
 
 [functions.refresh-google-token]
 verify_jwt = true
+
+[functions.add-to-google-calendar]
+verify_jwt = true
+
+[functions.ai-chat]
+verify_jwt = true
+
+[functions.delete-google-event]
+verify_jwt = true
+
+[functions.update-google-event]
+verify_jwt = true

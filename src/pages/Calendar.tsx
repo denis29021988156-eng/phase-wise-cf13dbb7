@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AddEventDialog from '@/components/dialogs/AddEventDialog';
+import EditEventDialog from '@/components/dialogs/EditEventDialog';
 
 interface Event {
   id: string;
@@ -34,6 +35,8 @@ const Calendar = () => {
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [addEventOpen, setAddEventOpen] = useState(false);
+  const [editEventOpen, setEditEventOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventWithSuggestion | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [userCycle, setUserCycle] = useState<UserCycle | null>(null);
   const [showFullCalendar, setShowFullCalendar] = useState(false);
@@ -170,6 +173,58 @@ const Calendar = () => {
     } finally {
       setGoogleLoading(false);
     }
+  };
+
+  const handleDeleteEvent = async (event: EventWithSuggestion) => {
+    if (!user) return;
+    
+    if (!confirm(`Удалить событие "${event.title}"?`)) return;
+    
+    try {
+      const isGoogleEvent = event.source === 'google';
+      
+      if (isGoogleEvent) {
+        // Delete via edge function to sync with Google Calendar
+        const { data, error } = await supabase.functions.invoke('delete-google-event', {
+          body: {
+            userId: user.id,
+            eventId: event.id,
+            googleEventId: event.id,
+          }
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Failed to delete event');
+      } else {
+        // Delete local event only
+        const { error: deleteError } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', event.id)
+          .eq('user_id', user.id);
+
+        if (deleteError) throw deleteError;
+      }
+
+      toast({
+        title: 'Событие удалено',
+        description: 'Событие успешно удалено из календаря',
+      });
+
+      loadEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить событие',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditEvent = (event: EventWithSuggestion) => {
+    setSelectedEvent(event);
+    setEditEventOpen(true);
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -619,18 +674,36 @@ const Calendar = () => {
                     className="p-4 rounded-lg bg-muted/50 border border-border hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium text-foreground">{event.title}</h3>
                         <p className="text-sm text-muted-foreground">
                           {formatTime(event.start_time)} - {formatTime(event.end_time)}
                         </p>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs ${
-                        event.source === 'google' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {event.source === 'google' ? 'Google' : 'Ручной'}
+                      <div className="flex items-center gap-2">
+                        <div className={`px-2 py-1 rounded-full text-xs ${
+                          event.source === 'google' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {event.source === 'google' ? 'Google' : 'Ручной'}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditEvent(event)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteEvent(event)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                     
@@ -678,6 +751,13 @@ const Calendar = () => {
         onOpenChange={setAddEventOpen}
         selectedDate={selectedDate}
         onEventAdded={loadEvents}
+      />
+
+      <EditEventDialog
+        open={editEventOpen}
+        onOpenChange={setEditEventOpen}
+        event={selectedEvent}
+        onEventUpdated={loadEvents}
       />
     </div>
   );

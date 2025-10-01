@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Lightbulb } from 'lucide-react';
+import { Calendar, Clock, Lightbulb, Trash2, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import EditEventDialog from '@/components/dialogs/EditEventDialog';
 
 interface Event {
   id: string;
@@ -22,6 +24,8 @@ const AllEvents = () => {
   const { toast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editEventOpen, setEditEventOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const loadAllEvents = async () => {
     if (!user) return;
@@ -86,6 +90,56 @@ const AllEvents = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  const handleDeleteEvent = async (event: Event) => {
+    if (!user) return;
+    
+    if (!confirm(`Удалить событие "${event.title}"?`)) return;
+    
+    try {
+      const isGoogleEvent = event.source === 'google';
+      
+      if (isGoogleEvent) {
+        const { data, error } = await supabase.functions.invoke('delete-google-event', {
+          body: {
+            userId: user.id,
+            eventId: event.id,
+            googleEventId: event.id,
+          }
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Failed to delete event');
+      } else {
+        const { error: deleteError } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', event.id)
+          .eq('user_id', user.id);
+
+        if (deleteError) throw deleteError;
+      }
+
+      toast({
+        title: 'Событие удалено',
+        description: 'Событие успешно удалено из календаря',
+      });
+
+      loadAllEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить событие',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setEditEventOpen(true);
+  };
 
   const getSourceColor = (source: string) => {
     switch (source) {
@@ -164,11 +218,31 @@ const AllEvents = () => {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-foreground">{event.title}</h3>
-                          <div className="flex items-center text-xs text-muted-foreground gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(event.start_time), 'HH:mm')}–
-                            {format(new Date(event.end_time), 'HH:mm')}
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-foreground">{event.title}</h3>
+                            <div className="flex items-center text-xs text-muted-foreground gap-1 mt-1">
+                              <Clock className="h-3 w-3" />
+                              {format(new Date(event.start_time), 'HH:mm')}–
+                              {format(new Date(event.end_time), 'HH:mm')}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditEvent(event)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteEvent(event)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
 
@@ -194,9 +268,16 @@ const AllEvents = () => {
                   ))}
                 </div>
               </div>
-            ))}
+          ))}
         </div>
       )}
+
+      <EditEventDialog
+        open={editEventOpen}
+        onOpenChange={setEditEventOpen}
+        event={selectedEvent}
+        onEventUpdated={loadAllEvents}
+      />
     </div>
   );
 };
