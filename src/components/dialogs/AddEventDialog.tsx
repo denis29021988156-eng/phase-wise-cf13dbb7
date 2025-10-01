@@ -229,7 +229,14 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
                 id="startTime"
                 type="time"
                 value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                onChange={(e) => {
+                  const newStartTime = e.target.value;
+                  // Automatically set end time to 1 hour after start time
+                  const [hours, minutes] = newStartTime.split(':');
+                  const endHour = (parseInt(hours) + 1) % 24;
+                  const newEndTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+                  setFormData({ ...formData, startTime: newStartTime, endTime: newEndTime });
+                }}
                 required
               />
             </div>
