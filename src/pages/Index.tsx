@@ -102,10 +102,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="pb-20">
+      <main className="pb-32">
         {renderActiveTab()}
       </main>
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t z-50">
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </div>
