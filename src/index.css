@@ -36,15 +36,26 @@ All colors MUST be HSL.
     --input: 210 15% 85%;
     --ring: 210 18% 45%;
 
-    --radius: 0.5rem;
+    --radius: 1.25rem;
 
-    /* Steel-gray business theme */
-    --steel-primary: 210 18% 45%;
-    --steel-accent: 210 20% 65%;
-    --steel-light: 210 15% 98%;
-    --steel-gradient: linear-gradient(135deg, hsl(210, 18%, 45%), hsl(210, 20%, 65%));
-    --steel-glow: 0 10px 30px -5px hsl(210 18% 45% / 0.2);
+    /* Minimal stroke-based design tokens */
+    --stroke-thin: 1px;
+    --stroke-medium: 1.5px;
+    --stroke-thick: 2px;
+    --stroke-opacity: 0.2;
+    --stroke-opacity-hover: 0.4;
+    
+    /* Soft shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(210 15% 15% / 0.08);
+    --shadow-medium: 0 4px 16px -4px hsl(210 15% 15% / 0.12);
+    --shadow-glow: 0 0 24px -4px hsl(210 18% 45% / 0.3);
+    
+    /* Smooth transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Accent glow effects */
+    --glow-primary: 0 0 20px hsl(210 18% 45% / 0.4);
+    --glow-accent: 0 0 16px hsl(210 20% 65% / 0.3);
 
     --sidebar-background: 0 0% 98%;
 
@@ -91,6 +102,14 @@ All colors MUST be HSL.
     --border: 210 15% 20%;
     --input: 210 15% 20%;
     --ring: 210 18% 55%;
+    
+    /* Dark mode shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(210 15% 0% / 0.3);
+    --shadow-medium: 0 4px 16px -4px hsl(210 15% 0% / 0.4);
+    --shadow-glow: 0 0 24px -4px hsl(210 18% 55% / 0.5);
+    --glow-primary: 0 0 20px hsl(210 18% 55% / 0.6);
+    --glow-accent: 0 0 16px hsl(210 20% 65% / 0.4);
+    
     --sidebar-background: 210 18% 10%;
     --sidebar-foreground: 210 10% 95%;
     --sidebar-primary: 210 18% 55%;

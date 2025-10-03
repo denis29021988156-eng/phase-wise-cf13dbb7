@@ -36,7 +36,7 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   ];
 
   return (
-    <nav className="bg-card border-t border-border p-4">
+    <nav className="bg-card/80 backdrop-blur-xl border-t border-border/20 p-4">
       <div className="flex items-center justify-between max-w-md mx-auto">
         <div className="flex space-x-2">
           {tabs.map(({ id, label, icon: Icon }) => (
@@ -45,14 +45,14 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               variant={activeTab === id ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onTabChange(id)}
-              className={`flex flex-col items-center space-y-1 h-auto py-2 px-3 ${
+              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 transition-all duration-300 ${
                 activeTab === id 
-                  ? 'bg-primary text-primary-foreground shadow-md' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'shadow-[var(--shadow-glow)] scale-105' 
+                  : 'text-muted-foreground hover:text-foreground hover:scale-105'
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs">{label}</span>
+              <Icon className="h-5 w-5 stroke-[1.5]" />
+              <span className="text-xs font-medium">{label}</span>
             </Button>
           ))}
         </div>
@@ -61,10 +61,10 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
           variant="ghost"
           size="sm"
           onClick={handleSignOut}
-          className="flex flex-col items-center space-y-1 h-auto py-2 px-3 text-muted-foreground hover:text-destructive"
+          className="flex flex-col items-center gap-1 h-auto py-2 px-3 text-muted-foreground hover:text-destructive transition-all duration-300 hover:scale-105"
         >
-          <LogOut className="h-5 w-5" />
-          <span className="text-xs">Выход</span>
+          <LogOut className="h-5 w-5 stroke-[1.5]" />
+          <span className="text-xs font-medium">Выход</span>
         </Button>
       </div>
     </nav>
