@@ -55,7 +55,7 @@ serve(async (req) => {
       }
     );
 
-    const { event, cycleData } = await req.json();
+    const { event, cycleData, timezone = 'UTC' } = await req.json();
 
     console.log('Generating AI suggestion for event:', event.title);
     console.log('Cycle data:', cycleData);
@@ -100,7 +100,7 @@ serve(async (req) => {
     const eventTime = event.start_time_local || new Date(event.start_time).toLocaleTimeString('ru-RU', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Europe/Moscow'
+      timeZone: timezone
     });
 
     const userName = profile?.name ? profile.name : 'дорогая';

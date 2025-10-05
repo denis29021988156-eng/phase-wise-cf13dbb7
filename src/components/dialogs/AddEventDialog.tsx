@@ -88,19 +88,22 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
 
         try {
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          
           const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
             body: {
               event: {
                 title: formData.title,
                 description: formData.description,
                 start_time: startDateTime.toISOString(),
-                start_time_local: formData.startTime // Добавляем локальное время
+                start_time_local: formData.startTime
               },
               cycleData: {
                 cycleDay: adjustedCycleDay,
                 cycleLength: cycleData.cycle_length,
                 startDate: cycleData.start_date
-              }
+              },
+              timezone: userTimezone
             }
           });
 
