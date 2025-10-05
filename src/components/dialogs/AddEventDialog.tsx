@@ -118,7 +118,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               .insert({
                 event_id: eventData.id,
                 suggestion: suggestionData.suggestion,
-                justification: suggestionData.justification || `Gaia AI для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
+                justification: suggestionData.justification || `Gaia для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
                 decision: 'generated'
               });
 
