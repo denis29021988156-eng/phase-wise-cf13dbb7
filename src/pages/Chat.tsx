@@ -180,7 +180,7 @@ const Chat = () => {
                     {msg.type === 'ai' && (
                       <div className="flex items-center space-x-2 mb-2">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium text-primary">Gaia</span>
+                        <span className="text-sm font-medium text-primary">G<span className="font-bold text-primary">ai</span>a</span>
                       </div>
                     )}
                     <p className="text-sm">{msg.content}</p>
