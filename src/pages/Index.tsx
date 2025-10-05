@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useGoogleTokens } from '@/hooks/useGoogleTokens';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('calendar');
   const [needsCycleSetup, setNeedsCycleSetup] = useState(false);
   const [checkingCycle, setCheckingCycle] = useState(true);
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const [navHeight, setNavHeight] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -59,6 +61,27 @@ const Index = () => {
       checkCycleSetup();
     }
   }, [user, loading]);
+
+  // Measure bottom navigation height and reserve space to prevent overlap
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+
+    const update = () => setNavHeight(Math.ceil(el.getBoundingClientRect().height));
+    update();
+
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+
+    window.addEventListener('orientationchange', update);
+    window.addEventListener('resize', update);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
   if (loading || checkingCycle) {
     return (
@@ -102,10 +125,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="pb-32">
+      <main className="pb-6">
         {renderActiveTab()}
       </main>
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t z-50">
+
+      {/* Spacer to reserve space for the fixed bottom navigation */}
+      <div aria-hidden className="w-full" style={{ height: navHeight }} />
+
+      {/* Fixed bottom navigation with safe-area padding */}
+      <div
+        ref={navRef}
+        className="fixed bottom-0 left-0 right-0 z-50"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
+      >
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </div>
