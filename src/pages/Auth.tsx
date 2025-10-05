@@ -51,7 +51,7 @@ const Auth = () => {
                 CycleON
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Ваш персональный планировщик задач на основе цикла с Ева AI
+                Ваш персональный планировщик задач на основе цикла с Gaia AI
               </CardDescription>
             </div>
           </CardHeader>
@@ -68,7 +68,7 @@ const Auth = () => {
               </div>
               <div className="flex flex-col items-center space-y-2">
                 <Brain className="h-8 w-8 text-primary" />
-                <span className="text-xs text-muted-foreground">Ева AI</span>
+                <span className="text-xs text-muted-foreground">Gaia AI</span>
               </div>
             </div>
 
@@ -111,7 +111,7 @@ const Auth = () => {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Вход позволит синхронизировать данные с Google Календарем и получить персональные советы Ева AI
+              Вход позволит синхронизировать данные с Google Календарем и получить персональные советы Gaia AI
             </p>
           </CardContent>
         </Card>

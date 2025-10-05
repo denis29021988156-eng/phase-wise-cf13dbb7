@@ -50,7 +50,7 @@ const Chat = () => {
             {
               id: 'welcome',
               type: 'ai',
-              content: 'Привет, дорогая! Меня зовут Ева, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
+              content: 'Привет, дорогая! Меня зовут Gaia, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
               timestamp: new Date(),
             }
           ]);
@@ -62,7 +62,7 @@ const Chat = () => {
           {
             id: 'welcome',
             type: 'ai',
-            content: 'Привет, дорогая! Меня зовут Ева, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
+            content: 'Привет, дорогая! Меня зовут Gaia, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
             timestamp: new Date(),
           }
         ]);
@@ -127,7 +127,7 @@ const Chat = () => {
       
       toast({
         title: 'Ошибка',
-        description: 'Не удалось получить ответ от Ева AI',
+        description: 'Не удалось получить ответ от Gaia AI',
         variant: 'destructive',
       });
     } finally {
@@ -150,7 +150,7 @@ const Chat = () => {
           <Brain className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Ева AI</h1>
+          <h1 className="text-2xl font-bold text-foreground">Gaia AI</h1>
           <p className="text-muted-foreground">Персональные советы и поддержка</p>
         </div>
       </div>
@@ -180,7 +180,7 @@ const Chat = () => {
                     {msg.type === 'ai' && (
                       <div className="flex items-center space-x-2 mb-2">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium text-primary">Ева</span>
+                        <span className="text-sm font-medium text-primary">Gaia</span>
                       </div>
                     )}
                     <p className="text-sm">{msg.content}</p>
@@ -199,7 +199,7 @@ const Chat = () => {
                   <div className="bg-muted p-3 rounded-lg max-w-[80%]">
                     <div className="flex items-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span className="text-sm text-muted-foreground">Ева печатает...</span>
+                      <span className="text-sm text-muted-foreground">Gaia печатает...</span>
                     </div>
                   </div>
                 </div>
