@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit, Droplet } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AddEventDialog from '@/components/dialogs/AddEventDialog';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
+import PeriodTrackingDialog from '@/components/dialogs/PeriodTrackingDialog';
 
 interface Event {
   id: string;
@@ -42,6 +43,7 @@ const Calendar = () => {
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const eventsRef = useState<HTMLDivElement | null>(null)[0];
+  const [periodTrackingOpen, setPeriodTrackingOpen] = useState(false);
 
   // Generate 7 days starting from currentWeekStart
   const generateWeekDates = () => {
@@ -375,6 +377,15 @@ const Calendar = () => {
           >
             <Plus className="h-4 w-4 mr-2" />
             Добавить
+          </Button>
+          <Button
+            onClick={() => setPeriodTrackingOpen(true)}
+            size="sm"
+            variant="outline"
+            className="border-primary/50 text-primary hover:bg-primary/10"
+          >
+            <Droplet className="h-4 w-4 mr-2" />
+            Месячные
           </Button>
           <Button
             onClick={handleConnectGoogleCalendar}
@@ -757,6 +768,15 @@ const Calendar = () => {
         onOpenChange={setEditEventOpen}
         event={selectedEvent}
         onEventUpdated={loadEvents}
+      />
+
+      <PeriodTrackingDialog
+        open={periodTrackingOpen}
+        onOpenChange={setPeriodTrackingOpen}
+        onUpdate={() => {
+          loadUserCycle();
+          loadEvents();
+        }}
       />
     </div>
   );

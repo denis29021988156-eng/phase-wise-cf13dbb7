@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.update-google-event]
 verify_jwt = true
+
+[functions.recalculate-suggestions]
+verify_jwt = true
