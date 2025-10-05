@@ -51,7 +51,7 @@ const Auth = () => {
                 CycleON
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Ваш персональный менструальный календарь с Ева AI
+                Ваш персональный планировщик задач на основе цикла с Ева AI
               </CardDescription>
             </div>
           </CardHeader>

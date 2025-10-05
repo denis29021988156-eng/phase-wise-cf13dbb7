@@ -29,7 +29,7 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   };
 
   const tabs = [
-    { id: 'calendar', label: 'Календарь', icon: Calendar },
+    { id: 'calendar', label: 'Задачи', icon: Calendar },
     { id: 'all-events', label: 'Все события', icon: List },
     { id: 'profile', label: 'Профиль', icon: User },
     { id: 'chat', label: 'Ева AI', icon: MessageCircle },
