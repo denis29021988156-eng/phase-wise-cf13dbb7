@@ -49,6 +49,11 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
     checkGoogleToken();
   }, [open, user]);
 
+  // Update form date when selectedDate changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, date: selectedDate }));
+  }, [selectedDate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
