@@ -93,7 +93,8 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               event: {
                 title: formData.title,
                 description: formData.description,
-                start_time: startDateTime.toISOString()
+                start_time: startDateTime.toISOString(),
+                start_time_local: formData.startTime // Добавляем локальное время
               },
               cycleData: {
                 cycleDay: adjustedCycleDay,

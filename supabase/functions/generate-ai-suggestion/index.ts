@@ -96,9 +96,11 @@ serve(async (req) => {
     }
 
     const { phase, description } = getCyclePhase(cycleData.cycleDay, cycleData.cycleLength);
-    const eventTime = new Date(event.start_time).toLocaleTimeString('ru-RU', {
+    // Используем локальное время, если оно передано, иначе форматируем из ISO
+    const eventTime = event.start_time_local || new Date(event.start_time).toLocaleTimeString('ru-RU', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Europe/Moscow'
     });
 
     const userName = profile?.name ? profile.name : 'дорогая';
