@@ -368,15 +368,6 @@ const Calendar = () => {
       {/* Action Buttons */}
       <div className="flex items-center justify-center gap-2 w-full">
         <Button
-          onClick={() => setAddEventOpen(true)}
-          size="sm"
-          variant="outline"
-          className="flex-1 border-primary text-primary hover:bg-primary/10"
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Добавить
-        </Button>
-        <Button
           onClick={() => setPeriodTrackingOpen(true)}
           size="sm"
           variant="outline"
