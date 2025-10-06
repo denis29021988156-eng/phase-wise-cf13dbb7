@@ -15,6 +15,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     start_date: '',
     cycle_length: 28,
+    menstrual_length: 5,
   });
 
   // Load user cycle data
@@ -42,6 +43,7 @@ const Profile = () => {
         setFormData({
           start_date: data.start_date,
           cycle_length: data.cycle_length,
+          menstrual_length: data.menstrual_length || 5,
         });
       }
     } catch (error) {
@@ -61,6 +63,7 @@ const Profile = () => {
           user_id: user.id,
           start_date: formData.start_date,
           cycle_length: formData.cycle_length,
+          menstrual_length: formData.menstrual_length,
         });
 
       if (error) throw error;
@@ -156,14 +159,18 @@ const Profile = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="text-2xl font-bold text-primary">{currentDay}</div>
                 <div className="text-sm text-muted-foreground">День цикла</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-accent/5 border border-accent/20">
                 <div className="text-2xl font-bold text-accent">{formData.cycle_length}</div>
-                <div className="text-sm text-muted-foreground">Длительность</div>
+                <div className="text-sm text-muted-foreground">Длительность цикла</div>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-secondary/5 border border-secondary/20">
+                <div className="text-2xl font-bold text-secondary">{formData.menstrual_length}</div>
+                <div className="text-sm text-muted-foreground">Длительность месячных</div>
               </div>
             </div>
             
@@ -226,6 +233,23 @@ const Profile = () => {
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Обычно от 21 до 35 дней
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="menstrual_length">Длительность месячных (дни)</Label>
+              <Input
+                id="menstrual_length"
+                type="number"
+                min="3"
+                max="7"
+                value={formData.menstrual_length}
+                onChange={(e) => setFormData({ ...formData, menstrual_length: parseInt(e.target.value) })}
+                className="mt-2"
+                required
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Обычно от 3 до 7 дней
               </p>
             </div>
 
