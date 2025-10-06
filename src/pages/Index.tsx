@@ -85,10 +85,10 @@ const Index = () => {
 
   if (loading || checkingCycle) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="text-lg text-muted-foreground">Загрузка...</span>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
+          <span className="text-sm text-muted-foreground font-medium">Загрузка...</span>
         </div>
       </div>
     );
@@ -124,7 +124,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <main className="pb-6">
         {renderActiveTab()}
       </main>

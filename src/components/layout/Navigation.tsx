@@ -36,35 +36,33 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   ];
 
   return (
-    <nav className="bg-card/80 backdrop-blur-xl border-t border-border/20 p-4">
-      <div className="flex items-center justify-between max-w-md mx-auto">
-        <div className="flex space-x-2">
-          {tabs.map(({ id, label, icon: Icon }) => (
-            <Button
-              key={id}
-              variant={activeTab === id ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onTabChange(id)}
-              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 transition-all duration-300 ${
-                activeTab === id 
-                  ? 'shadow-[var(--shadow-glow)] scale-105' 
-                  : 'text-muted-foreground hover:text-foreground hover:scale-105'
-              }`}
-            >
-              <Icon className="h-5 w-5 stroke-[1.5]" />
-              <span className="text-xs font-medium">{label}</span>
-            </Button>
-          ))}
-        </div>
+    <nav className="bg-card/95 backdrop-blur-xl border-t border-border shadow-[var(--shadow-medium)]">
+      <div className="flex items-center justify-around max-w-2xl mx-auto px-4 py-3 safe-bottom">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <Button
+            key={id}
+            variant={activeTab === id ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => onTabChange(id)}
+            className={`flex flex-col items-center justify-center gap-1.5 h-auto py-2.5 px-4 transition-all duration-200 ${
+              activeTab === id 
+                ? 'bg-primary text-primary-foreground shadow-[var(--shadow-soft)]' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/10'
+            }`}
+          >
+            <Icon className="h-5 w-5 stroke-[1.5]" />
+            <span className="text-[10px] font-medium">{label}</span>
+          </Button>
+        ))}
         
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={handleSignOut}
-          className="flex flex-col items-center gap-1 h-auto py-2 px-3 text-muted-foreground hover:text-destructive transition-all duration-300 hover:scale-105"
+          className="flex flex-col items-center justify-center gap-1.5 h-auto py-2.5 px-4 text-muted-foreground hover:text-destructive transition-all duration-200 hover:bg-destructive/5"
         >
           <LogOut className="h-5 w-5 stroke-[1.5]" />
-          <span className="text-xs font-medium">Выход</span>
+          <span className="text-[10px] font-medium">Выход</span>
         </Button>
       </div>
     </nav>
