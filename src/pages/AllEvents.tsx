@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Lightbulb, Trash2, Edit, ArrowUp } from 'lucide-react';
+import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
@@ -182,18 +182,41 @@ const AllEvents = () => {
     : events.filter(event => new Date(event.start_time) >= today);
 
   const groupedEvents = groupEventsByDate(filteredEvents);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  
+  const pastEventsCount = events.filter(event => new Date(event.start_time) < today).length;
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Все события</h1>
-        <p className="text-muted-foreground mt-2">
-          {filteredEvents.length} {filteredEvents.length === 1 ? 'событие' : filteredEvents.length < 5 ? 'события' : 'событий'}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Все события</h1>
+            <p className="text-muted-foreground mt-2">
+              {filteredEvents.length} {filteredEvents.length === 1 ? 'событие' : filteredEvents.length < 5 ? 'события' : 'событий'}
+            </p>
+          </div>
+          
+          {pastEventsCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAllEvents(!showAllEvents)}
+              className="flex items-center gap-2"
+            >
+              {showAllEvents ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  <span className="text-sm">Скрыть прошедшие</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  <span className="text-sm">Показать прошедшие ({pastEventsCount})</span>
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {filteredEvents.length === 0 ? (
@@ -289,22 +312,6 @@ const AllEvents = () => {
         event={selectedEvent}
         onEventUpdated={loadAllEvents}
       />
-
-      {/* Scroll to top button - also toggles showing all events */}
-      <Button
-        onClick={() => {
-          if (!showAllEvents) {
-            setShowAllEvents(true);
-            setTimeout(scrollToTop, 100);
-          } else {
-            scrollToTop();
-          }
-        }}
-        className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-[var(--shadow-card)] z-50"
-        size="icon"
-      >
-        <ArrowUp className="h-5 w-5" />
-      </Button>
     </div>
   );
 };
