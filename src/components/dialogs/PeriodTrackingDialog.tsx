@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,8 +26,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
   const [dateRange, setDateRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!user || !dateRange?.from) return;
 
     setLoading(true);
@@ -88,12 +87,10 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
 
       toast({
         title: 'Месячные обновлены',
-        description: `Отмечено ${menstrualLength} дней. Все советы пересчитаны.`,
+        description: `Отмечено ${menstrualLength} дней`,
       });
 
-      setDateRange(undefined);
       onUpdate();
-      onOpenChange(false);
     } catch (error) {
       console.error('Error updating period:', error);
       toast({
@@ -104,7 +101,19 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, dateRange, toast, onUpdate]);
+
+  // Auto-save when full range is selected
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to || loading) return;
+    
+    // Auto-save after a short delay to allow user to adjust selection
+    const timeoutId = setTimeout(() => {
+      handleSave();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [dateRange?.from, dateRange?.to, handleSave, loading]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,7 +124,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
             Отметить месячные
           </DialogTitle>
           <DialogDescription>
-            Выберите все дни месячных. Это обновит расчет цикла и пересчитает все советы.
+            Выберите все дни месячных. Данные автоматически сохранятся и все советы будут пересчитаны.
           </DialogDescription>
         </DialogHeader>
 
@@ -178,14 +187,9 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
               onOpenChange(false);
             }}
             disabled={loading}
+            className="w-full"
           >
-            Отмена
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={loading || !dateRange?.from}
-          >
-            {loading ? 'Сохранение...' : 'Сохранить и пересчитать'}
+            Закрыть
           </Button>
         </DialogFooter>
       </DialogContent>

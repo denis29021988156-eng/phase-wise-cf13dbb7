@@ -25,6 +25,32 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Subscribe to real-time updates for user_cycles
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('user-cycles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_cycles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Reload cycle data when it changes
+          loadUserCycle();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadUserCycle = async () => {
     if (!user) return;
 
