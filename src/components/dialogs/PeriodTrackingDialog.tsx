@@ -32,6 +32,12 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
 
     setLoading(true);
     try {
+      const formatDateLocal = (date: Date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
       const startDate = dateRange.from;
       const endDate = dateRange.to || dateRange.from;
       
@@ -56,7 +62,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
         await supabase
           .from('user_cycles')
           .update({
-            start_date: startDate.toISOString().split('T')[0],
+            start_date: formatDateLocal(startDate),
             menstrual_length: menstrualLength,
           })
           .eq('user_id', user.id);
@@ -65,7 +71,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
           .from('user_cycles')
           .insert({
             user_id: user.id,
-            start_date: startDate.toISOString().split('T')[0],
+            start_date: formatDateLocal(startDate),
             menstrual_length: menstrualLength,
             cycle_length: 28, // default
           });
