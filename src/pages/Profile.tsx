@@ -87,8 +87,13 @@ const Profile = () => {
   const calculateCurrentDay = () => {
     if (!formData.start_date) return null;
     
+    // Normalize both dates to midnight for accurate day calculation
     const today = new Date();
-    const startDate = new Date(formData.start_date);
+    today.setHours(0, 0, 0, 0);
+    
+    const startDate = new Date(formData.start_date + 'T00:00:00');
+    startDate.setHours(0, 0, 0, 0);
+    
     const diffInDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     const cycleDay = (diffInDays % formData.cycle_length) + 1;
     

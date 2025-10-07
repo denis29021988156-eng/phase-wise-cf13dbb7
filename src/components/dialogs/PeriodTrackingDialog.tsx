@@ -32,6 +32,11 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
 
     setLoading(true);
     try {
+      console.log('Saving period data:', {
+        selectedDatesCount: selectedDates.length,
+        dates: selectedDates.map(d => d.toLocaleDateString('ru-RU'))
+      });
+      
       // Find the first and last dates
       const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
       const startDate = sortedDates[0];
