@@ -23,24 +23,27 @@ interface PeriodTrackingDialogProps {
 const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
 
   const handleSave = async () => {
-    if (!user || selectedDates.length === 0) return;
+    if (!user || !dateRange?.from) return;
 
     setLoading(true);
     try {
-      console.log('Saving period data:', {
-        selectedDatesCount: selectedDates.length,
-        dates: selectedDates.map(d => d.toLocaleDateString('ru-RU'))
-      });
+      const startDate = dateRange.from;
+      const endDate = dateRange.to || dateRange.from;
       
-      // Find the first and last dates
-      const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
-      const startDate = sortedDates[0];
-      const menstrualLength = sortedDates.length;
+      // Calculate number of days (inclusive)
+      const diffInMs = endDate.getTime() - startDate.getTime();
+      const menstrualLength = Math.floor(diffInMs / (1000 * 60 * 60 * 24)) + 1;
+      
+      console.log('Saving period data:', {
+        startDate: startDate.toLocaleDateString('ru-RU'),
+        endDate: endDate.toLocaleDateString('ru-RU'),
+        menstrualLength
+      });
 
       // Update user_cycles
       const { data: existingCycle } = await supabase
@@ -82,7 +85,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
         description: `Отмечено ${menstrualLength} дней. Все советы пересчитаны.`,
       });
 
-      setSelectedDates([]);
+      setDateRange(undefined);
       onUpdate();
       onOpenChange(false);
     } catch (error) {
@@ -111,39 +114,50 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Check className="h-4 w-4" />
-            <span>Выбрано дней: {selectedDates.length}</span>
-          </div>
+          {dateRange?.from && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Check className="h-4 w-4" />
+              <span>
+                Выбрано дней: {dateRange.to 
+                  ? Math.floor((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1
+                  : 1}
+              </span>
+            </div>
+          )}
 
           <Calendar
-            mode="multiple"
-            selected={selectedDates}
-            onSelect={(dates) => {
-              if (dates) {
-                const normalizedDates = dates.map(d => {
-                  const normalized = new Date(d);
-                  normalized.setHours(0, 0, 0, 0);
-                  return normalized;
-                }).sort((a, b) => a.getTime() - b.getTime());
-                setSelectedDates(normalizedDates);
-                console.log('Selected dates:', normalizedDates.length, normalizedDates.map(d => d.toLocaleDateString('ru-RU')));
+            mode="range"
+            selected={dateRange}
+            onSelect={(range) => {
+              if (range?.from) {
+                const normalizedFrom = new Date(range.from);
+                normalizedFrom.setHours(0, 0, 0, 0);
+                
+                const normalizedTo = range.to ? new Date(range.to) : undefined;
+                if (normalizedTo) {
+                  normalizedTo.setHours(0, 0, 0, 0);
+                }
+                
+                setDateRange({
+                  from: normalizedFrom,
+                  to: normalizedTo
+                });
               } else {
-                setSelectedDates([]);
+                setDateRange(undefined);
               }
             }}
             className="rounded-md border"
             disabled={(date) => date > new Date()}
           />
 
-          {selectedDates.length > 0 && (
+          {dateRange?.from && (
             <div className="text-sm space-y-1">
               <p className="text-muted-foreground">
-                Первый день: {selectedDates[0]?.toLocaleDateString('ru-RU')}
+                Первый день: {dateRange.from.toLocaleDateString('ru-RU')}
               </p>
-              {selectedDates.length > 1 && (
+              {dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime() && (
                 <p className="text-muted-foreground">
-                  Последний день: {selectedDates[selectedDates.length - 1]?.toLocaleDateString('ru-RU')}
+                  Последний день: {dateRange.to.toLocaleDateString('ru-RU')}
                 </p>
               )}
             </div>
@@ -154,7 +168,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
           <Button
             variant="outline"
             onClick={() => {
-              setSelectedDates([]);
+              setDateRange(undefined);
               onOpenChange(false);
             }}
             disabled={loading}
@@ -163,7 +177,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
           </Button>
           <Button
             onClick={handleSave}
-            disabled={loading || selectedDates.length === 0}
+            disabled={loading || !dateRange?.from}
           >
             {loading ? 'Сохранение...' : 'Сохранить и пересчитать'}
           </Button>
