@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Lightbulb, Trash2, Edit } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar, Clock, Lightbulb, Trash2, Edit, ArrowUp } from 'lucide-react';
+import { format, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Event {
   id: string;
@@ -26,6 +27,7 @@ const AllEvents = () => {
   const [loading, setLoading] = useState(true);
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   const loadAllEvents = async () => {
     if (!user) return;
@@ -173,18 +175,28 @@ const AllEvents = () => {
     );
   }
 
-  const groupedEvents = groupEventsByDate(events);
+  // Filter events to show only from today onwards (unless showAllEvents is true)
+  const today = startOfDay(new Date());
+  const filteredEvents = showAllEvents 
+    ? events 
+    : events.filter(event => new Date(event.start_time) >= today);
+
+  const groupedEvents = groupEventsByDate(filteredEvents);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-foreground">Все события</h1>
         <p className="text-muted-foreground mt-2">
-          {events.length} {events.length === 1 ? 'событие' : events.length < 5 ? 'события' : 'событий'}
+          {filteredEvents.length} {filteredEvents.length === 1 ? 'событие' : filteredEvents.length < 5 ? 'события' : 'событий'}
         </p>
       </div>
 
-      {events.length === 0 ? (
+      {filteredEvents.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
@@ -277,6 +289,22 @@ const AllEvents = () => {
         event={selectedEvent}
         onEventUpdated={loadAllEvents}
       />
+
+      {/* Scroll to top button - also toggles showing all events */}
+      <Button
+        onClick={() => {
+          if (!showAllEvents) {
+            setShowAllEvents(true);
+            setTimeout(scrollToTop, 100);
+          } else {
+            scrollToTop();
+          }
+        }}
+        className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-[var(--shadow-card)] z-50"
+        size="icon"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </Button>
     </div>
   );
 };
