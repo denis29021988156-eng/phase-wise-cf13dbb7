@@ -96,9 +96,9 @@ const Profile = () => {
   };
 
   const getCyclePhase = (cycleDay: number) => {
-    if (cycleDay >= 1 && cycleDay <= 5) {
+    if (cycleDay >= 1 && cycleDay <= formData.menstrual_length) {
       return { name: 'Менструация', color: 'text-red-500' };
-    } else if (cycleDay >= 6 && cycleDay <= 13) {
+    } else if (cycleDay >= formData.menstrual_length + 1 && cycleDay <= 13) {
       return { name: 'Фолликулярная фаза', color: 'text-green-500' };
     } else if (cycleDay >= 14 && cycleDay <= 16) {
       return { name: 'Овуляция', color: 'text-purple-500' };

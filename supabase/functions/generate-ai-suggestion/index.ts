@@ -10,13 +10,13 @@ const corsHeaders = {
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 // Определяем фазы цикла и их описания
-const getCyclePhase = (cycleDay: number, cycleLength: number = 28) => {
-  if (cycleDay >= 1 && cycleDay <= 5) {
+const getCyclePhase = (cycleDay: number, cycleLength: number = 28, menstrualLength: number = 5) => {
+  if (cycleDay >= 1 && cycleDay <= menstrualLength) {
     return {
       phase: 'Менструация',
       description: 'снижение энергии, потребность в отдыхе, возможные болевые ощущения, эмоциональная чувствительность'
     };
-  } else if (cycleDay >= 6 && cycleDay <= 13) {
+  } else if (cycleDay >= menstrualLength + 1 && cycleDay <= 13) {
     return {
       phase: 'Фолликулярная фаза',
       description: 'повышение энергии, улучшение настроения, активность, хорошая концентрация'
@@ -95,7 +95,7 @@ serve(async (req) => {
       }
     }
 
-    const { phase, description } = getCyclePhase(cycleData.cycleDay, cycleData.cycleLength);
+    const { phase, description } = getCyclePhase(cycleData.cycleDay, cycleData.cycleLength, cycleData.menstrualLength || 5);
     // Используем локальное время, если оно передано, иначе форматируем из ISO
     const eventTime = event.start_time_local || new Date(event.start_time).toLocaleTimeString('ru-RU', {
       hour: '2-digit',
