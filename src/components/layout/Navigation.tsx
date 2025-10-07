@@ -42,27 +42,25 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
           <Button
             key={id}
             variant={activeTab === id ? 'default' : 'ghost'}
-            size="icon"
             onClick={() => onTabChange(id)}
-            className={`flex flex-col items-center justify-center gap-1.5 h-auto py-2.5 px-4 transition-all duration-200 ${
+            className={`flex flex-col items-center justify-center gap-1.5 h-auto py-2.5 px-3 min-w-[70px] transition-all duration-200 ${
               activeTab === id 
                 ? 'bg-primary text-primary-foreground shadow-[var(--shadow-soft)]' 
                 : 'text-muted-foreground hover:text-foreground hover:bg-accent/10'
             }`}
           >
             <Icon className="h-5 w-5 stroke-[1.5]" />
-            <span className="text-[10px] font-medium">{label}</span>
+            <span className="text-[10px] font-medium whitespace-nowrap">{label}</span>
           </Button>
         ))}
         
         <Button
           variant="ghost"
-          size="icon"
           onClick={handleSignOut}
-          className="flex flex-col items-center justify-center gap-1.5 h-auto py-2.5 px-4 text-muted-foreground hover:text-destructive transition-all duration-200 hover:bg-destructive/5"
+          className="flex flex-col items-center justify-center gap-1.5 h-auto py-2.5 px-3 min-w-[70px] text-muted-foreground hover:text-destructive transition-all duration-200 hover:bg-destructive/5"
         >
           <LogOut className="h-5 w-5 stroke-[1.5]" />
-          <span className="text-[10px] font-medium">Выход</span>
+          <span className="text-[10px] font-medium whitespace-nowrap">Выход</span>
         </Button>
       </div>
     </nav>
