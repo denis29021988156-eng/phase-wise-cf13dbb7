@@ -26,24 +26,6 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-    
-    // Normalize date to midnight
-    const normalizedDate = new Date(date);
-    normalizedDate.setHours(0, 0, 0, 0);
-    
-    const dateStr = normalizedDate.toISOString();
-    const index = selectedDates.findIndex(d => d.toISOString() === dateStr);
-    
-    if (index > -1) {
-      // Remove date if already selected
-      setSelectedDates(selectedDates.filter((_, i) => i !== index));
-    } else {
-      // Add date
-      setSelectedDates([...selectedDates, normalizedDate].sort((a, b) => a.getTime() - b.getTime()));
-    }
-  };
 
   const handleSave = async () => {
     if (!user || selectedDates.length === 0) return;
@@ -134,11 +116,15 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
             selected={selectedDates}
             onSelect={(dates) => {
               if (dates) {
-                setSelectedDates(dates.map(d => {
+                const normalizedDates = dates.map(d => {
                   const normalized = new Date(d);
                   normalized.setHours(0, 0, 0, 0);
                   return normalized;
-                }));
+                }).sort((a, b) => a.getTime() - b.getTime());
+                setSelectedDates(normalizedDates);
+                console.log('Selected dates:', normalizedDates.length, normalizedDates.map(d => d.toLocaleDateString('ru-RU')));
+              } else {
+                setSelectedDates([]);
               }
             }}
             className="rounded-md border"
