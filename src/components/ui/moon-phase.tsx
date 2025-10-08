@@ -43,27 +43,13 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
         {/* Фаза луны - освещенная часть */}
         <defs>
           <clipPath id={`moonClip-${value}`}>
-            {percentage <= 0.5 ? (
-              // Растущая луна (0-50%)
-              <ellipse
-                cx={100 - (90 * (1 - percentage * 2))}
-                cy="100"
-                rx={90 * percentage * 2}
-                ry="90"
-              />
-            ) : (
-              // Убывающая луна (50-100%)
-              <>
-                <circle cx="100" cy="100" r="90" />
-                <ellipse
-                  cx={100 + (90 * ((percentage - 0.5) * 2))}
-                  cy="100"
-                  rx={90 * (1 - (percentage - 0.5) * 2)}
-                  ry="90"
-                  fill="black"
-                />
-              </>
-            )}
+            {/* Растущая луна от 0 до 100% */}
+            <ellipse
+              cx={100 - (90 * (1 - percentage))}
+              cy="100"
+              rx={90 * percentage}
+              ry="90"
+            />
           </clipPath>
         </defs>
 
