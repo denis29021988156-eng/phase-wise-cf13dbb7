@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Send, Brain, Sparkles } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { MessageCircle, Send, Brain, Sparkles, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,14 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [showFullHistory, setShowFullHistory] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // Load chat history when component mounts
   useEffect(() => {
@@ -142,6 +151,13 @@ const Chat = () => {
     }
   };
 
+  // Show only recent messages if history is collapsed
+  const displayedMessages = showFullHistory 
+    ? messages 
+    : messages.slice(-10); // Show last 10 messages
+
+  const hasHiddenMessages = messages.length > 10 && !showFullHistory;
+
   return (
     <div className="flex flex-col h-full p-4">
       {/* Header */}
@@ -157,15 +173,31 @@ const Chat = () => {
 
       {/* Messages */}
       <Card className="flex-1 flex flex-col">
-        <CardContent className="flex-1 p-4 space-y-4 overflow-y-auto max-h-96">
-          {loadingHistory ? (
-            <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-2 text-muted-foreground">Загружаю историю сообщений...</span>
+        <CardContent className="flex-1 p-0">
+          {hasHiddenMessages && (
+            <div className="p-2 border-b flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFullHistory(true)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                <ChevronDown className="h-4 w-4 mr-1" />
+                Показать всю историю ({messages.length - displayedMessages.length} скрыто)
+              </Button>
             </div>
-          ) : (
-            <>
-              {messages.map((msg) => (
+          )}
+          
+          <ScrollArea className="h-96 p-4" ref={scrollAreaRef}>
+            <div className="space-y-4">
+              {loadingHistory ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-2 text-muted-foreground">Загружаю историю сообщений...</span>
+                </div>
+              ) : (
+                <>
+                  {displayedMessages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -204,8 +236,11 @@ const Chat = () => {
                   </div>
                 </div>
               )}
-            </>
-          )}
+              <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+          </ScrollArea>
         </CardContent>
 
         {/* Input */}
