@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { MoonPhase } from '@/components/ui/moon-phase';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -208,13 +208,10 @@ const Symptoms = () => {
           <CardTitle className="text-lg">Индекс самочувствия</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-4">
-          <div className="relative w-32 h-32">
-            <Progress 
-              value={wellnessIndex} 
-              className="w-full h-full rounded-full"
-            />
+          <div className="relative w-40 h-40">
+            <MoonPhase value={wellnessIndex} className="w-full h-full" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-4xl font-bold ${getIndexColor(wellnessIndex)}`}>
+              <span className={`text-4xl font-bold ${getIndexColor(wellnessIndex)} drop-shadow-lg`}>
                 {wellnessIndex}
               </span>
             </div>
