@@ -73,6 +73,15 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .maybeSingle();
 
+    // Get today's symptom log
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todaySymptoms } = await supabaseClient
+      .from('symptom_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle();
+
     // Get recent chat history to understand user's health context (last 10 messages)
     const { data: recentMessages } = await supabaseClient
       .from('chat_messages')
@@ -82,8 +91,37 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    // Build health context from recent messages
+    // Build health context from symptoms and recent messages
     let healthContext = '';
+    
+    // Add symptom data if available
+    if (todaySymptoms) {
+      const moodLabels: Record<string, string> = {
+        happy: 'радость', calm: 'спокойствие', anxious: 'тревога',
+        irritable: 'раздражение', sad: 'грусть', motivated: 'вдохновение'
+      };
+      const physicalLabels: Record<string, string> = {
+        pain: 'боль', fatigue: 'усталость', energy: 'бодрость',
+        cramps: 'спазмы', headache: 'головная боль', bloating: 'вздутие'
+      };
+      
+      healthContext += '\n📊 ДАННЫЕ О САМОЧУВСТВИИ СЕГОДНЯ:\n';
+      healthContext += `- Индекс самочувствия: ${todaySymptoms.wellness_index}/100\n`;
+      healthContext += `- Энергия: ${todaySymptoms.energy}/5\n`;
+      healthContext += `- Качество сна: ${todaySymptoms.sleep_quality}/5\n`;
+      healthContext += `- Уровень стресса: ${todaySymptoms.stress_level}/5\n`;
+      
+      if (todaySymptoms.mood && todaySymptoms.mood.length > 0) {
+        healthContext += `- Настроение: ${todaySymptoms.mood.map((m: string) => moodLabels[m] || m).join(', ')}\n`;
+      }
+      
+      if (todaySymptoms.physical_symptoms && todaySymptoms.physical_symptoms.length > 0) {
+        healthContext += `- Физические симптомы: ${todaySymptoms.physical_symptoms.map((s: string) => physicalLabels[s] || s).join(', ')}\n`;
+      }
+      healthContext += '\n';
+    }
+    
+    // Add chat context
     if (recentMessages && recentMessages.length > 0) {
       const healthKeywords = ['болею', 'болит', 'устала', 'плохо', 'больно', 'недомогание', 'головная боль', 'спина', 'живот', 'тошнит', 'слабость'];
       const relevantMessages = recentMessages.filter(msg => 
@@ -91,7 +129,7 @@ serve(async (req) => {
       );
       
       if (relevantMessages.length > 0) {
-        healthContext = `\nКонтекст самочувствия из недавних сообщений:\n${relevantMessages.map(msg => `- ${msg.content}`).join('\n')}\n`;
+        healthContext += `💬 Контекст из недавних сообщений:\n${relevantMessages.map(msg => `- ${msg.content}`).join('\n')}\n`;
       }
     }
 
@@ -114,12 +152,19 @@ serve(async (req) => {
 - Событие: «${event.title}»
 - Время: ${eventTime}${healthContext}
 
+${todaySymptoms ? `
+🚨 КРИТИЧЕСКИ ВАЖНО: У пользователя есть актуальные данные о самочувствии СЕГОДНЯ!
+- Индекс самочувствия: ${todaySymptoms.wellness_index}/100 ${todaySymptoms.wellness_index < 40 ? '(НИЗКИЙ - требуется отдых!)' : todaySymptoms.wellness_index < 70 ? '(средний)' : '(хороший)'}
+- Энергия: ${todaySymptoms.energy}/5
+- Стресс: ${todaySymptoms.stress_level}/5
+
+ОБЯЗАТЕЛЬНО учитывай эти данные в рекомендациях! Если индекс низкий или стресс высокий - рекомендуй отдых или перенос события.
+` : ''}
+
 Напиши развернутую оценку для ${userName} (4-6 предложений): влияние фазы, энергия, концентрация, эмоции, практические советы, альтернативы.
 
 ВАРИАНТЫ НАЧАЛА (варьируй):
 "${userName}, смотри..." / "Слушай, ${userName}..." / "Знаешь, ${userName}..." / "${userName}, давай разберем..." / "${userName}, тут важно учесть..."
-
-${healthContext ? 'ВАЖНО: Учти информацию о самочувствии в рекомендациях!' : ''}
 `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
