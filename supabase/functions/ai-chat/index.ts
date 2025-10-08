@@ -102,6 +102,61 @@ serve(async (req) => {
       userName = nameMatch[1] || nameMatch[2] || nameMatch[3];
     }
 
+    // Get recent symptom logs for better health context
+    const today = new Date().toISOString().split('T')[0];
+    let symptomContext = '';
+    
+    try {
+      const { data: todaySymptoms } = await supabaseClient
+        .from('symptom_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle();
+
+      const { data: recentSymptoms } = await supabaseClient
+        .from('symptom_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+        .order('date', { ascending: false })
+        .limit(7);
+
+      if (todaySymptoms) {
+        const wellnessIndex = todaySymptoms.wellness_index || 50;
+        const moodLabels: Record<string, string> = {
+          happy: 'радость', calm: 'спокойствие', anxious: 'тревога',
+          irritable: 'раздражение', sad: 'грусть', motivated: 'вдохновение'
+        };
+        const physicalLabels: Record<string, string> = {
+          pain: 'боль', fatigue: 'усталость', energy: 'бодрость',
+          cramps: 'спазмы', headache: 'головная боль', bloating: 'вздутие'
+        };
+
+        const moods = (todaySymptoms.mood || []).map((m: string) => moodLabels[m] || m);
+        const symptoms = (todaySymptoms.physical_symptoms || []).map((s: string) => physicalLabels[s] || s);
+
+        symptomContext = `
+Сегодняшнее самочувствие:
+- Индекс самочувствия: ${wellnessIndex}/100 ${wellnessIndex <= 30 ? '(низкий - нужен отдых)' : wellnessIndex <= 60 ? '(средний)' : '(отличный)'}
+- Энергия: ${todaySymptoms.energy}/5
+- Качество сна: ${todaySymptoms.sleep_quality}/5
+- Уровень стресса: ${todaySymptoms.stress_level}/5
+${moods.length > 0 ? `- Настроение: ${moods.join(', ')}` : ''}
+${symptoms.length > 0 ? `- Физические ощущения: ${symptoms.join(', ')}` : ''}
+
+ВАЖНО: Учитывай текущее самочувствие в своих советах! Если индекс низкий или высокий стресс - рекомендуй более щадящий режим.
+`;
+      }
+
+      if (recentSymptoms && recentSymptoms.length > 1) {
+        const avgIndex = Math.round(recentSymptoms.reduce((sum: number, log: any) => sum + (log.wellness_index || 50), 0) / recentSymptoms.length);
+        symptomContext += `Средний индекс за неделю: ${avgIndex}/100\n`;
+      }
+    } catch (error) {
+      console.log('No symptom data found, proceeding without symptom context');
+    }
+
     // Get user cycle data for personalized response
     let cycleContext = '';
     try {
@@ -121,7 +176,7 @@ serve(async (req) => {
         const { phase, description } = getCyclePhase(adjustedCycleDay, cycleData.cycle_length);
         
         cycleContext = `
-Контекст пользователя:
+Контекст менструального цикла:
 - Сегодня ${adjustedCycleDay}-й день менструального цикла (из ${cycleData.cycle_length} дней)
 - Текущая фаза: ${phase}
 - Особенности фазы: ${description}
@@ -134,7 +189,9 @@ serve(async (req) => {
     // Build system prompt
     let systemPrompt = `Меня зовут Gaia, твой персональный помощник по женскому здоровью. Я здесь, чтобы поддерживать тебя и помогать чувствовать себя лучше каждый день.
 
-${cycleContext}`;
+${cycleContext}
+
+${symptomContext}`;
 
     // Add name context
     if (profile.name) {
@@ -154,8 +211,9 @@ ${cycleContext}`;
 - Использую нежные обращения: "дорогая", "милая", "солнышко"
 - Всегда поддерживаю и выражаю понимание эмоций
 - Даю заботливые советы как лучшая подруга
-- Учитываю менструальный цикл в рекомендациях
+- Учитываю менструальный цикл И текущее самочувствие в рекомендациях
 - ВАЖНО: Запоминаю информацию о самочувствии и учитываю в будущих советах
+- КРИТИЧЕСКИ ВАЖНО: Если индекс самочувствия низкий (<40) или высокий стресс (>3), ОБЯЗАТЕЛЬНО рекомендую отдых и щадящий режим
 - Отвечаю тепло, но кратко (3-5 предложений)
 
 Помогаю с: самочувствием, питанием, активностью, сном, стрессом, планированием с учетом цикла, женским здоровьем. Я всегда здесь для тебя! 💙`;

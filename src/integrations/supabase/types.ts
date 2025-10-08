@@ -106,6 +106,48 @@ export type Database = {
         }
         Relationships: []
       }
+      symptom_logs: {
+        Row: {
+          created_at: string
+          date: string
+          energy: number | null
+          id: string
+          mood: string[] | null
+          physical_symptoms: string[] | null
+          sleep_quality: number | null
+          stress_level: number | null
+          updated_at: string
+          user_id: string
+          wellness_index: number | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          energy?: number | null
+          id?: string
+          mood?: string[] | null
+          physical_symptoms?: string[] | null
+          sleep_quality?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id: string
+          wellness_index?: number | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          energy?: number | null
+          id?: string
+          mood?: string[] | null
+          physical_symptoms?: string[] | null
+          sleep_quality?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id?: string
+          wellness_index?: number | null
+        }
+        Relationships: []
+      }
       user_cycles: {
         Row: {
           created_at: string | null

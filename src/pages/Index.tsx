@@ -8,6 +8,7 @@ import Calendar from './Calendar';
 import AllEvents from './AllEvents';
 import Profile from './Profile';
 import Chat from './Chat';
+import Symptoms from './Symptoms';
 import CycleSetup from './CycleSetup';
 
 const Index = () => {
@@ -118,6 +119,8 @@ const Index = () => {
         return <Profile />;
       case 'chat':
         return <Chat />;
+      case 'symptoms':
+        return <Symptoms />;
       default:
         return <Calendar />;
     }
