@@ -152,6 +152,8 @@ const Symptoms = () => {
           sleep_quality: currentLog.sleep_quality,
           stress_level: currentLog.stress_level,
           wellness_index: wellnessIndex
+        }, {
+          onConflict: 'user_id,date'
         });
 
       if (error) throw error;
