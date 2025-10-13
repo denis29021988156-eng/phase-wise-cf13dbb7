@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +25,7 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const lastSavedRangeRef = useRef<string | null>(null);
 
   const handleSave = useCallback(async () => {
     if (!user || !dateRange?.from) return;
@@ -107,13 +108,18 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to || loading) return;
     
+    // Create unique key for current range to prevent duplicate saves
+    const rangeKey = `${dateRange.from.getTime()}-${dateRange.to.getTime()}`;
+    if (lastSavedRangeRef.current === rangeKey) return;
+    
     // Auto-save after a short delay to allow user to adjust selection
     const timeoutId = setTimeout(() => {
+      lastSavedRangeRef.current = rangeKey;
       handleSave();
     }, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [dateRange?.from, dateRange?.to, handleSave, loading]);
+  }, [dateRange?.from?.getTime(), dateRange?.to?.getTime(), loading]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
