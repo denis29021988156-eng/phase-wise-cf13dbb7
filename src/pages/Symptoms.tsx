@@ -8,7 +8,8 @@ import { MoonPhase } from '@/components/ui/moon-phase';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart, Brain, Zap, Moon } from 'lucide-react';
+import { Heart, Brain, Zap, Moon, RefreshCw, Upload } from 'lucide-react';
+import { useHealthKit } from '@/hooks/useHealthKit';
 
 interface SymptomLog {
   energy: number;
@@ -27,6 +28,7 @@ interface HistoryDay {
 const Symptoms = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const healthKit = useHealthKit();
   
   const [currentLog, setCurrentLog] = useState<SymptomLog>({
     energy: 3,
@@ -39,6 +41,7 @@ const Symptoms = () => {
   
   const [history, setHistory] = useState<HistoryDay[]>([]);
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // Данные для выбора
   const physicalOptions = [
@@ -63,6 +66,7 @@ const Symptoms = () => {
   useEffect(() => {
     loadHistory();
     loadTodayLog();
+    healthKit.checkAvailability();
   }, [user]);
 
   const loadHistory = async () => {
@@ -161,6 +165,11 @@ const Symptoms = () => {
       setCurrentLog({ ...currentLog, wellness_index: wellnessIndex });
       await loadHistory();
       
+      // Синхронизация с Apple Health если доступно
+      if (healthKit.isAvailable && healthKit.hasPermissions) {
+        await healthKit.writeWellnessIndex(wellnessIndex);
+      }
+      
       toast({
         title: 'Сохранено! ✨',
         description: getFeedbackText(wellnessIndex),
@@ -174,6 +183,78 @@ const Symptoms = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Синхронизация с Apple Health
+  const handleSyncFromHealth = async () => {
+    setSyncing(true);
+    
+    try {
+      // Запрос разрешений если еще не получены
+      if (!healthKit.hasPermissions) {
+        const authorized = await healthKit.requestAuthorization();
+        if (!authorized) {
+          toast({
+            title: 'Нет доступа',
+            description: 'Разрешите доступ к Apple Health в настройках',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      // Получение данных из Health
+      const healthData = await healthKit.syncFromHealth();
+      
+      // Обновление текущих данных
+      const updated = { ...currentLog };
+      if (healthData.sleepQuality) updated.sleep_quality = healthData.sleepQuality;
+      if (healthData.stressLevel) updated.stress_level = healthData.stressLevel;
+      
+      setCurrentLog(updated);
+      
+      toast({
+        title: 'Синхронизировано ✅',
+        description: 'Данные из Apple Health загружены',
+      });
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: 'Ошибка синхронизации',
+        description: 'Не удалось загрузить данные из Apple Health',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleConnectHealth = async () => {
+    const available = await healthKit.checkAvailability();
+    
+    if (!available) {
+      toast({
+        title: 'Недоступно',
+        description: 'Apple Health доступно только на iOS',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const authorized = await healthKit.requestAuthorization();
+    
+    if (authorized) {
+      toast({
+        title: 'Подключено! 🎉',
+        description: 'Apple Health успешно подключено',
+      });
+    } else {
+      toast({
+        title: 'Отклонено',
+        description: 'Разрешите доступ к Apple Health в настройках',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -320,10 +401,36 @@ const Symptoms = () => {
             </TabsContent>
           </Tabs>
 
+          {/* Apple Health интеграция */}
+          {healthKit.isAvailable && (
+            <div className="flex gap-2 mt-6">
+              {!healthKit.hasPermissions ? (
+                <Button 
+                  onClick={handleConnectHealth}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Подключить Apple Health
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleSyncFromHealth}
+                  disabled={syncing}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Синхронизация...' : 'Загрузить из Health'}
+                </Button>
+              )}
+            </div>
+          )}
+
           <Button 
             onClick={handleSave} 
             disabled={loading}
-            className="w-full mt-6"
+            className="w-full mt-4"
           >
             {loading ? 'Сохранение...' : 'Сохранить'}
           </Button>
