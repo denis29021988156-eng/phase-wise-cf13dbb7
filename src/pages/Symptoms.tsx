@@ -402,30 +402,28 @@ const Symptoms = () => {
           </Tabs>
 
           {/* Apple Health интеграция */}
-          {healthKit.isAvailable && (
-            <div className="flex gap-2 mt-6">
-              {!healthKit.hasPermissions ? (
-                <Button 
-                  onClick={handleConnectHealth}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Heart className="h-4 w-4 mr-2" />
-                  Подключить Apple Health
-                </Button>
-              ) : (
-                <Button 
-                  onClick={handleSyncFromHealth}
-                  disabled={syncing}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Синхронизация...' : 'Загрузить из Health'}
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex gap-2 mt-6">
+            {!healthKit.hasPermissions ? (
+              <Button 
+                onClick={handleConnectHealth}
+                variant="outline"
+                className="flex-1"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Подключить Apple Health
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleSyncFromHealth}
+                disabled={syncing}
+                variant="outline"
+                className="flex-1"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Синхронизация...' : 'Загрузить из Health'}
+              </Button>
+            )}
+          </div>
 
           <Button 
             onClick={handleSave} 
