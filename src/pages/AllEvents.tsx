@@ -29,6 +29,8 @@ const AllEvents = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [syncingOutlook, setSyncingOutlook] = useState(false);
+  const [hasMicrosoftToken, setHasMicrosoftToken] = useState(false);
+  const [checkingToken, setCheckingToken] = useState(true);
 
   const loadAllEvents = async () => {
     if (!user) return;
@@ -67,6 +69,30 @@ const AllEvents = () => {
 
   useEffect(() => {
     loadAllEvents();
+  }, [user]);
+
+  // Check if user has Microsoft token
+  useEffect(() => {
+    const checkMicrosoftToken = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('user_tokens')
+          .select('access_token')
+          .eq('user_id', user.id)
+          .eq('provider', 'microsoft')
+          .maybeSingle();
+        
+        setHasMicrosoftToken(!!data);
+      } catch (error) {
+        console.error('Error checking Microsoft token:', error);
+      } finally {
+        setCheckingToken(false);
+      }
+    };
+
+    checkMicrosoftToken();
   }, [user]);
 
   // Set up real-time subscription for updates
@@ -250,15 +276,28 @@ const AllEvents = () => {
           )}
         </div>
         
-        <Button
-          onClick={handleSyncOutlook}
-          disabled={syncingOutlook}
-          className="w-full"
-          variant="outline"
-        >
-          <CloudCog className="h-4 w-4 mr-2" />
-          {syncingOutlook ? 'Синхронизация...' : 'Подключить Outlook календарь'}
-        </Button>
+        {!checkingToken && (
+          hasMicrosoftToken ? (
+            <Button
+              onClick={handleSyncOutlook}
+              disabled={syncingOutlook}
+              className="w-full"
+              variant="outline"
+            >
+              <CloudCog className="h-4 w-4 mr-2" />
+              {syncingOutlook ? 'Синхронизация...' : 'Синхронизировать Outlook календарь'}
+            </Button>
+          ) : (
+            <Button
+              onClick={() => window.location.href = `https://pytefsexxwtlropzkmxi.supabase.co/auth/v1/authorize?provider=azure&redirect_to=${encodeURIComponent(window.location.origin + '/dashboard')}&scopes=openid profile email offline_access Calendars.ReadWrite`}
+              className="w-full"
+              variant="outline"
+            >
+              <CloudCog className="h-4 w-4 mr-2" />
+              Подключить Microsoft аккаунт
+            </Button>
+          )
+        )}
       </div>
 
       {filteredEvents.length === 0 ? (
