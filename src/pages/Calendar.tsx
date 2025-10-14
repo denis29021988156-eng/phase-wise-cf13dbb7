@@ -226,7 +226,7 @@ const Calendar = () => {
       if (data?.success) {
         toast({
           title: 'Календарь синхронизирован',
-          description: `Импортировано событий: ${data.inserted || 0}`,
+          description: data.message || `Импортировано событий: ${data.inserted || 0}`,
         });
         loadEvents();
       } else {

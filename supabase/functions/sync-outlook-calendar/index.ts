@@ -202,8 +202,20 @@ console.log('Using access token (masked):', maskToken(accessToken));
 
     console.log(`Found ${outlookEvents.length} Outlook events`);
 
+    // Get user cycle data for AI suggestions
+    const { data: cycleData, error: cycleError } = await supabase
+      .from('user_cycles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (cycleError || !cycleData) {
+      console.log('No cycle data found, skipping AI suggestions');
+    }
+
     let insertedCount = 0;
     let skippedCount = 0;
+    let suggestionsCount = 0;
 
     for (const outlookEvent of outlookEvents) {
       // Skip all-day events or events without proper times
@@ -230,7 +242,7 @@ console.log('Using access token (masked):', maskToken(accessToken));
       }
 
       // Insert new event
-      const { error: insertError } = await supabase
+      const { data: newEvent, error: insertError } = await supabase
         .from('events')
         .insert({
           user_id: userId,
@@ -238,16 +250,65 @@ console.log('Using access token (masked):', maskToken(accessToken));
           start_time: startTime,
           end_time: endTime,
           source: 'outlook',
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
         console.error('Error inserting event:', insertError);
-      } else {
-        insertedCount++;
+        continue;
+      }
+      
+      insertedCount++;
+
+      // Generate AI suggestion if cycle data exists
+      if (cycleData && newEvent) {
+        try {
+          const eventDate = new Date(startTime);
+          const startDate = new Date(cycleData.start_date);
+          const diffInDays = Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const eventCycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+          const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
+
+          console.log(`Generating AI suggestion for event "${newEvent.title}" on cycle day ${adjustedCycleDay}`);
+
+          const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
+            body: {
+              event: {
+                title: newEvent.title,
+                start_time: startTime,
+                description: outlookEvent.bodyPreview || ''
+              },
+              cycleData: {
+                cycleDay: adjustedCycleDay,
+                cycleLength: cycleData.cycle_length,
+                startDate: cycleData.start_date
+              }
+            }
+          });
+
+          if (!suggestionError && suggestionData?.suggestion) {
+            await supabase
+              .from('event_ai_suggestions')
+              .insert({
+                event_id: newEvent.id,
+                suggestion: suggestionData.suggestion,
+                justification: suggestionData.justification || `ИИ-совет для ${adjustedCycleDay} дня цикла`,
+                decision: 'generated'
+              });
+
+            suggestionsCount++;
+            console.log(`AI suggestion created for event: ${newEvent.title}`);
+          } else {
+            console.error('Error with AI suggestion:', suggestionError);
+          }
+        } catch (aiError) {
+          console.error('Error generating AI suggestion for event:', newEvent.title, aiError);
+        }
       }
     }
 
-    console.log(`Sync completed: ${insertedCount} inserted, ${skippedCount} skipped`);
+    console.log(`Sync completed: ${insertedCount} inserted, ${skippedCount} skipped, ${suggestionsCount} AI suggestions`);
 
     return new Response(
       JSON.stringify({
@@ -255,6 +316,8 @@ console.log('Using access token (masked):', maskToken(accessToken));
         inserted: insertedCount,
         skipped: skippedCount,
         total: outlookEvents.length,
+        suggestionsCount: suggestionsCount,
+        message: `Загружено ${insertedCount} событий с ${suggestionsCount} ИИ-советами`
       }),
       {
         status: 200,
