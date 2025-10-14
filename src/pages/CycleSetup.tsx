@@ -132,14 +132,14 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                   id="cycle_length"
                   type="number"
                   min="21"
-                  max="35"
+                  max="45"
                   value={formData.cycle_length}
                   onChange={(e) => setFormData({ ...formData, cycle_length: parseInt(e.target.value) })}
                   className="mt-2"
                   required
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Обычно от 21 до 35 дней
+                  Обычно от 21 до 45 дней
                 </p>
               </div>
 
