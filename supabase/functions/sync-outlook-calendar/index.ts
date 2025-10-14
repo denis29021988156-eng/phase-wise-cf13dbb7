@@ -117,23 +117,74 @@ Deno.serve(async (req) => {
       }
     );
 
-    if (!calendarResponse.ok) {
-      const errorText = await calendarResponse.text();
-      console.error('Calendar fetch failed with status:', calendarResponse.status);
+    // Handle 401 by attempting a token refresh and retrying once
+    let finalResponse = calendarResponse;
+    if (!finalResponse.ok && finalResponse.status === 401 && tokenData.refresh_token) {
+      try {
+        console.log('401 from Graph. Attempting token refresh and retry...');
+        const refreshResponse = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: Deno.env.get('MICROSOFT_CLIENT_ID')!,
+            client_secret: Deno.env.get('MICROSOFT_CLIENT_SECRET')!,
+            refresh_token: tokenData.refresh_token || '',
+            grant_type: 'refresh_token',
+          }),
+        });
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          accessToken = refreshData.access_token;
+
+          await supabase
+            .from('user_tokens')
+            .update({
+              access_token: refreshData.access_token,
+              refresh_token: refreshData.refresh_token || tokenData.refresh_token,
+              expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
+            })
+            .eq('user_id', userId)
+            .eq('provider', 'microsoft');
+
+          finalResponse = await fetch(
+            `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}&$orderby=start/dateTime`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        } else {
+          const errText = await refreshResponse.text();
+          console.error('Refresh after 401 failed:', errText);
+        }
+      } catch (e) {
+        console.error('Unexpected error during 401 refresh flow:', e);
+      }
+    }
+
+    if (!finalResponse.ok) {
+      const errorText = await finalResponse.text();
+      const wwwAuth = finalResponse.headers.get('www-authenticate') || finalResponse.headers.get('WWW-Authenticate') || '';
+      console.error('Calendar fetch failed with status:', finalResponse.status);
+      console.error('WWW-Authenticate:', wwwAuth);
       console.error('Error details:', errorText);
       console.error('Request URL:', `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}&$orderby=start/dateTime`);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to fetch calendar', 
           details: errorText,
-          status: calendarResponse.status,
-          hint: calendarResponse.status === 401 ? 'Token may be invalid or missing required scopes (Calendars.ReadWrite)' : 'Unknown error'
+          status: finalResponse.status,
+          wwwAuthenticate: wwwAuth,
+          hint: finalResponse.status === 401 ? 'Token invalid/expired or missing scopes. Try re-login to refresh consent.' : 'Unknown error'
         }),
-        { status: calendarResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: finalResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const calendarData = await calendarResponse.json();
+    const calendarData = await finalResponse.json();
     const outlookEvents = calendarData.value || [];
 
     console.log(`Found ${outlookEvents.length} Outlook events`);
