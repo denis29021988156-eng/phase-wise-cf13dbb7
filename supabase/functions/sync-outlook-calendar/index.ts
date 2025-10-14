@@ -119,9 +119,16 @@ Deno.serve(async (req) => {
 
     if (!calendarResponse.ok) {
       const errorText = await calendarResponse.text();
-      console.error('Calendar fetch failed:', errorText);
+      console.error('Calendar fetch failed with status:', calendarResponse.status);
+      console.error('Error details:', errorText);
+      console.error('Request URL:', `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}&$orderby=start/dateTime`);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch calendar', details: errorText }),
+        JSON.stringify({ 
+          error: 'Failed to fetch calendar', 
+          details: errorText,
+          status: calendarResponse.status,
+          hint: calendarResponse.status === 401 ? 'Token may be invalid or missing required scopes (Calendars.ReadWrite)' : 'Unknown error'
+        }),
         { status: calendarResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
