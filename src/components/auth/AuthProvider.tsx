@@ -8,6 +8,9 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithMicrosoft: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  linkMicrosoftIdentity: () => Promise<void>;
+  linkAppleIdentity: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -84,6 +87,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithApple = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: redirectUrl,
+      }
+    });
+    
+    if (error) {
+      console.error('Error signing in with Apple:', error);
+      throw error;
+    }
+  };
+
+  const linkMicrosoftIdentity = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'azure',
+      options: {
+        redirectTo: redirectUrl,
+        scopes: 'openid profile email offline_access Calendars.ReadWrite',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
+    });
+    
+    if (error) {
+      console.error('Error linking Microsoft identity:', error);
+      throw error;
+    }
+  };
+
+  const linkAppleIdentity = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'apple',
+      options: {
+        redirectTo: redirectUrl,
+      }
+    });
+    
+    if (error) {
+      console.error('Error linking Apple identity:', error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -98,6 +154,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loading,
     signInWithGoogle,
     signInWithMicrosoft,
+    signInWithApple,
+    linkMicrosoftIdentity,
+    linkAppleIdentity,
     signOut,
   };
 

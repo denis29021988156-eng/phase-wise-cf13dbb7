@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useGoogleTokens } from '@/hooks/useGoogleTokens';
 import { useMicrosoftTokens } from '@/hooks/useMicrosoftTokens';
+import { useAppleTokens } from '@/hooks/useAppleTokens';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/layout/Navigation';
@@ -20,6 +21,7 @@ const Index = () => {
   // Store Google and Microsoft tokens when available
   useGoogleTokens();
   useMicrosoftTokens();
+  useAppleTokens();
   const [activeTab, setActiveTab] = useState('calendar');
   const [needsCycleSetup, setNeedsCycleSetup] = useState(false);
   const [checkingCycle, setCheckingCycle] = useState(true);

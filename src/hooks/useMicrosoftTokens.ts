@@ -12,7 +12,12 @@ export const useMicrosoftTokens = () => {
       const providerToken = session.provider_token;
       const providerRefreshToken = session.provider_refresh_token;
       
-      if (providerToken && session.user.app_metadata.provider === 'azure') {
+      // Check all identities for Microsoft/Azure provider
+      const azureIdentity = session.user.identities?.find(
+        identity => identity.provider === 'azure'
+      );
+      
+      if (providerToken && azureIdentity) {
         try {
           await supabase
             .from('user_tokens')

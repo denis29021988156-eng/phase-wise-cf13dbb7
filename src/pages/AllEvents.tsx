@@ -21,7 +21,7 @@ interface Event {
 }
 
 const AllEvents = () => {
-  const { user } = useAuth();
+  const { user, linkMicrosoftIdentity } = useAuth();
   const { toast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -289,7 +289,22 @@ const AllEvents = () => {
             </Button>
           ) : (
             <Button
-              onClick={() => window.location.href = `https://pytefsexxwtlropzkmxi.supabase.co/auth/v1/authorize?provider=azure&redirect_to=${encodeURIComponent(window.location.origin + '/dashboard')}&scopes=openid profile email offline_access Calendars.ReadWrite`}
+              onClick={async () => {
+                try {
+                  await linkMicrosoftIdentity();
+                  toast({
+                    title: "Успешно",
+                    description: "Microsoft аккаунт подключается...",
+                  });
+                } catch (error) {
+                  console.error('Error linking Microsoft account:', error);
+                  toast({
+                    title: "Ошибка",
+                    description: "Не удалось подключить Microsoft аккаунт",
+                    variant: "destructive",
+                  });
+                }
+              }}
               className="w-full"
               variant="outline"
             >

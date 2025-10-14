@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useGoogleTokens = () => {
+export const useAppleTokens = () => {
   const { session, user } = useAuth();
 
   useEffect(() => {
@@ -12,26 +12,26 @@ export const useGoogleTokens = () => {
       const providerToken = session.provider_token;
       const providerRefreshToken = session.provider_refresh_token;
       
-      // Check all identities for Google provider
-      const googleIdentity = session.user.identities?.find(
-        identity => identity.provider === 'google'
+      // Check all identities for Apple provider
+      const appleIdentity = session.user.identities?.find(
+        identity => identity.provider === 'apple'
       );
       
-      if (providerToken && googleIdentity) {
+      if (providerToken && appleIdentity) {
         try {
           await supabase
             .from('user_tokens')
             .upsert({
               user_id: user.id,
-              provider: 'google',
+              provider: 'apple',
               access_token: providerToken,
               refresh_token: providerRefreshToken || null,
               expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
             });
           
-          console.log('Google tokens stored successfully');
+          console.log('Apple tokens stored successfully');
         } catch (error) {
-          console.error('Error storing Google tokens:', error);
+          console.error('Error storing Apple tokens:', error);
         }
       }
     };

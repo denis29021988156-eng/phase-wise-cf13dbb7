@@ -8,7 +8,7 @@ import { Heart, Calendar, Brain } from 'lucide-react';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
-  const { signInWithGoogle, user, loading: authLoading } = useAuth();
+  const { signInWithGoogle, signInWithApple, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -28,6 +28,22 @@ const Auth = () => {
       toast({
         title: 'Ошибка входа',
         description: error.message || 'Произошла ошибка при входе через Google',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      setLoading(true);
+      await signInWithApple();
+      // Navigation will be handled by AuthProvider after successful login
+    } catch (error: any) {
+      toast({
+        title: 'Ошибка входа',
+        description: error.message || 'Произошла ошибка при входе через Apple',
         variant: 'destructive',
       });
     } finally {
@@ -99,6 +115,7 @@ const Auth = () => {
 
               <Button
                 variant="outline"
+                onClick={handleAppleSignIn}
                 disabled={loading}
                 className="w-full h-12 text-base font-medium border-2 border-muted-foreground/20 hover:border-primary/50 transition-all duration-300"
               >
