@@ -384,14 +384,24 @@ const Symptoms = () => {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const isPredicted = data.type === 'predicted';
+      
       return (
-        <div className="bg-background border border-border p-3 rounded-lg shadow-lg">
-          <p className="font-semibold">{data.date}</p>
-          <p className="text-sm">
-            Ресурсность: <span className="font-bold">{data.wellness}</span>
-          </p>
-          {data.type === 'predicted' && data.note && (
-            <p className="text-xs text-muted-foreground mt-1">{data.note}</p>
+        <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-200 p-4 rounded-2xl shadow-2xl animate-scale-in">
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-3 h-3 rounded-full ${isPredicted ? 'bg-pink-400' : 'bg-purple-500'}`} />
+            <p className="font-semibold text-[#374151]">{data.date}</p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+              {data.wellness}
+            </span>
+            <span className="text-sm text-gray-500">/ 100</span>
+          </div>
+          {isPredicted && data.note && (
+            <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-purple-100">
+              💡 {data.note}
+            </p>
           )}
         </div>
       );
@@ -556,70 +566,103 @@ const Symptoms = () => {
       </Card>
 
       {/* График энергетического баланса */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Энергетический баланс</CardTitle>
+      <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-[#FDFCFB] to-white animate-fade-in">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+            Энергетический баланс
+          </CardTitle>
+          <p className="text-sm text-[#374151] mt-1">Ваша ресурсность за последние 15 дней и прогноз на 30 дней</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {isLoadingPredictions ? (
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              Загрузка прогноза...
+            <div className="h-80 flex flex-col items-center justify-center gap-4">
+              <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
+              <p className="text-[#374151] font-medium">Загрузка прогноза...</p>
             </div>
           ) : history.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              Начните добавлять данные для просмотра графика
+            <div className="h-80 flex flex-col items-center justify-center gap-3 text-center px-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                <Brain className="w-10 h-10 text-purple-500" />
+              </div>
+              <p className="text-[#374151] font-medium">Начните добавлять данные</p>
+              <p className="text-sm text-gray-500">График появится после сохранения первой записи</p>
             </div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={getChartData()}>
+              <ResponsiveContainer width="100%" height={320}>
+                <AreaChart data={getChartData()} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorActual" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#ef4444" />
-                      <stop offset="50%" stopColor="#eab308" />
-                      <stop offset="100%" stopColor="#22c55e" />
+                    <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4}/>
+                      <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0.1}/>
                     </linearGradient>
+                    <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#F472B6" stopOpacity={0.3}/>
+                      <stop offset="100%" stopColor="#FBCFE8" stopOpacity={0.05}/>
+                    </linearGradient>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" strokeOpacity={0.5} />
                   <XAxis 
                     dataKey="date" 
-                    stroke="hsl(var(--muted-foreground))"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    tickLine={{ stroke: '#E5E7EB' }}
                   />
                   <YAxis 
                     domain={[0, 100]} 
-                    stroke="hsl(var(--muted-foreground))"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    ticks={[0, 25, 50, 75, 100]}
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    tickLine={{ stroke: '#E5E7EB' }}
                   />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="wellness" 
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#C4B5FD', strokeWidth: 2, strokeDasharray: '5 5' }} />
+                  
+                  {/* Фактические данные */}
+                  <Area
+                    type="monotone"
+                    dataKey="wellness"
                     data={getChartData().filter(d => d.type === 'actual')}
-                    stroke="url(#colorActual)" 
+                    stroke="#8B5CF6"
                     strokeWidth={3}
-                    dot={{ r: 4 }}
+                    fill="url(#gradientActual)"
+                    dot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: 'white', filter: 'url(#glow)' }}
+                    activeDot={{ r: 7, fill: '#8B5CF6', strokeWidth: 3, stroke: 'white' }}
+                    animationDuration={1500}
+                    animationEasing="ease-in-out"
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="wellness" 
+                  
+                  {/* Прогноз */}
+                  <Area
+                    type="monotone"
+                    dataKey="wellness"
                     data={getChartData().filter(d => d.type === 'predicted')}
-                    stroke="hsl(var(--chart-2))" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={{ r: 3, opacity: 0.6 }}
-                    opacity={0.7}
+                    stroke="#F472B6"
+                    strokeWidth={2.5}
+                    strokeDasharray="8 4"
+                    fill="url(#gradientPredicted)"
+                    dot={{ r: 4, fill: '#F472B6', strokeWidth: 2, stroke: 'white', opacity: 0.7 }}
+                    activeDot={{ r: 6, fill: '#F472B6', strokeWidth: 2, stroke: 'white' }}
+                    animationDuration={1500}
+                    animationEasing="ease-in-out"
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
-              <div className="flex items-center justify-center gap-6 mt-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-0.5 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
-                  <span className="text-muted-foreground">Фактические данные</span>
+              
+              <div className="flex items-center justify-center gap-8 mt-6 px-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-1 rounded-full bg-gradient-to-r from-purple-500 to-purple-300 shadow-sm" />
+                  <span className="text-sm text-[#374151] font-medium">Фактические данные</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-0.5 border-t-2 border-dashed" style={{ borderColor: 'hsl(var(--chart-2))' }} />
-                  <span className="text-muted-foreground">Прогноз</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-1 rounded-full border-2 border-dashed border-pink-400" />
+                  <span className="text-sm text-[#374151] font-medium">Прогноз ИИ</span>
                 </div>
               </div>
             </>

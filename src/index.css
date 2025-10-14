@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap');
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -123,5 +125,12 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "liga" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
   }
 }
