@@ -186,7 +186,7 @@ ${symptoms.length > 0 ? `- Физические ощущения: ${symptoms.joi
       console.log('No cycle data found for user, proceeding without cycle context');
     }
 
-    // Build system prompt
+    // Build system prompt with user profile data
     let systemPrompt = `Ты — продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, подробные и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы.
 
 Правила общения:
@@ -197,8 +197,18 @@ ${symptoms.length > 0 ? `- Физические ощущения: ${symptoms.joi
 
 ${cycleContext}
 
-${symptomContext}
+${symptomContext}`;
 
+    // Add user profile data if available
+    if (profile.age || profile.height || profile.weight) {
+      systemPrompt += '\n\nДанные пользователя:\n';
+      if (profile.age) systemPrompt += `- Возраст: ${profile.age} лет\n`;
+      if (profile.height) systemPrompt += `- Рост: ${profile.height} см\n`;
+      if (profile.weight) systemPrompt += `- Вес: ${profile.weight} кг\n`;
+      systemPrompt += '\nИспользуй эти данные для более персонализированных рекомендаций по питанию, физической активности и общему самочувствию.\n';
+    }
+
+    systemPrompt += `
 Справка (для тебя): Фазы менструального цикла и их типичное влияние на самочувствие:
 • Дни 1–5 – Менструация: сниженная энергия, возможны усталость, болезненные ощущения, повышенная потребность в отдыхе.
 • Дни 6–13 – Фолликулярная фаза: постепенный подъём энергии, улучшение настроения и концентрации, чувство воодушевления.

@@ -20,6 +20,9 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
     start_date: '',
     cycle_length: 28,
     menstrual_length: 5,
+    age: '',
+    height: '',
+    weight: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,21 +41,36 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Save cycle data
+      const { error: cycleError } = await supabase
         .from('user_cycles')
         .insert({
           user_id: user.id,
           start_date: formData.start_date,
           cycle_length: formData.cycle_length,
           menstrual_length: formData.menstrual_length,
-        })
-        .select();
+        });
 
-      console.log('Supabase response:', { data, error });
+      if (cycleError) {
+        console.error('Supabase cycle error:', cycleError);
+        throw cycleError;
+      }
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      // Save or update profile data with age, height, weight
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          age: formData.age ? parseInt(formData.age) : null,
+          height: formData.height ? parseInt(formData.height) : null,
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (profileError) {
+        console.error('Supabase profile error:', profileError);
+        throw profileError;
       }
 
       toast({
@@ -140,6 +158,55 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                 <p className="text-sm text-muted-foreground mt-1">
                   Обычно от 3 до 7 дней
                 </p>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-border">
+                <p className="text-sm font-medium text-card-foreground">
+                  Дополнительная информация (для персонализации)
+                </p>
+                
+                <div>
+                  <Label htmlFor="age">Возраст (лет)</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    min="10"
+                    max="100"
+                    value={formData.age}
+                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    className="mt-2"
+                    placeholder="Укажите ваш возраст"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="height">Рост (см)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    min="100"
+                    max="250"
+                    value={formData.height}
+                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                    className="mt-2"
+                    placeholder="Укажите ваш рост"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="weight">Вес (кг)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    step="0.1"
+                    min="20"
+                    max="300"
+                    value={formData.weight}
+                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                    className="mt-2"
+                    placeholder="Укажите ваш вес"
+                  />
+                </div>
               </div>
 
               <Button

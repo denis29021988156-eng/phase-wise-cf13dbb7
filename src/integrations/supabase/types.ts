@@ -207,25 +207,34 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          age: number | null
           created_at: string
+          height: number | null
           id: string
           name: string | null
           updated_at: string
           user_id: string
+          weight: number | null
         }
         Insert: {
+          age?: number | null
           created_at?: string
+          height?: number | null
           id?: string
           name?: string | null
           updated_at?: string
           user_id: string
+          weight?: number | null
         }
         Update: {
+          age?: number | null
           created_at?: string
+          height?: number | null
           id?: string
           name?: string | null
           updated_at?: string
           user_id?: string
+          weight?: number | null
         }
         Relationships: []
       }
