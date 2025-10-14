@@ -78,19 +78,71 @@ const Symptoms = () => {
     
     setIsLoadingPredictions(true);
     try {
+      console.log('Starting to load predictions...');
+      const session = await supabase.auth.getSession();
+      console.log('Session:', session.data.session ? 'exists' : 'missing');
+      
       const { data, error } = await supabase.functions.invoke('predict-wellness', {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session?.access_token}`,
         },
       });
 
-      if (error) throw error;
+      console.log('Predictions response:', { data, error });
+
+      if (error) {
+        console.error('Error from predict-wellness:', error);
+        throw error;
+      }
       
       if (data?.predictions) {
+        console.log('Setting predictions:', data.predictions.length, 'items');
         setPredictions(data.predictions);
+      } else {
+        console.warn('No predictions in response');
       }
     } catch (error) {
       console.error('Error loading predictions:', error);
+      // Fallback: generate simple predictions based on cycle if available
+      try {
+        const { data: cycle } = await supabase
+          .from('user_cycles')
+          .select('start_date, cycle_length, menstrual_length')
+          .eq('user_id', user.id)
+          .single();
+
+        if (cycle) {
+          const today = new Date();
+          const cycleStart = new Date(cycle.start_date);
+          const daysSinceStart = Math.floor((today.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24));
+          
+          const fallbackPredictions = Array.from({ length: 30 }, (_, i) => {
+            const cycleDay = ((daysSinceStart + i + 1) % (cycle.cycle_length || 28)) + 1;
+            let wellness = 50;
+            
+            if (cycleDay <= (cycle.menstrual_length || 5)) {
+              wellness = 40 + Math.random() * 15;
+            } else if (cycleDay <= 13) {
+              wellness = 60 + Math.random() * 20;
+            } else if (cycleDay <= 15) {
+              wellness = 75 + Math.random() * 20;
+            } else {
+              wellness = 45 + Math.random() * 25;
+            }
+            
+            return {
+              day: i + 1,
+              wellness: Math.round(wellness),
+              note: 'Прогноз на основе фазы цикла'
+            };
+          });
+          
+          console.log('Using fallback predictions');
+          setPredictions(fallbackPredictions);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
     } finally {
       setIsLoadingPredictions(false);
     }
