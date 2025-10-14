@@ -4,6 +4,7 @@ import { useGoogleTokens } from '@/hooks/useGoogleTokens';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/layout/Navigation';
+import { Notifications } from '@/components/Notifications';
 import Calendar from './Calendar';
 import AllEvents from './AllEvents';
 import Profile from './Profile';
@@ -128,6 +129,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      {/* Header with notifications */}
+      <header className="sticky top-0 z-40 w-full bg-card/80 backdrop-blur-lg border-b border-border shadow-sm">
+        <div className="container flex h-14 items-center justify-between px-4">
+          <h1 className="text-lg font-semibold">PhaseWise</h1>
+          <Notifications />
+        </div>
+      </header>
+
       <main className="pb-6">
         {renderActiveTab()}
       </main>
