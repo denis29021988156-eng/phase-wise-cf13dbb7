@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.check-period-notifications]
 verify_jwt = false
+
+[functions.predict-wellness]
+verify_jwt = true

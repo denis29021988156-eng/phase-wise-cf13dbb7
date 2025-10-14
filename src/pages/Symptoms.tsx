@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, Brain, Zap, Moon, RefreshCw, Upload } from 'lucide-react';
 import { useHealthKit } from '@/hooks/useHealthKit';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 interface SymptomLog {
   energy: number;
@@ -42,6 +43,8 @@ const Symptoms = () => {
   const [history, setHistory] = useState<HistoryDay[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
 
   // Данные для выбора
   const physicalOptions = [
@@ -66,8 +69,32 @@ const Symptoms = () => {
   useEffect(() => {
     loadHistory();
     loadTodayLog();
+    loadPredictions();
     healthKit.checkAvailability();
   }, [user]);
+
+  const loadPredictions = async () => {
+    if (!user) return;
+    
+    setIsLoadingPredictions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('predict-wellness', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.predictions) {
+        setPredictions(data.predictions);
+      }
+    } catch (error) {
+      console.error('Error loading predictions:', error);
+    } finally {
+      setIsLoadingPredictions(false);
+    }
+  };
 
   const loadHistory = async () => {
     if (!user) return;
@@ -77,7 +104,7 @@ const Symptoms = () => {
       .select('date, wellness_index')
       .eq('user_id', user.id)
       .order('date', { ascending: false })
-      .limit(7);
+      .limit(15); // Changed from 7 to 15 for chart
 
     if (data) {
       setHistory(data);
@@ -164,6 +191,7 @@ const Symptoms = () => {
 
       setCurrentLog({ ...currentLog, wellness_index: wellnessIndex });
       await loadHistory();
+      await loadPredictions(); // Refresh predictions after saving
       
       // Синхронизация с Apple Health если доступно
       if (healthKit.isAvailable && healthKit.hasPermissions) {
@@ -277,6 +305,46 @@ const Symptoms = () => {
       : [...current, id];
     
     setCurrentLog({ ...currentLog, [category]: updated });
+  };
+
+  const getChartData = () => {
+    const historicalData = history.slice().reverse().map(h => ({
+      date: new Date(h.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
+      wellness: h.wellness_index,
+      type: 'actual'
+    }));
+
+    const today = new Date();
+    const predictedData = predictions.map((p, idx) => {
+      const futureDate = new Date(today);
+      futureDate.setDate(today.getDate() + idx + 1);
+      return {
+        date: futureDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
+        wellness: p.wellness,
+        type: 'predicted',
+        note: p.note
+      };
+    });
+
+    return [...historicalData, ...predictedData];
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-background border border-border p-3 rounded-lg shadow-lg">
+          <p className="font-semibold">{data.date}</p>
+          <p className="text-sm">
+            Ресурсность: <span className="font-bold">{data.wellness}</span>
+          </p>
+          {data.type === 'predicted' && data.note && (
+            <p className="text-xs text-muted-foreground mt-1">{data.note}</p>
+          )}
+        </div>
+      );
+    }
+    return null;
   };
 
   const wellnessIndex = calculateWellnessIndex(currentLog);
@@ -432,6 +500,78 @@ const Symptoms = () => {
           >
             {loading ? 'Сохранение...' : 'Сохранить'}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* График энергетического баланса */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Энергетический баланс</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingPredictions ? (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              Загрузка прогноза...
+            </div>
+          ) : history.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              Начните добавлять данные для просмотра графика
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={getChartData()}>
+                  <defs>
+                    <linearGradient id="colorActual" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="50%" stopColor="#eab308" />
+                      <stop offset="100%" stopColor="#22c55e" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    domain={[0, 100]} 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="wellness" 
+                    data={getChartData().filter(d => d.type === 'actual')}
+                    stroke="url(#colorActual)" 
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="wellness" 
+                    data={getChartData().filter(d => d.type === 'predicted')}
+                    stroke="hsl(var(--chart-2))" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ r: 3, opacity: 0.6 }}
+                    opacity={0.7}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
+                  <span className="text-muted-foreground">Фактические данные</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-0.5 border-t-2 border-dashed" style={{ borderColor: 'hsl(var(--chart-2))' }} />
+                  <span className="text-muted-foreground">Прогноз</span>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
