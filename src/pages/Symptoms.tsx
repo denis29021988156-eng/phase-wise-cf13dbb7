@@ -78,9 +78,8 @@ const Symptoms = () => {
     
     setIsLoadingPredictions(true);
     try {
-      console.log('Starting to load predictions...');
+      console.log('Loading predictions...');
       const session = await supabase.auth.getSession();
-      console.log('Session:', session.data.session ? 'exists' : 'missing');
       
       const { data, error } = await supabase.functions.invoke('predict-wellness', {
         headers: {
@@ -88,7 +87,7 @@ const Symptoms = () => {
         },
       });
 
-      console.log('Predictions response:', { data, error });
+      console.log('Predictions loaded:', data ? 'success' : 'failed');
 
       if (error) {
         console.error('Error from predict-wellness:', error);
@@ -96,14 +95,11 @@ const Symptoms = () => {
       }
       
       if (data?.predictions) {
-        console.log('Setting predictions:', data.predictions.length, 'items');
         setPredictions(data.predictions);
-      } else {
-        console.warn('No predictions in response');
       }
     } catch (error) {
       console.error('Error loading predictions:', error);
-      // Fallback: generate simple predictions based on cycle if available
+      // Fallback: generate simple predictions
       try {
         const { data: cycle } = await supabase
           .from('user_cycles')
@@ -133,15 +129,14 @@ const Symptoms = () => {
             return {
               day: i + 1,
               wellness: Math.round(wellness),
-              note: 'Прогноз на основе фазы цикла'
+              note: 'Базовый прогноз по фазе цикла'
             };
           });
           
-          console.log('Using fallback predictions');
           setPredictions(fallbackPredictions);
         }
       } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
+        console.error('Fallback failed:', fallbackError);
       }
     } finally {
       setIsLoadingPredictions(false);
