@@ -73,6 +73,7 @@ Deno.serve(async (req) => {
             client_secret: Deno.env.get('MICROSOFT_CLIENT_SECRET')!,
             refresh_token: tokenData.refresh_token || '',
             grant_type: 'refresh_token',
+            scope: 'openid profile email offline_access Calendars.ReadWrite User.Read',
           }),
         });
 
@@ -130,6 +131,7 @@ Deno.serve(async (req) => {
             client_secret: Deno.env.get('MICROSOFT_CLIENT_SECRET')!,
             refresh_token: tokenData.refresh_token || '',
             grant_type: 'refresh_token',
+            scope: 'openid profile email offline_access Calendars.ReadWrite User.Read',
           }),
         });
 
