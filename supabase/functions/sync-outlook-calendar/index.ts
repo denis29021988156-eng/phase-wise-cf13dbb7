@@ -54,7 +54,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    let accessToken = tokenData.access_token;
+let accessToken = tokenData.access_token;
+const maskToken = (t?: string) => t ? `${t.slice(0,5)}...${t.slice(-5)}` : 'undefined';
+console.log('Access token (masked):', maskToken(accessToken));
+console.log('Has refresh token:', Boolean(tokenData.refresh_token));
+if (!accessToken) {
+  console.error('No access token available for Microsoft Graph');
+  return new Response(
+    JSON.stringify({ error: 'No access token', details: 'Microsoft account connected but access token is missing' }),
+    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
     
     // Check if token needs refresh
     if (tokenData.expires_at) {
@@ -102,7 +112,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log('Fetching events from Microsoft Calendar...');
+console.log('Fetching events from Microsoft Calendar...');
+console.log('Using access token (masked):', maskToken(accessToken));
 
     // Fetch events from Microsoft Graph API
     const startDateTime = new Date().toISOString();
