@@ -123,8 +123,21 @@ Phases: menstruation (low 35-55), follicular (rising 65-85), ovulation (peak 80-
             const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             const aiPredictions = JSON.parse(jsonContent);
             
-            // Could store enhanced predictions in cache table for next request
+            // Save enhanced predictions to cache
             console.log('AI predictions generated:', aiPredictions.length);
+            
+            const today = new Date().toISOString().split('T')[0];
+            await supabase
+              .from('wellness_predictions')
+              .upsert({
+                user_id: user.id,
+                prediction_date: today,
+                predictions: aiPredictions
+              }, {
+                onConflict: 'user_id,prediction_date'
+              });
+            
+            console.log('AI predictions saved to cache');
           }
         } catch (error) {
           console.error('Background AI enhancement failed:', error);
