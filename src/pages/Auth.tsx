@@ -8,7 +8,7 @@ import { Heart, Calendar, Brain } from 'lucide-react';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
-  const { signInWithGoogle, signInWithApple, user, loading: authLoading } = useAuth();
+  const { signInWithGoogle, signInWithMicrosoft, signInWithApple, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -28,6 +28,22 @@ const Auth = () => {
       toast({
         title: 'Ошибка входа',
         description: error.message || 'Произошла ошибка при входе через Google',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignIn = async () => {
+    try {
+      setLoading(true);
+      await signInWithMicrosoft();
+      // Navigation will be handled by AuthProvider after successful login
+    } catch (error: any) {
+      toast({
+        title: 'Ошибка входа',
+        description: error.message || 'Произошла ошибка при входе через Microsoft',
         variant: 'destructive',
       });
     } finally {
@@ -109,6 +125,26 @@ const Auth = () => {
                       <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
                     Войти через Google
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleMicrosoftSignIn}
+                disabled={loading}
+                className="w-full h-12 text-base font-medium bg-secondary hover:bg-secondary/90 text-secondary-foreground transition-all duration-300"
+              >
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-secondary-foreground"></div>
+                    <span>Вход...</span>
+                  </div>
+                ) : (
+                  <>
+                    <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/>
+                    </svg>
+                    Войти через Microsoft
                   </>
                 )}
               </Button>

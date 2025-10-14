@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit, Droplet } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit, Droplet, CloudCog } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +29,7 @@ interface UserCycle {
 }
 
 const Calendar = () => {
-  const { user } = useAuth();
+  const { user, linkMicrosoftIdentity } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -39,6 +39,9 @@ const Calendar = () => {
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventWithSuggestion | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [outlookLoading, setOutlookLoading] = useState(false);
+  const [hasMicrosoftToken, setHasMicrosoftToken] = useState(false);
+  const [checkingToken, setCheckingToken] = useState(true);
   const [userCycle, setUserCycle] = useState<UserCycle | null>(null);
   const [showFullCalendar, setShowFullCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -65,6 +68,30 @@ const Calendar = () => {
       loadEvents();
     }
   }, [user, selectedDate]);
+
+  // Check if user has Microsoft token
+  useEffect(() => {
+    const checkMicrosoftToken = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('user_tokens')
+          .select('access_token')
+          .eq('user_id', user.id)
+          .eq('provider', 'microsoft')
+          .maybeSingle();
+        
+        setHasMicrosoftToken(!!data);
+      } catch (error) {
+        console.error('Error checking Microsoft token:', error);
+      } finally {
+        setCheckingToken(false);
+      }
+    };
+
+    checkMicrosoftToken();
+  }, [user]);
 
   const loadUserCycle = async () => {
     if (!user) return;
@@ -174,6 +201,50 @@ const Calendar = () => {
       });
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleSyncOutlook = async () => {
+    if (!user) return;
+
+    setOutlookLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-outlook-calendar', {
+        body: { userId: user.id }
+      });
+
+      if (error) {
+        console.error('Sync error:', error);
+        toast({
+          title: "Ошибка синхронизации",
+          description: error.message || "Не удалось загрузить события из Outlook",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.success) {
+        toast({
+          title: 'Календарь синхронизирован',
+          description: `Импортировано событий: ${data.inserted || 0}`,
+        });
+        loadEvents();
+      } else {
+        toast({
+          title: "Ошибка синхронизации",
+          description: data?.error || "Не удалось синхронизировать календарь",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error syncing Outlook:', error);
+      toast({
+        title: 'Ошибка синхронизации',
+        description: error?.message || 'Не удалось загрузить события из Outlook',
+        variant: 'destructive',
+      });
+    } finally {
+      setOutlookLoading(false);
     }
   };
 
@@ -424,8 +495,56 @@ const Calendar = () => {
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
               <ChevronRight className="h-4 w-4" />
+        </Button>
+        
+        {!checkingToken && (
+          hasMicrosoftToken ? (
+            <Button
+              onClick={handleSyncOutlook}
+              disabled={outlookLoading}
+              size="sm"
+              className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-[var(--shadow-soft)]"
+            >
+              {outlookLoading ? (
+                <div className="flex items-center gap-1.5">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondary-foreground border-t-transparent"></div>
+                  <span className="text-xs">Синхр...</span>
+                </div>
+              ) : (
+                <>
+                  <CloudCog className="h-4 w-4 mr-1.5" />
+                  <span className="text-xs">Outlook</span>
+                </>
+              )}
             </Button>
-          </div>
+          ) : (
+            <Button
+              onClick={async () => {
+                try {
+                  await linkMicrosoftIdentity();
+                  toast({
+                    title: "Успешно",
+                    description: "Outlook подключается...",
+                  });
+                } catch (error) {
+                  console.error('Error linking Microsoft account:', error);
+                  toast({
+                    title: "Ошибка",
+                    description: "Не удалось подключить Outlook",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              size="sm"
+              variant="outline"
+              className="flex-1"
+            >
+              <CloudCog className="h-4 w-4 mr-1.5" />
+              <span className="text-xs">Подключить Outlook</span>
+            </Button>
+          )
+        )}
+      </div>
         </CardHeader>
         <CardContent>
           <div className="flex justify-around space-x-2">

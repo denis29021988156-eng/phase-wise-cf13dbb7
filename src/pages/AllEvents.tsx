@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp, CloudCog } from 'lucide-react';
+import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
@@ -21,16 +21,14 @@ interface Event {
 }
 
 const AllEvents = () => {
-  const { user, linkMicrosoftIdentity } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
-  const [syncingOutlook, setSyncingOutlook] = useState(false);
-  const [hasMicrosoftToken, setHasMicrosoftToken] = useState(false);
-  const [checkingToken, setCheckingToken] = useState(true);
+  const [syncingGoogle, setSyncingGoogle] = useState(false);
 
   const loadAllEvents = async () => {
     if (!user) return;
@@ -69,30 +67,6 @@ const AllEvents = () => {
 
   useEffect(() => {
     loadAllEvents();
-  }, [user]);
-
-  // Check if user has Microsoft token
-  useEffect(() => {
-    const checkMicrosoftToken = async () => {
-      if (!user) return;
-      
-      try {
-        const { data } = await supabase
-          .from('user_tokens')
-          .select('access_token')
-          .eq('user_id', user.id)
-          .eq('provider', 'microsoft')
-          .maybeSingle();
-        
-        setHasMicrosoftToken(!!data);
-      } catch (error) {
-        console.error('Error checking Microsoft token:', error);
-      } finally {
-        setCheckingToken(false);
-      }
-    };
-
-    checkMicrosoftToken();
   }, [user]);
 
   // Set up real-time subscription for updates
@@ -167,35 +141,6 @@ const AllEvents = () => {
   const handleEditEvent = (event: Event) => {
     setSelectedEvent(event);
     setEditEventOpen(true);
-  };
-
-  const handleSyncOutlook = async () => {
-    if (!user) return;
-    
-    setSyncingOutlook(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-outlook-calendar', {
-        body: { userId: user.id },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Синхронизация завершена',
-        description: `Добавлено событий: ${data.inserted}, пропущено: ${data.skipped}`,
-      });
-
-      loadAllEvents();
-    } catch (error) {
-      console.error('Error syncing Outlook calendar:', error);
-      toast({
-        title: 'Ошибка синхронизации',
-        description: 'Проверьте подключение к Outlook',
-        variant: 'destructive',
-      });
-    } finally {
-      setSyncingOutlook(false);
-    }
   };
 
   const getSourceColor = (source: string) => {
@@ -275,44 +220,6 @@ const AllEvents = () => {
             </Button>
           )}
         </div>
-        
-        {!checkingToken && (
-          hasMicrosoftToken ? (
-            <Button
-              onClick={handleSyncOutlook}
-              disabled={syncingOutlook}
-              className="w-full"
-              variant="outline"
-            >
-              <CloudCog className="h-4 w-4 mr-2" />
-              {syncingOutlook ? 'Синхронизация...' : 'Синхронизировать Outlook календарь'}
-            </Button>
-          ) : (
-            <Button
-              onClick={async () => {
-                try {
-                  await linkMicrosoftIdentity();
-                  toast({
-                    title: "Успешно",
-                    description: "Microsoft аккаунт подключается...",
-                  });
-                } catch (error) {
-                  console.error('Error linking Microsoft account:', error);
-                  toast({
-                    title: "Ошибка",
-                    description: "Не удалось подключить Microsoft аккаунт",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              className="w-full"
-              variant="outline"
-            >
-              <CloudCog className="h-4 w-4 mr-2" />
-              Подключить Microsoft аккаунт
-            </Button>
-          )
-        )}
       </div>
 
       {filteredEvents.length === 0 ? (
