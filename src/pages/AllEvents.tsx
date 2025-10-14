@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp, CloudCog } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
@@ -28,6 +28,7 @@ const AllEvents = () => {
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [syncingOutlook, setSyncingOutlook] = useState(false);
 
   const loadAllEvents = async () => {
     if (!user) return;
@@ -142,10 +143,41 @@ const AllEvents = () => {
     setEditEventOpen(true);
   };
 
+  const handleSyncOutlook = async () => {
+    if (!user) return;
+    
+    setSyncingOutlook(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-outlook-calendar', {
+        body: { userId: user.id },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Синхронизация завершена',
+        description: `Добавлено событий: ${data.inserted}, пропущено: ${data.skipped}`,
+      });
+
+      loadAllEvents();
+    } catch (error) {
+      console.error('Error syncing Outlook calendar:', error);
+      toast({
+        title: 'Ошибка синхронизации',
+        description: 'Проверьте подключение к Outlook',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncingOutlook(false);
+    }
+  };
+
   const getSourceColor = (source: string) => {
     switch (source) {
       case 'google':
         return 'hsl(var(--chart-1))';
+      case 'outlook':
+        return 'hsl(var(--chart-3))';
       case 'manual':
         return 'hsl(var(--chart-2))';
       default:
@@ -188,7 +220,7 @@ const AllEvents = () => {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Все события</h1>
             <p className="text-muted-foreground mt-2">
@@ -217,6 +249,16 @@ const AllEvents = () => {
             </Button>
           )}
         </div>
+        
+        <Button
+          onClick={handleSyncOutlook}
+          disabled={syncingOutlook}
+          className="w-full"
+          variant="outline"
+        >
+          <CloudCog className="h-4 w-4 mr-2" />
+          {syncingOutlook ? 'Синхронизация...' : 'Подключить Outlook календарь'}
+        </Button>
       </div>
 
       {filteredEvents.length === 0 ? (

@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithMicrosoft: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -66,6 +67,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithMicrosoft = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'azure',
+      options: {
+        redirectTo: redirectUrl,
+        scopes: 'openid profile email offline_access Calendars.ReadWrite',
+      }
+    });
+    
+    if (error) {
+      console.error('Error signing in with Microsoft:', error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -79,6 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     session,
     loading,
     signInWithGoogle,
+    signInWithMicrosoft,
     signOut,
   };
 

@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.predict-wellness]
 verify_jwt = true
+
+[functions.sync-outlook-calendar]
+verify_jwt = true
