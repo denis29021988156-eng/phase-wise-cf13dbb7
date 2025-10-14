@@ -86,6 +86,12 @@ const PeriodTrackingDialog = ({ open, onOpenChange, onUpdate }: PeriodTrackingDi
         console.error('Error recalculating suggestions:', recalcError);
       }
 
+      // Invalidate prediction cache since cycle data changed
+      await supabase
+        .from('wellness_predictions')
+        .delete()
+        .eq('user_id', user.id);
+
       toast({
         title: 'Месячные обновлены',
         description: `Отмечено ${menstrualLength} дней`,

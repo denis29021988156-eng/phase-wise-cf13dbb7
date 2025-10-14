@@ -78,6 +78,12 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
         description: 'Добро пожаловать в CycleON!',
       });
       
+      // Invalidate prediction cache since cycle data changed
+      await supabase
+        .from('wellness_predictions')
+        .delete()
+        .eq('user_id', user.id);
+      
       onComplete();
     } catch (error: any) {
       console.error('Error saving cycle data:', error);

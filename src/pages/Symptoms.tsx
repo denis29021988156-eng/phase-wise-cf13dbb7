@@ -78,7 +78,25 @@ const Symptoms = () => {
     
     setIsLoadingPredictions(true);
     try {
-      console.log('Loading predictions...');
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if we have cached predictions for today
+      const { data: cachedPrediction } = await supabase
+        .from('wellness_predictions')
+        .select('predictions, prediction_date')
+        .eq('user_id', user.id)
+        .eq('prediction_date', today)
+        .maybeSingle();
+
+      if (cachedPrediction) {
+        console.log('Using cached predictions from', cachedPrediction.prediction_date);
+        setPredictions(cachedPrediction.predictions as any[]);
+        setIsLoadingPredictions(false);
+        return;
+      }
+
+      // No cache, generate new predictions
+      console.log('Generating new predictions...');
       const session = await supabase.auth.getSession();
       
       const { data, error } = await supabase.functions.invoke('predict-wellness', {
@@ -87,8 +105,6 @@ const Symptoms = () => {
         },
       });
 
-      console.log('Predictions loaded:', data ? 'success' : 'failed');
-
       if (error) {
         console.error('Error from predict-wellness:', error);
         throw error;
@@ -96,10 +112,23 @@ const Symptoms = () => {
       
       if (data?.predictions) {
         setPredictions(data.predictions);
+        
+        // Cache the predictions
+        await supabase
+          .from('wellness_predictions')
+          .upsert({
+            user_id: user.id,
+            prediction_date: today,
+            predictions: data.predictions
+          }, {
+            onConflict: 'user_id,prediction_date'
+          });
+        
+        console.log('Predictions cached successfully');
       }
     } catch (error) {
       console.error('Error loading predictions:', error);
-      // Fallback: generate simple predictions
+      // Fallback to simple predictions
       try {
         const { data: cycle } = await supabase
           .from('user_cycles')
@@ -140,6 +169,22 @@ const Symptoms = () => {
       }
     } finally {
       setIsLoadingPredictions(false);
+    }
+  };
+
+  const invalidatePredictionCache = async () => {
+    if (!user) return;
+    
+    try {
+      // Delete cached predictions to force refresh
+      await supabase
+        .from('wellness_predictions')
+        .delete()
+        .eq('user_id', user.id);
+      
+      console.log('Prediction cache invalidated');
+    } catch (error) {
+      console.error('Error invalidating cache:', error);
     }
   };
 
@@ -238,7 +283,10 @@ const Symptoms = () => {
 
       setCurrentLog({ ...currentLog, wellness_index: wellnessIndex });
       await loadHistory();
-      await loadPredictions(); // Refresh predictions after saving
+      
+      // Invalidate prediction cache and reload predictions
+      await invalidatePredictionCache();
+      await loadPredictions();
       
       // Синхронизация с Apple Health если доступно
       if (healthKit.isAvailable && healthKit.hasPermissions) {
