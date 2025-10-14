@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.recalculate-suggestions]
 verify_jwt = true
+
+[functions.check-period-notifications]
+verify_jwt = false
