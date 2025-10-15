@@ -241,7 +241,7 @@ console.log('Using access token (masked):', maskToken(accessToken));
         continue;
       }
 
-      // Insert new event
+      // Insert new event with Microsoft event ID
       const { data: newEvent, error: insertError } = await supabase
         .from('events')
         .insert({
@@ -250,6 +250,7 @@ console.log('Using access token (masked):', maskToken(accessToken));
           start_time: startTime,
           end_time: endTime,
           source: 'outlook',
+          microsoft_event_id: outlookEvent.id, // Сохранить ID события из Outlook
         })
         .select()
         .single();

@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logRetryAttempt, logOperationMetric, logErrorNotification, withTimeout, OperationTimer } from '../_shared/logger.ts';
+import { checkRateLimit, rateLimitHeaders } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,37 @@ serve(async (req) => {
     );
 
     const { suggestionId, customSubject, customBody } = await req.json();
+
+    // Получить user_id из suggestion для rate limiting
+    const { data: suggestionData } = await supabaseClient
+      .from('event_move_suggestions')
+      .select('user_id')
+      .eq('id', suggestionId)
+      .single();
+
+    if (suggestionData) {
+      userId = suggestionData.user_id;
+
+      // Проверить rate limit
+      const rateLimit = await checkRateLimit(supabaseClient, userId, 'ai-handle-event-move');
+      
+      if (!rateLimit.allowed) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Превышен лимит запросов. Попробуйте через минуту.',
+            success: false
+          }),
+          {
+            status: 429,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json',
+              ...rateLimitHeaders(rateLimit.remaining, rateLimit.resetAt)
+            },
+          }
+        );
+      }
+    }
 
     console.log('Handling event move for suggestion:', suggestionId);
 
@@ -88,7 +120,7 @@ serve(async (req) => {
     let participants: string[] = [];
     
     if (emailProvider === 'google') {
-      // Получить детали события из Google Calendar
+    // Получить детали события из Google Calendar
       const eventResponse = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.google_event_id}`,
         {
@@ -107,8 +139,10 @@ serve(async (req) => {
     } else {
       // Microsoft Graph API - получить участников из Outlook
       try {
+        // Используем отдельное поле для Microsoft event ID
+        const microsoftEventId = (event as any).microsoft_event_id || event.google_event_id;
         const eventResponse = await fetch(
-          `https://graph.microsoft.com/v1.0/me/events/${event.google_event_id}`, // microsoft event id хранится в том же поле
+          `https://graph.microsoft.com/v1.0/me/events/${microsoftEventId}`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`,

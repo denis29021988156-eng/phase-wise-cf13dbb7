@@ -125,6 +125,33 @@ export type Database = {
         }
         Relationships: []
       }
+      api_rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          request_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          request_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          request_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -246,6 +273,7 @@ export type Database = {
           end_time: string
           google_event_id: string | null
           id: string
+          microsoft_event_id: string | null
           source: string | null
           start_time: string
           title: string
@@ -256,6 +284,7 @@ export type Database = {
           end_time: string
           google_event_id?: string | null
           id?: string
+          microsoft_event_id?: string | null
           source?: string | null
           start_time: string
           title: string
@@ -266,6 +295,7 @@ export type Database = {
           end_time?: string
           google_event_id?: string | null
           id?: string
+          microsoft_event_id?: string | null
           source?: string | null
           start_time?: string
           title?: string
@@ -465,6 +495,10 @@ export type Database = {
     }
     Functions: {
       cleanup_old_ai_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_rate_limits: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

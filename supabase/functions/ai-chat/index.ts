@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkRateLimit, rateLimitHeaders } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,6 +60,26 @@ serve(async (req) => {
 
     console.log('Processing AI chat message for user:', userId);
     console.log('User message:', message);
+
+    // Проверить rate limit
+    const rateLimit = await checkRateLimit(supabaseClient, userId, 'ai-chat');
+    
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Слишком много запросов. Пожалуйста, подождите минуту.',
+          response: 'Прости, дорогая, но ты отправляешь слишком много сообщений. Давай немного подождем? 😊'
+        }),
+        {
+          status: 429,
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            ...rateLimitHeaders(rateLimit.remaining, rateLimit.resetAt)
+          },
+        }
+      );
+    }
 
     // Get or create user profile
     let { data: profile } = await supabaseClient

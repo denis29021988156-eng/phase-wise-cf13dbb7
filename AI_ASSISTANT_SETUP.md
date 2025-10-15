@@ -1,277 +1,325 @@
-# Настройка AI-ассистента по переносу событий
+# Настройка AI-ассистента PhaseWise - Полное руководство
 
-## Обзор
+## 🎯 Обзор
 
-AI-ассистент автоматически анализирует календарь пользователя и предлагает переносить события, учитывая:
-- Фазу менструального цикла
-- Плотность расписания
-- Недавние логи самочувствия
-
-## 📋 Компоненты системы
-
-### 1. База данных
-✅ **Таблица `event_move_suggestions`** - хранит предложения AI по переносу
-- Создана автоматически через миграцию
-- Включает RLS политики для безопасности
-
-### 2. Edge Functions
-
-#### `ai-week-planner` 
-- **Назначение**: Анализирует календарь на неделю вперед
-- **Запуск**: Через cron (ежедневно)
-- **Что делает**:
-  - Проверяет события всех пользователей
-  - Находит дни с перегрузкой
-  - Создает предложения по переносу
-  - Добавляет сообщения в чат
-
-#### `ai-handle-event-move`
-- **Назначение**: Отправляет письма участникам
-- **Запуск**: По запросу пользователя (кнопка в чате)
-- **Что делает**:
-  - Получает участников события
-  - Отправляет письмо через Gmail/Outlook API
-  - Обновляет статус предложения
-
-#### `ai-handle-email-reply`
-- **Назначение**: Обрабатывает ответы участников
-- **Запуск**: Через webhook от Gmail/Outlook
-- **Что делает**:
-  - Анализирует ответ с помощью AI
-  - Обновляет событие при согласии
-  - Уведомляет пользователя в чате
-
-### 3. UI (Chat.tsx)
-- Отображает предложения AI в виде карточек
-- Кнопка "Написать участникам" → вызывает `ai-handle-event-move`
-- Real-time обновления через Supabase subscriptions
+PhaseWise использует AI-ассистента "Gaia" для помощи в планировании событий с учетом менструального цикла.
 
 ---
 
-## 🚀 Инструкция по запуску
+## ✅ РЕАЛИЗОВАННЫЕ УЛУЧШЕНИЯ (2025-01-15)
 
-### Шаг 1: Настроить Cron Job
+### 1. ✅ Разделение Google и Microsoft Event ID
+**Статус:** ✅ Реализовано
 
-Выполните SQL в Supabase SQL Editor:
+**Изменения:**
+- Добавлено отдельное поле `microsoft_event_id` в таблицу `events`
+- Google события используют `google_event_id`
+- Microsoft/Outlook события используют `microsoft_event_id`
+- Созданы индексы для быстрого поиска обоих полей
+- Обновлен код синхронизации для корректного сохранения ID
 
-\`\`\`sql
--- 1. Включить расширения pg_cron и pg_net
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
+**Миграция выполнена автоматически.**
 
--- 2. Создать cron job для ежедневного запуска (каждое утро в 9:00 UTC)
-SELECT cron.schedule(
-  'ai-week-planner-daily',
-  '0 9 * * *', -- каждый день в 9:00 UTC (12:00 MSK)
-  $$
-  SELECT
-    net.http_post(
-      url:='https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-week-planner',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_SERVICE_ROLE_KEY"}'::jsonb,
-      body:='{}'::jsonb
-    ) as request_id;
-  $$
-);
-\`\`\`
+---
 
-**Важно**: Замените `YOUR_SERVICE_ROLE_KEY` на ваш Service Role Key из Supabase Dashboard → Settings → API.
+### 2. ✅ Настроенные Cron Jobs
+**Статус:** ✅ Автоматически настроено
 
-### Шаг 2: Проверить работу Cron
+#### Активные Cron Jobs:
 
-Чтобы проверить, запустить функцию вручную:
+**`ai-week-planner-daily`** - Каждый день в 9:00 UTC (12:00 МСК)
+- Анализирует события на неделю вперед
+- Создает предложения по переносу встреч с учетом фазы цикла
+- Добавляет сообщения в чат пользователя
 
-\`\`\`bash
-curl -X POST https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-week-planner \\
-  -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY" \\
-  -H "Content-Type: application/json"
-\`\`\`
+**`cleanup-ai-logs-daily`** - Каждый день в 2:00 UTC
+- Удаляет retry логи старше 7 дней
+- Очищает метрики старше 30 дней
+- Удаляет resolved уведомления об ошибках старше 7 дней
 
-Проверьте логи в Supabase Dashboard → Edge Functions → ai-week-planner → Logs.
+**`cleanup-rate-limits-hourly`** - Каждый час
+- Удаляет записи rate limiting старше 1 часа
 
-### Шаг 3: Настроить Gmail Webhook (для получения ответов)
+**`cleanup-rejected-suggestions-weekly`** - Каждое воскресенье в 3:00 UTC
+- Удаляет отклоненные предложения старше 30 дней
 
-#### 3.1 Создать Google Cloud Pub/Sub Topic
+**Проверка статуса:**
+```sql
+SELECT * FROM cron.job;
+```
 
-1. Перейти в [Google Cloud Console](https://console.cloud.google.com/cloudpubsub)
-2. Создать новый Topic: `gmail-notifications`
-3. Скопировать полное имя топика (например, `projects/YOUR_PROJECT/topics/gmail-notifications`)
+**Проверка последних выполнений:**
+```sql
+SELECT * FROM cron.job_run_details 
+ORDER BY start_time DESC LIMIT 10;
+```
 
-#### 3.2 Настроить Gmail Push Notifications
+---
 
-Выполните через Gmail API:
+### 3. ✅ Rate Limiting для AI-запросов
+**Статус:** ✅ Реализовано
 
-\`\`\`javascript
-// Пример запроса для настройки webhook
-POST https://gmail.googleapis.com/gmail/v1/users/me/watch
-{
-  "labelIds": ["INBOX"],
-  "topicName": "projects/YOUR_PROJECT/topics/gmail-notifications"
-}
-\`\`\`
+#### Лимиты по эндпоинтам:
+| Эндпоинт | Макс. запросов | Временное окно |
+|----------|----------------|----------------|
+| `ai-chat` | 30 | 1 минута |
+| `ai-week-planner` | 10 | 1 минута |
+| `generate-ai-suggestion` | 20 | 1 минута |
+| `ai-generate-email-preview` | 15 | 1 минута |
+| `ai-handle-event-move` | 10 | 1 минута |
 
-#### 3.3 Создать Cloud Function для обработки Pub/Sub
+**Как работает:**
+1. Создана таблица `api_rate_limits` для отслеживания запросов
+2. Каждый запрос к AI проверяется через `checkRateLimit()`
+3. При превышении лимита возвращается HTTP 429 (Too Many Requests)
+4. Заголовки ответа содержат информацию:
+   - `X-RateLimit-Remaining`: оставшихся запросов
+   - `X-RateLimit-Reset`: время сброса лимита (unix timestamp)
 
-\`\`\`javascript
-// Google Cloud Function
-exports.handleGmailWebhook = async (message, context) => {
-  const data = Buffer.from(message.data, 'base64').toString();
-  const historyId = JSON.parse(data).historyId;
-  
-  // Получить новые сообщения из истории
-  // Вызвать ai-handle-email-reply через fetch
-  
-  await fetch('https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-handle-email-reply', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer YOUR_SERVICE_ROLE_KEY'
-    },
-    body: JSON.stringify({
-      threadId: extractedThreadId,
-      emailBody: extractedBody,
-      userId: extractedUserId
-    })
-  });
+**Настройка лимитов:**
+Редактировать файл `supabase/functions/_shared/rate-limiter.ts`:
+```typescript
+const DEFAULT_LIMITS: Record<string, RateLimitConfig> = {
+  'ai-chat': { maxRequests: 30, windowMs: 60000 },
+  // ... другие эндпоинты
 };
-\`\`\`
-
-### Шаг 4: Настроить Outlook Webhook
-
-1. Зарегистрировать webhook endpoint в Azure AD
-2. Подписаться на уведомления о новых письмах через Microsoft Graph API:
-
-\`\`\`javascript
-POST https://graph.microsoft.com/v1.0/subscriptions
-{
-  "changeType": "created",
-  "notificationUrl": "https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-handle-email-reply",
-  "resource": "/me/mailFolders('Inbox')/messages",
-  "expirationDateTime": "2025-12-31T00:00:00Z",
-  "clientState": "secretClientValue"
-}
-\`\`\`
+```
 
 ---
 
-## 🧪 Тестирование
+### 4. ⚠️ Leaked Password Protection
+**Статус:** ⚠️ Требует ручной настройки
 
-### Тест 1: Ручной запуск ai-week-planner
+**Инструкция:**
 
-\`\`\`bash
-curl -X POST https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-week-planner \\
-  -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY"
-\`\`\`
+1. Откройте [Supabase Dashboard → Authentication](https://supabase.com/dashboard/project/pytefsexxwtlropzkmxi/auth/providers)
+2. Перейдите в раздел **Policies**
+3. Найдите **"Password Strength and Leaked Password Protection"**
+4. Включите опцию **"Check for leaked passwords"**
+5. Настройте требования к паролю:
+   - ✅ Минимум 8 символов
+   - ✅ Хотя бы одна заглавная буква  
+   - ✅ Хотя бы одна цифра
+   - ✅ Хотя бы один специальный символ
 
-Ожидаемый результат:
-- В логах Edge Function появятся записи о созданных предложениях
-- В таблице `event_move_suggestions` появятся новые записи
-- В чате пользователя появятся сообщения от AI
-
-### Тест 2: Перенос события
-
-1. Открыть чат в приложении
-2. Увидеть карточку с предложением переноса
-3. Нажать "Написать участникам"
-4. Проверить, что письмо отправлено (статус в БД = 'email_sent')
-
-### Тест 3: Обработка ответа
-
-Симулировать webhook:
-
-\`\`\`bash
-curl -X POST https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-handle-email-reply \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "threadId": "test-thread-123",
-    "emailBody": "Да, давайте перенесем на это время",
-    "userId": "user-uuid-here"
-  }'
-\`\`\`
+**Ссылка на документацию:**
+https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
 ---
 
-## 📊 Мониторинг
+## 📋 КОМПОНЕНТЫ СИСТЕМЫ
 
-### Проверить статус Cron Job
+### База данных
 
-\`\`\`sql
-SELECT * FROM cron.job WHERE jobname = 'ai-week-planner-daily';
-\`\`\`
+**Основные таблицы:**
+- `events` - события календаря (Google/Microsoft)
+- `event_move_suggestions` - предложения AI по переносу
+- `chat_messages` - история чата с Gaia
+- `user_cycles` - данные менструального цикла
+- `ai_retry_logs` - логи повторных попыток
+- `ai_operation_metrics` - метрики производительности AI
+- `ai_error_notifications` - уведомления об ошибках
+- `api_rate_limits` - отслеживание лимитов запросов
 
-### Посмотреть последние запуски
+### Edge Functions
 
-\`\`\`sql
+**`ai-week-planner`** (ежедневно, cron)
+- Анализирует календарь на 7 дней вперед
+- Создает предложения по переносу событий
+- Учитывает фазу цикла и плотность расписания
+
+**`ai-chat`** (по запросу)
+- Обрабатывает сообщения пользователя
+- Rate limiting: 30 запросов/минуту
+- Сохраняет историю в БД
+
+**`ai-handle-event-move`** (по запросу)
+- Генерирует и отправляет письма участникам
+- Rate limiting: 10 запросов/минуту
+- Поддержка Gmail и Microsoft Graph API
+
+**`ai-generate-email-preview`** (по запросу)  
+- Генерирует preview письма через OpenAI
+- Rate limiting: 15 запросов/минуту
+
+**`generate-ai-suggestion`** (по запросу)
+- Генерирует советы для событий
+- Rate limiting: 20 запросов/минуту
+
+---
+
+## 📊 МОНИТОРИНГ
+
+### AI Monitoring Dashboard
+Перейдите на **`/ai-monitoring`** для просмотра:
+- ✅ Статистика AI операций (последние 7 дней)
+- ✅ Критические ошибки
+- ✅ Средние время выполнения
+- ✅ Success rate
+- ✅ Разбивка по типам операций
+
+### SQL запросы для мониторинга
+
+**Последние retry попытки:**
+```sql
+SELECT * FROM ai_retry_logs 
+ORDER BY created_at DESC LIMIT 50;
+```
+
+**Метрики за последние 24 часа:**
+```sql
+SELECT operation_type, 
+       COUNT(*) as total,
+       AVG(execution_time_ms) as avg_time_ms,
+       COUNT(*) FILTER (WHERE status = 'success') as success_count
+FROM ai_operation_metrics 
+WHERE created_at > NOW() - INTERVAL '1 day'
+GROUP BY operation_type;
+```
+
+**Критические ошибки (не resolved):**
+```sql
+SELECT * FROM ai_error_notifications 
+WHERE severity IN ('high', 'critical') 
+  AND resolved = false
+ORDER BY created_at DESC;
+```
+
+**Текущие rate limits:**
+```sql
+SELECT user_id, endpoint, request_count, window_start 
+FROM api_rate_limits 
+WHERE window_start > NOW() - INTERVAL '5 minutes'
+ORDER BY request_count DESC;
+```
+
+---
+
+## 🧪 ТЕСТИРОВАНИЕ
+
+### Тест 1: Rate Limiting
+```bash
+# Отправить 35 запросов подряд (лимит 30/мин)
+for i in {1..35}; do
+  curl -X POST https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-chat \
+    -H "Authorization: Bearer YOUR_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"message":"test","userId":"YOUR_USER_ID"}'
+  echo "Request $i"
+done
+```
+**Ожидается:** После 30 запросов - ответ 429 с заголовками rate limit
+
+### Тест 2: Cron Job (ручной запуск)
+```bash
+curl -X POST https://pytefsexxwtlropzkmxi.supabase.co/functions/v1/ai-week-planner \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5dGVmc2V4eHd0bHJvcHprbXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1MjIxOTEsImV4cCI6MjA3NDA5ODE5MX0.fPbLIqM08fdMuAO2vQO5mj-Zt3yBpTmmUXrwAV5fWg0"
+```
+**Ожидается:** Предложения в `event_move_suggestions`, сообщения в чате
+
+### Тест 3: Microsoft Event ID
+```sql
+-- Проверить, что Microsoft события используют правильное поле
+SELECT id, title, source, google_event_id, microsoft_event_id 
+FROM events 
+WHERE source = 'outlook'
+LIMIT 5;
+```
+**Ожидается:** `microsoft_event_id` заполнен, `google_event_id` = NULL
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+### Проблема: Rate limit срабатывает слишком часто
+
+**Решение 1:** Увеличить лимиты
+```typescript
+// supabase/functions/_shared/rate-limiter.ts
+'ai-chat': { maxRequests: 50, windowMs: 60000 }
+```
+
+**Решение 2:** Очистить старые записи вручную
+```sql
+DELETE FROM api_rate_limits WHERE window_start < NOW() - INTERVAL '1 hour';
+```
+
+### Проблема: Cron job не запускается
+
+**Проверка 1:** Расширения включены?
+```sql
+SELECT * FROM pg_extension WHERE extname IN ('pg_cron', 'pg_net');
+```
+
+**Проверка 2:** Job существует?
+```sql
+SELECT * FROM cron.job WHERE jobname LIKE '%planner%';
+```
+
+**Проверка 3:** Последние запуски
+```sql
 SELECT * FROM cron.job_run_details 
 WHERE jobid = (SELECT jobid FROM cron.job WHERE jobname = 'ai-week-planner-daily')
-ORDER BY start_time DESC
-LIMIT 10;
-\`\`\`
+ORDER BY start_time DESC LIMIT 5;
+```
 
-### Посмотреть логи Edge Functions
+### Проблема: Microsoft события не синхронизируются
 
-Supabase Dashboard → Edge Functions → [function name] → Logs
+**Проверка:** Токены актуальны?
+```sql
+SELECT user_id, provider, expires_at, 
+       (expires_at < NOW()) as is_expired
+FROM user_tokens 
+WHERE provider = 'microsoft';
+```
 
----
+### Проблема: AI не генерирует предложения
 
-## 🔧 Настройка
-
-### Изменить время запуска Cron
-
-\`\`\`sql
--- Запускать каждый день в 8:00 UTC (11:00 MSK)
-SELECT cron.schedule(
-  'ai-week-planner-daily',
-  '0 8 * * *',
-  ...
-);
-\`\`\`
-
-### Отключить Cron
-
-\`\`\`sql
-SELECT cron.unschedule('ai-week-planner-daily');
-\`\`\`
+**Чек-лист:**
+1. ✅ OpenAI API key настроен в Supabase Secrets
+2. ✅ У пользователя есть данные цикла (`user_cycles`)
+3. ✅ У пользователя есть события на ближайшие 7 дней
+4. ✅ Проверить логи edge function
+5. ✅ Проверить `ai_error_notifications`
 
 ---
 
-## 🐛 Troubleshooting
+## 🎯 СЛЕДУЮЩИЕ ШАГИ
 
-### Предложения не создаются
-
-1. Проверить, что у пользователей есть:
-   - Записи в `user_cycles`
-   - События на ближайшие 7 дней в `events`
-2. Проверить логи `ai-week-planner`
-3. Проверить, что OPENAI_API_KEY настроен в Supabase Secrets
-
-### Письма не отправляются
-
-1. Проверить токены в `user_tokens` (provider = 'google' или 'microsoft')
-2. Проверить, что у событий есть участники
-3. Проверить логи `ai-handle-event-move`
-
-### Ответы не обрабатываются
-
-1. Проверить, что webhook корректно настроен в Gmail/Outlook
-2. Проверить, что `email_thread_id` записан в `event_move_suggestions`
-3. Проверить логи `ai-handle-email-reply`
+1. ✅ **Включить Leaked Password Protection** (см. раздел 4)
+2. 📊 **Следить за метриками** на `/ai-monitoring`
+3. 🔍 **Мониторить rate limits** - возможно потребуется корректировка
+4. 🔔 **Настроить уведомления** о критических ошибках (опционально)
+5. 🧪 **Провести нагрузочное тестирование** rate limiting
 
 ---
 
-## 📚 Полезные ссылки
+## 🔗 ПОЛЕЗНЫЕ ССЫЛКИ
 
-- [Supabase Cron Jobs](https://supabase.com/docs/guides/database/extensions/pg_cron)
-- [Gmail Push Notifications](https://developers.google.com/gmail/api/guides/push)
-- [Microsoft Graph Webhooks](https://learn.microsoft.com/en-us/graph/webhooks)
-- [OpenAI API](https://platform.openai.com/docs/api-reference)
+
+- [Supabase Dashboard](https://supabase.com/dashboard/project/pytefsexxwtlropzkmxi)
+- [Edge Functions](https://supabase.com/dashboard/project/pytefsexxwtlropzkmxi/functions)
+- [Database Cron Jobs](https://supabase.com/dashboard/project/pytefsexxwtlropzkmxi/database/cron)
+- [Authentication Settings](https://supabase.com/dashboard/project/pytefsexxwtlropzkmxi/auth/providers)
+- [AI Monitoring Dashboard](/ai-monitoring)
+- [Supabase Cron Docs](https://supabase.com/docs/guides/database/extensions/pg_cron)
+- [Gmail API Docs](https://developers.google.com/gmail/api)
+- [Microsoft Graph Docs](https://learn.microsoft.com/en-us/graph/)
+- [OpenAI API Docs](https://platform.openai.com/docs)
 
 ---
 
-## 🎯 Следующие шаги
+## 🏁 ЧЕКЛИСТ ГОТОВНОСТИ
 
-1. ✅ Настроить Cron Job (Шаг 1)
-2. ✅ Протестировать ручной запуск (Тест 1)
-3. ⏳ Настроить Gmail/Outlook Webhooks (Шаг 3-4)
-4. ⏳ Протестировать полный цикл (Тесты 2-3)
+- [x] База данных: таблицы созданы
+- [x] Event ID: разделены для Google/Microsoft
+- [x] Cron Jobs: настроены и запущены
+- [x] Rate Limiting: активно
+- [ ] **Password Protection: ТРЕБУЕТСЯ ВКЛЮЧИТЬ ВРУЧНУЮ**
+- [x] Мониторинг: dashboard доступен
+- [x] Edge Functions: задеплоены
+
+**Осталось только включить Leaked Password Protection вручную в Supabase Dashboard!**
 
 Удачи! 🚀
+
