@@ -36,7 +36,8 @@ serve(async (req) => {
 
     let totalSuggestions = 0;
 
-    for (const { user_id } of users || []) {
+    // Параллельная обработка пользователей для ускорения
+    const userProcessingPromises = (users || []).map(async ({ user_id }) => {
       try {
         // Получить события на ближайшие 7 дней
         const now = new Date();
@@ -135,22 +136,44 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
 
               const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
               
-              const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${openAIApiKey}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  model: 'gpt-4o-mini',
-                  messages: [
-                    { role: 'system', content: 'Ты помощник по планированию с учетом менструального цикла. Отвечай только JSON.' },
-                    { role: 'user', content: aiPrompt }
-                  ],
-                  temperature: 0.7,
-                  max_tokens: 300,
-                }),
-              });
+              // Retry логика для API calls
+              let aiResponse;
+              let retries = 3;
+              
+              while (retries > 0) {
+                try {
+                  aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${openAIApiKey}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      model: 'gpt-5-nano-2025-08-07', // Быстрая модель для классификации
+                      messages: [
+                        { role: 'system', content: 'Ты помощник по планированию с учетом менструального цикла. Отвечай только JSON.' },
+                        { role: 'user', content: aiPrompt }
+                      ],
+                      max_completion_tokens: 250, // Новые модели используют max_completion_tokens
+                    }),
+                  });
+                  
+                  if (aiResponse.ok) break;
+                  
+                  if (aiResponse.status === 429 || aiResponse.status >= 500) {
+                    retries--;
+                    if (retries > 0) {
+                      await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries))); // Exponential backoff
+                      continue;
+                    }
+                  }
+                  break;
+                } catch (error) {
+                  retries--;
+                  if (retries === 0) throw error;
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
 
               if (!aiResponse.ok) {
                 console.error('OpenAI API error:', await aiResponse.text());
@@ -189,7 +212,6 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
                 });
 
               if (!suggestionError) {
-                totalSuggestions++;
                 console.log(`Created suggestion for user ${user_id}: move "${eventToMove.title}"`);
               }
 
@@ -202,15 +224,23 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
                   content: `📅 ${aiSuggestion.reason}\n\n${aiSuggestion.event_to_move} → ${newStartDate.toLocaleDateString('ru-RU')} в ${newStartDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}\n\nХочешь, чтобы я написал участникам?`
                 });
 
-              break; // Одно предложение на день
+              return 1; // Возвращаем 1 созданное предложение
             }
           }
         }
+        
+        return 0; // Нет предложений создано
 
+        return 0; // Возвращаем 0 предложений при успехе без создания
       } catch (userError) {
         console.error(`Error processing user ${user_id}:`, userError);
+        return 0;
       }
-    }
+    });
+
+    // Ждём завершения всех пользователей
+    const results = await Promise.all(userProcessingPromises);
+    totalSuggestions = results.reduce((sum, count) => sum + count, 0);
 
     console.log(`AI week planner completed: ${totalSuggestions} suggestions created`);
 

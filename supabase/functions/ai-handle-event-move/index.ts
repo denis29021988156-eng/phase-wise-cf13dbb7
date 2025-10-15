@@ -101,9 +101,27 @@ serve(async (req) => {
           .map((a: any) => a.email);
       }
     } else {
-      // Microsoft Graph API
-      // TODO: Получить участников из Outlook
-      participants = [];
+      // Microsoft Graph API - получить участников из Outlook
+      try {
+        const eventResponse = await fetch(
+          `https://graph.microsoft.com/v1.0/me/events/${event.google_event_id}`, // microsoft event id хранится в том же поле
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (eventResponse.ok) {
+          const eventData = await eventResponse.json();
+          participants = (eventData.attendees || [])
+            .filter((a: any) => a.emailAddress?.address)
+            .map((a: any) => a.emailAddress.address);
+        }
+      } catch (error) {
+        console.error('Error fetching Outlook event participants:', error);
+        participants = [];
+      }
     }
 
     // Если нет участников, просто обновить событие локально
@@ -132,19 +150,21 @@ serve(async (req) => {
       );
     }
 
-    // Использовать кастомный текст если передан, иначе сгенерировать
-    let emailSubject = customSubject || `Предложение перенести: ${event.title}`;
-    let emailBody = customBody || '';
+    // Использовать кастомный текст если передан
+    let emailSubject = customSubject;
+    let emailBody = customBody;
     
-    // Если кастомный текст не передан, сгенерировать через AI
-    if (!customBody) {
+    // Кастомный текст уже приходит от ai-generate-email-preview
+    if (!emailSubject || !emailBody) {
       const { data: userProfile } = await supabaseClient
         .from('user_profiles')
         .select('name')
         .eq('user_id', userId)
         .single();
 
-      const userName = userProfile?.name || 'Пользователь';
+      // Fallback на простой шаблон
+      emailSubject = `Предложение перенести: ${event.title}`;
+      const userName = (await supabaseClient.from('user_profiles').select('name').eq('user_id', userId).single()).data?.name || 'Пользователь';
       const newStartDate = new Date(suggestion.suggested_new_start);
       
       emailBody = `Здравствуйте!
@@ -162,38 +182,86 @@ ${userName}`;
     let emailSent = false;
     let threadId = '';
 
-    if (emailProvider === 'google') {
-      // Отправить через Gmail API
-      const message = [
-        'Content-Type: text/plain; charset=utf-8',
-        'MIME-Version: 1.0',
-        `To: ${participants.join(', ')}`,
-        `Subject: ${emailSubject}`,
-        '',
-        emailBody
-      ].join('\n');
+    // Retry логика для отправки
+    let sendRetries = 3;
+    
+    while (sendRetries > 0 && !emailSent) {
+      try {
+        if (emailProvider === 'google') {
+          // Отправить через Gmail API
+          const message = [
+            'Content-Type: text/plain; charset=utf-8',
+            'MIME-Version: 1.0',
+            `To: ${participants.join(', ')}`,
+            `Subject: ${emailSubject}`,
+            '',
+            emailBody
+          ].join('\n');
 
-      const encodedMessage = btoa(unescape(encodeURIComponent(message)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+          const encodedMessage = btoa(unescape(encodeURIComponent(message)))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
 
-      const sendResponse = await fetch(
-        'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ raw: encodedMessage }),
+          const sendResponse = await fetch(
+            'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ raw: encodedMessage }),
+            }
+          );
+
+          if (sendResponse.ok) {
+            const sendData = await sendResponse.json();
+            emailSent = true;
+            threadId = sendData.threadId;
+          } else if (sendResponse.status >= 500) {
+            throw new Error('Server error, retrying...');
+          }
+        } else {
+          // Microsoft Graph API
+          const sendResponse = await fetch(
+            'https://graph.microsoft.com/v1.0/me/sendMail',
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: {
+                  subject: emailSubject,
+                  body: {
+                    contentType: 'Text',
+                    content: emailBody
+                  },
+                  toRecipients: participants.map(email => ({
+                    emailAddress: { address: email }
+                  }))
+                }
+              }),
+            }
+          );
+
+          if (sendResponse.ok) {
+            emailSent = true;
+          } else if (sendResponse.status >= 500) {
+            throw new Error('Server error, retrying...');
+          }
         }
-      );
-
-      if (sendResponse.ok) {
-        const sendData = await sendResponse.json();
-        emailSent = true;
-        threadId = sendData.threadId;
+        
+        if (emailSent) break;
+        sendRetries--;
+      } catch (error) {
+        console.error(`Send attempt failed, ${sendRetries - 1} retries left:`, error);
+        sendRetries--;
+        if (sendRetries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (4 - sendRetries)));
+        }
       }
     }
 
