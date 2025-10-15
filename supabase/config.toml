@@ -3,6 +3,15 @@ project_id = "pytefsexxwtlropzkmxi"
 [functions.generate-ai-suggestion]
 verify_jwt = true
 
+[functions.ai-week-planner]
+verify_jwt = false
+
+[functions.ai-handle-event-move]
+verify_jwt = true
+
+[functions.ai-handle-email-reply]
+verify_jwt = false
+
 [functions.sync-google-calendar]
 verify_jwt = true
 

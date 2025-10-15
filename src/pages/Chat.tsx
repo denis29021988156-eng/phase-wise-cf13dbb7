@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageCircle, Send, Brain, Sparkles, ChevronDown } from 'lucide-react';
+import { MessageCircle, Send, Brain, Sparkles, ChevronDown, Calendar, Clock } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ interface Message {
   type: 'user' | 'ai';
   content: string;
   timestamp: Date;
+  suggestionId?: string; // ID предложения по переносу
 }
 
 const Chat = () => {
@@ -23,15 +24,17 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [showFullHistory, setShowFullHistory] = useState(false);
+  const [movingSuggestion, setMovingSuggestion] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load chat history when component mounts
+  // Load chat history and suggestions when component mounts
   useEffect(() => {
     if (!user) return;
 
@@ -64,6 +67,18 @@ const Chat = () => {
             }
           ]);
         }
+
+        // Загрузить pending предложения
+        const { data: suggestions } = await supabase
+          .from('event_move_suggestions')
+          .select('*, events(*)')
+          .eq('user_id', user.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (suggestions) {
+          setPendingSuggestions(suggestions);
+        }
       } catch (error) {
         console.error('Error loading chat history:', error);
         // Show welcome message on error
@@ -81,6 +96,61 @@ const Chat = () => {
     };
 
     loadChatHistory();
+
+    // Подписаться на новые сообщения
+    const channel = supabase
+      .channel('chat-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          if (newMsg.role === 'assistant') {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: newMsg.id,
+                type: 'ai',
+                content: newMsg.content,
+                timestamp: new Date(newMsg.created_at),
+              },
+            ]);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'event_move_suggestions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          const newSuggestion = payload.new as any;
+          // Перезагрузить предложения
+          const { data: suggestions } = await supabase
+            .from('event_move_suggestions')
+            .select('*, events(*)')
+            .eq('user_id', user.id)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+          
+          if (suggestions) {
+            setPendingSuggestions(suggestions);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleSendMessage = async () => {
@@ -151,6 +221,57 @@ const Chat = () => {
     }
   };
 
+  const handleMoveSuggestion = async (suggestionId: string) => {
+    if (!user) return;
+    
+    setMovingSuggestion(suggestionId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-handle-event-move', {
+        body: { suggestionId }
+      });
+
+      if (error) throw error;
+
+      // Обновить статус предложения локально
+      setPendingSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+
+      toast({
+        title: 'Отправлено',
+        description: data.message || 'Письмо отправлено участникам',
+      });
+    } catch (error) {
+      console.error('Error handling event move:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить письмо',
+        variant: 'destructive',
+      });
+    } finally {
+      setMovingSuggestion(null);
+    }
+  };
+
+  const handleRejectSuggestion = async (suggestionId: string) => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('event_move_suggestions')
+        .update({ status: 'rejected' })
+        .eq('id', suggestionId);
+
+      setPendingSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+
+      toast({
+        title: 'Отклонено',
+        description: 'Предложение отклонено',
+      });
+    } catch (error) {
+      console.error('Error rejecting suggestion:', error);
+    }
+  };
+
   // Show only recent messages if history is collapsed
   const displayedMessages = showFullHistory 
     ? messages 
@@ -197,6 +318,60 @@ const Chat = () => {
                 </div>
               ) : (
                 <>
+                  {/* Показать pending предложения вверху */}
+                  {pendingSuggestions.map((suggestion) => (
+                    <div key={suggestion.id} className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                      <div className="flex items-start space-x-3">
+                        <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground mb-2">
+                            {suggestion.suggestion_text}
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-3">
+                            {suggestion.reason}
+                          </p>
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              {new Date(suggestion.suggested_new_start).toLocaleDateString('ru-RU', {
+                                weekday: 'short',
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleMoveSuggestion(suggestion.id)}
+                              disabled={movingSuggestion === suggestion.id}
+                              className="bg-primary hover:bg-primary/90"
+                            >
+                              {movingSuggestion === suggestion.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                                  Отправляю...
+                                </>
+                              ) : (
+                                '✉️ Написать участникам'
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRejectSuggestion(suggestion.id)}
+                              disabled={movingSuggestion === suggestion.id}
+                            >
+                              Отклонить
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
                   {displayedMessages.map((msg) => (
                 <div
                   key={msg.id}

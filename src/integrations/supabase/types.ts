@@ -73,6 +73,62 @@ export type Database = {
           },
         ]
       }
+      event_move_suggestions: {
+        Row: {
+          created_at: string
+          email_sent_at: string | null
+          email_thread_id: string | null
+          event_id: string
+          id: string
+          participants: string[] | null
+          reason: string
+          status: string
+          suggested_new_end: string
+          suggested_new_start: string
+          suggestion_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_sent_at?: string | null
+          email_thread_id?: string | null
+          event_id: string
+          id?: string
+          participants?: string[] | null
+          reason: string
+          status?: string
+          suggested_new_end: string
+          suggested_new_start: string
+          suggestion_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_sent_at?: string | null
+          email_thread_id?: string | null
+          event_id?: string
+          id?: string
+          participants?: string[] | null
+          reason?: string
+          status?: string
+          suggested_new_end?: string
+          suggested_new_start?: string
+          suggestion_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_move_suggestions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
