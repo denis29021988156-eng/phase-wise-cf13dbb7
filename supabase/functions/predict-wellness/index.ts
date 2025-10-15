@@ -92,13 +92,25 @@ serve(async (req) => {
             `${s.date}: wellness=${s.wellness_index}`
           ).join(', ') || 'No history';
 
+          // Build profile context for more personalized predictions
+          let profileInfo = '';
+          if (profile) {
+            const parts = [];
+            if (profile.age) parts.push(`Age: ${profile.age}`);
+            if (profile.height) parts.push(`Height: ${profile.height}cm`);
+            if (profile.weight) parts.push(`Weight: ${profile.weight}kg`);
+            if (parts.length > 0) {
+              profileInfo = `\nUser data: ${parts.join(', ')}`;
+            }
+          }
+
           const prompt = `Based on menstrual cycle data, predict wellness (0-100) for next 30 days.
 Cycle: ${cycle?.cycle_length || 28} days, menstrual: ${cycle?.menstrual_length || 5} days
-Recent wellness: ${symptomsContext}
-Age: ${profile?.age || 'unknown'}
+Recent wellness: ${symptomsContext}${profileInfo}
 
 Return ONLY a JSON array with 30 objects: [{"day":1,"wellness":65,"note":"brief"}]
-Phases: menstruation (low 35-55), follicular (rising 65-85), ovulation (peak 80-95), luteal (moderate 50-70)`;
+Phases: menstruation (low 35-55), follicular (rising 65-85), ovulation (peak 80-95), luteal (moderate 50-70)
+Consider user's physical parameters for more accurate energy and activity recommendations.`;
 
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',

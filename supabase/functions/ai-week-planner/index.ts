@@ -68,6 +68,13 @@ serve(async (req) => {
 
         if (!cycleData) continue;
 
+        // Получить профиль пользователя (age, height, weight)
+        const { data: userProfile } = await supabaseClient
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user_id)
+          .maybeSingle();
+
         // Получить недавние логи симптомов
         const { data: recentLogs } = await supabaseClient
           .from('symptom_logs')
@@ -112,6 +119,18 @@ serve(async (req) => {
 
             // Если промежуток < 60 минут или это чувствительная фаза с 3+ событиями
             if (gapMinutes < 60 || (isSensitivePhase && dayEvents.length >= 3)) {
+              // Построить контекст профиля
+              let profileContext = '';
+              if (userProfile) {
+                const parts = [];
+                if (userProfile.age) parts.push(`Возраст: ${userProfile.age} лет`);
+                if (userProfile.height) parts.push(`Рост: ${userProfile.height} см`);
+                if (userProfile.weight) parts.push(`Вес: ${userProfile.weight} кг`);
+                if (parts.length > 0) {
+                  profileContext = `\n\nДанные пользователя:\n${parts.join('\n')}\n(Учитывай при оценке нагрузки и рекомендациях по активности)`;
+                }
+              }
+
               // Запросить AI для анализа
               const aiPrompt = `Ты AI-ассистент по планированию. Проанализируй календарь пользователя.
 
@@ -122,9 +141,9 @@ serve(async (req) => {
 ${dayEvents.map((e, idx) => `${idx + 1}. ${e.title} (${new Date(e.start_time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} - ${new Date(e.end_time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})`).join('\n')}
 
 Недавнее самочувствие:
-${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон ${log.sleep_quality}/10, Стресс ${log.stress_level}/10`).join('\n') || 'Нет данных'}
+${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон ${log.sleep_quality}/10, Стресс ${log.stress_level}/10`).join('\n') || 'Нет данных'}${profileContext}
 
-ЗАДАЧА: Если видишь перегрузку или плотное расписание в неблагоприятную фазу, предложи перенести ОДНО конкретное событие на другой день/время. 
+ЗАДАЧА: Если видишь перегрузку или плотное расписание в неблагоприятную фазу, предложи перенести ОДНО конкретное событие на другой день/время. Учитывай физические параметры пользователя при оценке допустимой нагрузки.
 
 Ответь в формате JSON:
 {

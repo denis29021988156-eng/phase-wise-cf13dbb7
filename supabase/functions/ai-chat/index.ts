@@ -81,7 +81,7 @@ serve(async (req) => {
       );
     }
 
-    // Get or create user profile
+    // Get or create user profile (with age, height, weight for personalized advice)
     let { data: profile } = await supabaseClient
       .from('user_profiles')
       .select('*')
@@ -97,6 +97,20 @@ serve(async (req) => {
       
       if (profileError) throw profileError;
       profile = newProfile;
+    }
+
+    // Build profile context for AI
+    let profileContext = '';
+    if (profile) {
+      const profileParts = [];
+      if (profile.name) profileParts.push(`Имя: ${profile.name}`);
+      if (profile.age) profileParts.push(`Возраст: ${profile.age} лет`);
+      if (profile.height) profileParts.push(`Рост: ${profile.height} см`);
+      if (profile.weight) profileParts.push(`Вес: ${profile.weight} кг`);
+      
+      if (profileParts.length > 0) {
+        profileContext = `\n\nДанные пользователя:\n${profileParts.join('\n')}`;
+      }
     }
 
     // Get conversation history (last 15 messages for context)

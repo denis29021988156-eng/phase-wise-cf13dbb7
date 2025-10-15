@@ -122,20 +122,26 @@ serve(async (req) => {
       console.error('Error fetching participants:', error);
     }
 
-    // Получить профиль пользователя
+    // Получить профиль пользователя (с физическими параметрами)
     const { data: userProfile } = await supabaseClient
       .from('user_profiles')
-      .select('name')
+      .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     const userName = userProfile?.name || 'Пользователь';
+    
+    // Добавить контекст профиля для более персонализированных писем
+    let profileNote = '';
+    if (userProfile?.age || userProfile?.height || userProfile?.weight) {
+      profileNote = ' (учитывая личные особенности)';
+    }
 
     // Сгенерировать текст письма с помощью AI
     const newStartDate = new Date(suggestion.suggested_new_start);
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
-    const aiPrompt = `Ты помощник, который пишет письма от имени ${userName} для переноса встреч.
+    const aiPrompt = `Ты помощник, который пишет письма от имени ${userName} для переноса встреч${profileNote}.
 
 Контекст:
 - Встреча: "${event.title}"

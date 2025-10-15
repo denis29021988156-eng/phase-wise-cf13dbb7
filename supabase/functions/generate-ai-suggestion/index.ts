@@ -66,12 +66,25 @@ serve(async (req) => {
       throw new Error('Пользователь не аутентифицирован');
     }
 
-    // Get user profile for name
+    // Get user profile for name and physical parameters
     const { data: profile } = await supabaseClient
       .from('user_profiles')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
+
+    // Build profile context
+    let profileContext = '';
+    if (profile) {
+      const profileParts = [];
+      if (profile.age) profileParts.push(`Возраст: ${profile.age} лет`);
+      if (profile.height) profileParts.push(`Рост: ${profile.height} см`);
+      if (profile.weight) profileParts.push(`Вес: ${profile.weight} кг`);
+      
+      if (profileParts.length > 0) {
+        profileContext = `\n\nДанные пользователя:\n${profileParts.join('\n')}\n(Используй для персонализации советов по активности и питанию)`;
+      }
+    }
 
     // Get today's symptom log
     const today = new Date().toISOString().split('T')[0];
