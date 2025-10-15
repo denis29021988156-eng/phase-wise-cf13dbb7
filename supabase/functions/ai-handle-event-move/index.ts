@@ -132,24 +132,101 @@ serve(async (req) => {
       );
     }
 
-    // Отправить письмо участникам
+    // Получить профиль пользователя для персонализации
+    const { data: userProfile } = await supabaseClient
+      .from('user_profiles')
+      .select('name')
+      .eq('user_id', userId)
+      .single();
+
+    const userName = userProfile?.name || 'Пользователь';
+
+    // Сгенерировать текст письма с помощью AI
     const newStartDate = new Date(suggestion.suggested_new_start);
-    const emailSubject = `Предложение перенести: ${event.title}`;
-    const emailBody = `
-Здравствуйте!
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    const aiPrompt = `Ты помощник, который пишет письма от имени ${userName} для переноса встреч.
 
-Я предлагаю перенести встречу "${event.title}" на новое время:
+Контекст:
+- Встреча: "${event.title}"
+- Текущее время: ${new Date(event.start_time).toLocaleString('ru-RU', { 
+  weekday: 'long', 
+  day: 'numeric', 
+  month: 'long', 
+  hour: '2-digit', 
+  minute: '2-digit' 
+})}
+- Предлагаемое время: ${newStartDate.toLocaleString('ru-RU', { 
+  weekday: 'long', 
+  day: 'numeric', 
+  month: 'long', 
+  hour: '2-digit', 
+  minute: '2-digit' 
+})}
+- Причина переноса: ${suggestion.reason}
 
-Текущее время: ${new Date(event.start_time).toLocaleString('ru-RU')}
-Новое время: ${newStartDate.toLocaleString('ru-RU')}
+ЗАДАЧА: Напиши вежливое, короткое письмо участникам с предложением переноса. 
+- Тон: дружелюбный, но профессиональный
+- От первого лица (от ${userName})
+- 3-4 предложения максимум
+- Спроси, подходит ли новое время
+- Не нужно подписи
+
+Напиши только текст письма, без темы.`;
+
+    let emailBody = '';
+    
+    try {
+      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'Ты помощник для написания деловых писем. Пиши кратко и естественно.' },
+            { role: 'user', content: aiPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 200,
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        emailBody = aiData.choices[0].message.content.trim();
+        console.log('AI generated email body:', emailBody);
+      } else {
+        // Fallback к шаблонному письму
+        emailBody = `Здравствуйте!
+
+Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
 
 Причина: ${suggestion.reason}
 
-Подходит ли вам новое время? Ответьте на это письмо.
+Подходит ли вам новое время?
 
-С уважением
-`;
+С уважением,
+${userName}`;
+      }
+    } catch (aiError) {
+      console.error('AI generation failed, using template:', aiError);
+      // Fallback к шаблонному письму
+      emailBody = `Здравствуйте!
 
+Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
+
+Причина: ${suggestion.reason}
+
+Подходит ли вам новое время?
+
+С уважением,
+${userName}`;
+    }
+
+    const emailSubject = `Предложение перенести: ${event.title}`;
     let emailSent = false;
     let threadId = '';
 
