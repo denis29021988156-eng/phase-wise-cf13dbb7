@@ -512,33 +512,6 @@ const Calendar = () => {
             </>
           )}
         </Button>
-      </div>
-
-      {/* Week Navigation */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <CardTitle className="text-lg">
-              {(() => {
-                // Show month and year for the selected date if it's different from the first week date
-                const selectedDateObj = new Date(selectedDate);
-                const firstWeekDate = weekDates[0];
-                
-                if (selectedDateObj.getMonth() !== firstWeekDate.getMonth() || 
-                    selectedDateObj.getFullYear() !== firstWeekDate.getFullYear()) {
-                  return selectedDateObj.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-                }
-                
-                return firstWeekDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-              })()}
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
-              <ChevronRight className="h-4 w-4" />
-        </Button>
-        
         {!checkingToken && (
           hasMicrosoftToken ? (
             <Button
@@ -587,6 +560,32 @@ const Calendar = () => {
           )
         )}
       </div>
+
+      {/* Week Navigation */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={() => navigateWeek('prev')}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle className="text-lg">
+              {(() => {
+                // Show month and year for the selected date if it's different from the first week date
+                const selectedDateObj = new Date(selectedDate);
+                const firstWeekDate = weekDates[0];
+                
+                if (selectedDateObj.getMonth() !== firstWeekDate.getMonth() || 
+                    selectedDateObj.getFullYear() !== firstWeekDate.getFullYear()) {
+                  return selectedDateObj.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+                }
+                
+                return firstWeekDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+              })()}
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex justify-around space-x-2">
