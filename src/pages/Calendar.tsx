@@ -181,9 +181,23 @@ const Calendar = () => {
       if (!tokenData) {
         toast({
           title: "Подключение Google",
-          description: "Перенаправление на авторизацию Google...",
+          description: "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Google...",
         });
-        await linkGoogleIdentity();
+        try {
+          await linkGoogleIdentity();
+        } catch (err: any) {
+          const msg = String(err?.message || err);
+          console.error('Link Google identity error:', err);
+          toast({
+            title: "Не удалось подключить календарь",
+            description: msg.includes('manual_linking_disabled') || msg.includes('Manual linking is disabled')
+              ? "В Supabase отключён manual linking. Включите manual linking в настройках провайдера Google и повторите попытку."
+              : msg.includes('unauthorized_client')
+              ? "Настройка Google OAuth некорректна (unauthorized_client). Проверьте Redirect URI и доступы в Google Cloud."
+              : "Произошла ошибка при привязке аккаунта Google. Попробуйте ещё раз.",
+            variant: "destructive",
+          });
+        }
         return; // After redirect, user will be back and can sync again
       }
 
@@ -237,16 +251,30 @@ const Calendar = () => {
         .from('user_tokens')
         .select('access_token')
         .eq('user_id', user.id)
-        .eq('provider', 'azure')
+        .eq('provider', 'microsoft')
         .maybeSingle();
 
       // If no token exists, link Microsoft identity first
       if (!tokenData) {
         toast({
           title: "Подключение Microsoft",
-          description: "Перенаправление на авторизацию Microsoft...",
+          description: "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Microsoft...",
         });
-        await linkMicrosoftIdentity();
+        try {
+          await linkMicrosoftIdentity();
+        } catch (err: any) {
+          const msg = String(err?.message || err);
+          console.error('Link Microsoft identity error:', err);
+          toast({
+            title: "Не удалось подключить календарь",
+            description: msg.includes('manual_linking_disabled') || msg.includes('Manual linking is disabled')
+              ? "В Supabase отключён manual linking. Включите manual linking в настройках провайдера Microsoft и повторите попытку."
+              : msg.includes('unauthorized_client')
+              ? "Настройка Microsoft OAuth некорректна (unauthorized_client). Проверьте тип аккаунтов и Redirect URI в Azure."
+              : "Произошла ошибка при привязке аккаунта Microsoft. Попробуйте ещё раз.",
+            variant: "destructive",
+          });
+        }
         return; // After redirect, user will be back and can sync again
       }
 
