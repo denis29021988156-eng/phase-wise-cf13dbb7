@@ -245,12 +245,12 @@ ${userName}`;
           const sendResponse = await withTimeout(
             fetch(
               'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-              },
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({ raw: encodedMessage }),
               }
             ),
@@ -262,16 +262,24 @@ ${userName}`;
             const sendData = await sendResponse.json();
             emailSent = true;
             threadId = sendData.threadId;
-          } else if (sendResponse.status >= 500) {
+          } else {
+            const bodyText = await sendResponse.text();
             await logRetryAttempt({
               supabaseClient,
               userId: userId!,
               operationType: 'email_send_gmail',
               attemptNumber: 4 - sendRetries,
               httpStatus: sendResponse.status,
-              errorMessage: `Gmail API error: ${sendResponse.status}`,
+              errorMessage: `Gmail API error: ${sendResponse.status} ${bodyText}`,
             });
-            throw new Error('Server error, retrying...');
+            // Не ретраим 4xx, ретраим 5xx
+            if (sendResponse.status >= 500) {
+              throw new Error('Gmail 5xx error, retrying...');
+            } else {
+              // прервать дальнейшие попытки
+              sendRetries = 1;
+              throw new Error('Gmail 4xx error, stopping retries');
+            }
           }
         } else {
           // Microsoft Graph API с таймаутом
@@ -304,16 +312,23 @@ ${userName}`;
 
           if (sendResponse.ok) {
             emailSent = true;
-          } else if (sendResponse.status >= 500) {
+          } else {
+            const bodyText = await sendResponse.text();
             await logRetryAttempt({
               supabaseClient,
               userId: userId!,
               operationType: 'email_send_microsoft',
               attemptNumber: 4 - sendRetries,
               httpStatus: sendResponse.status,
-              errorMessage: `Microsoft Graph API error: ${sendResponse.status}`,
+              errorMessage: `Microsoft Graph API error: ${sendResponse.status} ${bodyText}`,
             });
-            throw new Error('Server error, retrying...');
+            // Не ретраим 4xx, ретраим 5xx
+            if (sendResponse.status >= 500) {
+              throw new Error('Microsoft 5xx error, retrying...');
+            } else {
+              sendRetries = 1;
+              throw new Error('Microsoft 4xx error, stopping retries');
+            }
           }
         }
         

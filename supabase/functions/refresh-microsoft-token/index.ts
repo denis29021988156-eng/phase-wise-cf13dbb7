@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       .from('user_tokens')
       .select('access_token, refresh_token, expires_at')
       .eq('user_id', userId)
-      .eq('provider', 'microsoft')
+      .eq('provider', 'azure')
       .single();
 
     if (tokenError || !tokenData) {
@@ -78,13 +78,13 @@ Deno.serve(async (req) => {
         expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
       })
       .eq('user_id', userId)
-      .eq('provider', 'microsoft');
+      .eq('provider', 'azure');
 
     const mask = (t?: string) => (t ? `${t.slice(0,5)}...${t.slice(-5)}` : 'undefined');
     console.log('Refreshed Microsoft access token (masked):', mask(refreshData.access_token));
 
     return new Response(
-      JSON.stringify({ success: true, accessToken: refreshData.access_token, expiresIn: refreshData.expires_in }),
+      JSON.stringify({ access_token: refreshData.access_token, expires_in: refreshData.expires_in }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
