@@ -84,22 +84,42 @@ serve(async (req) => {
     const accessToken = refreshResponse.data.access_token;
 
     // Получить участников события
-    if (emailProvider === 'google' && event.google_event_id) {
-      const eventResponse = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.google_event_id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
-      );
+    try {
+      if (emailProvider === 'google' && event.google_event_id) {
+        const eventResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.google_event_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
 
-      if (eventResponse.ok) {
-        const eventData = await eventResponse.json();
-        participants = (eventData.attendees || [])
-          .filter((a: any) => a.email)
-          .map((a: any) => a.email);
+        if (eventResponse.ok) {
+          const eventData = await eventResponse.json();
+          participants = (eventData.attendees || [])
+            .filter((a: any) => a.email)
+            .map((a: any) => a.email);
+        }
+      } else if (emailProvider === 'microsoft' && event.google_event_id) {
+        const eventResponse = await fetch(
+          `https://graph.microsoft.com/v1.0/me/events/${event.google_event_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (eventResponse.ok) {
+          const eventData = await eventResponse.json();
+          participants = (eventData.attendees || [])
+            .filter((a: any) => a.emailAddress?.address)
+            .map((a: any) => a.emailAddress.address);
+        }
       }
+    } catch (error) {
+      console.error('Error fetching participants:', error);
     }
 
     // Получить профиль пользователя
@@ -145,44 +165,52 @@ serve(async (req) => {
 Напиши только текст письма, без темы.`;
 
     let emailBody = '';
+    let retries = 3;
     
-    try {
-      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'Ты помощник для написания деловых писем. Пиши кратко и естественно.' },
-            { role: 'user', content: aiPrompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 200,
-        }),
-      });
+    // Retry логика для AI генерации
+    while (retries > 0 && !emailBody) {
+      try {
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-5-nano-2025-08-07', // Быстрая модель для генерации текста
+            messages: [
+              { role: 'system', content: 'Ты помощник для написания деловых писем. Пиши кратко и естественно.' },
+              { role: 'user', content: aiPrompt }
+            ],
+            max_completion_tokens: 200, // Новые модели используют max_completion_tokens
+          }),
+        });
 
-      if (aiResponse.ok) {
-        const aiData = await aiResponse.json();
-        emailBody = aiData.choices[0].message.content.trim();
-        console.log('AI generated email body:', emailBody);
-      } else {
-        // Fallback к шаблонному письму
-        emailBody = `Здравствуйте!
-
-Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
-
-Причина: ${suggestion.reason}
-
-Подходит ли вам новое время?
-
-С уважением,
-${userName}`;
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          emailBody = aiData.choices[0].message.content.trim();
+          console.log('AI generated email body:', emailBody);
+          break;
+        } else if (aiResponse.status === 429 || aiResponse.status >= 500) {
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
+            continue;
+          }
+        }
+        break;
+      } catch (aiError) {
+        console.error(`AI generation attempt failed, ${retries - 1} retries left:`, aiError);
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-    } catch (aiError) {
-      console.error('AI generation failed, using template:', aiError);
+    }
+    
+    // Fallback если AI не сработал
+    if (!emailBody) {
+      console.log('Using fallback template');
       emailBody = `Здравствуйте!
 
 Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.

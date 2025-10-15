@@ -353,6 +353,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_rejected_suggestions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_ai_suggestion_content: {
         Args: {
           cycle_day: number
