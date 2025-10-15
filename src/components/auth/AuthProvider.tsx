@@ -9,6 +9,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithMicrosoft: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  linkGoogleIdentity: () => Promise<void>;
   linkMicrosoftIdentity: () => Promise<void>;
   linkAppleIdentity: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -66,6 +67,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (error) {
       console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  };
+
+  const linkGoogleIdentity = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        scopes: 'https://www.googleapis.com/auth/calendar',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
+    });
+    
+    if (error) {
+      console.error('Error linking Google identity:', error);
       throw error;
     }
   };
@@ -155,6 +177,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signInWithGoogle,
     signInWithMicrosoft,
     signInWithApple,
+    linkGoogleIdentity,
     linkMicrosoftIdentity,
     linkAppleIdentity,
     signOut,

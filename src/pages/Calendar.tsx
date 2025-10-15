@@ -32,7 +32,7 @@ interface UserCycle {
 }
 
 const Calendar = () => {
-  const { user } = useAuth();
+  const { user, linkGoogleIdentity, linkMicrosoftIdentity } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -169,6 +169,25 @@ const Calendar = () => {
     
     setGoogleLoading(true);
     try {
+      // Check if user already has Google token
+      const { data: tokenData } = await supabase
+        .from('user_tokens')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .maybeSingle();
+
+      // If no token exists, link Google identity first
+      if (!tokenData) {
+        toast({
+          title: "Подключение Google",
+          description: "Перенаправление на авторизацию Google...",
+        });
+        await linkGoogleIdentity();
+        return; // After redirect, user will be back and can sync again
+      }
+
+      // Token exists, proceed with sync
       const { data, error } = await supabase.functions.invoke('sync-google-calendar', {
         body: { userId: user.id }
       });
@@ -188,7 +207,7 @@ const Calendar = () => {
           title: 'Календарь синхронизирован',
           description: data.message || `Загружено ${data?.eventsCount || 0} событий`,
         });
-        loadEvents(); // Refresh events
+        loadEvents();
       } else {
         toast({
           title: "Ошибка",
@@ -213,6 +232,25 @@ const Calendar = () => {
 
     setOutlookLoading(true);
     try {
+      // Check if user already has Microsoft token
+      const { data: tokenData } = await supabase
+        .from('user_tokens')
+        .select('access_token')
+        .eq('user_id', user.id)
+        .eq('provider', 'azure')
+        .maybeSingle();
+
+      // If no token exists, link Microsoft identity first
+      if (!tokenData) {
+        toast({
+          title: "Подключение Microsoft",
+          description: "Перенаправление на авторизацию Microsoft...",
+        });
+        await linkMicrosoftIdentity();
+        return; // After redirect, user will be back and can sync again
+      }
+
+      // Token exists, proceed with sync
       const { data, error } = await supabase.functions.invoke('sync-outlook-calendar', {
         body: { userId: user.id }
       });
