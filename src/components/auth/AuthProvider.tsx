@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',  
       options: {
         redirectTo: redirectUrl,
-        scopes: 'https://www.googleapis.com/auth/calendar',
+        scopes: 'openid profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
-        scopes: 'https://www.googleapis.com/auth/calendar',
+        scopes: 'openid profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
