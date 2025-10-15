@@ -22,7 +22,7 @@ serve(async (req) => {
       }
     );
 
-    const { suggestionId } = await req.json();
+    const { suggestionId, customSubject, customBody } = await req.json();
 
     console.log('Handling event move for suggestion:', suggestionId);
 
@@ -132,88 +132,21 @@ serve(async (req) => {
       );
     }
 
-    // Получить профиль пользователя для персонализации
-    const { data: userProfile } = await supabaseClient
-      .from('user_profiles')
-      .select('name')
-      .eq('user_id', userId)
-      .single();
-
-    const userName = userProfile?.name || 'Пользователь';
-
-    // Сгенерировать текст письма с помощью AI
-    const newStartDate = new Date(suggestion.suggested_new_start);
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    // Использовать кастомный текст если передан, иначе сгенерировать
+    let emailSubject = customSubject || `Предложение перенести: ${event.title}`;
+    let emailBody = customBody || '';
     
-    const aiPrompt = `Ты помощник, который пишет письма от имени ${userName} для переноса встреч.
+    // Если кастомный текст не передан, сгенерировать через AI
+    if (!customBody) {
+      const { data: userProfile } = await supabaseClient
+        .from('user_profiles')
+        .select('name')
+        .eq('user_id', userId)
+        .single();
 
-Контекст:
-- Встреча: "${event.title}"
-- Текущее время: ${new Date(event.start_time).toLocaleString('ru-RU', { 
-  weekday: 'long', 
-  day: 'numeric', 
-  month: 'long', 
-  hour: '2-digit', 
-  minute: '2-digit' 
-})}
-- Предлагаемое время: ${newStartDate.toLocaleString('ru-RU', { 
-  weekday: 'long', 
-  day: 'numeric', 
-  month: 'long', 
-  hour: '2-digit', 
-  minute: '2-digit' 
-})}
-- Причина переноса: ${suggestion.reason}
-
-ЗАДАЧА: Напиши вежливое, короткое письмо участникам с предложением переноса. 
-- Тон: дружелюбный, но профессиональный
-- От первого лица (от ${userName})
-- 3-4 предложения максимум
-- Спроси, подходит ли новое время
-- Не нужно подписи
-
-Напиши только текст письма, без темы.`;
-
-    let emailBody = '';
-    
-    try {
-      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'Ты помощник для написания деловых писем. Пиши кратко и естественно.' },
-            { role: 'user', content: aiPrompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 200,
-        }),
-      });
-
-      if (aiResponse.ok) {
-        const aiData = await aiResponse.json();
-        emailBody = aiData.choices[0].message.content.trim();
-        console.log('AI generated email body:', emailBody);
-      } else {
-        // Fallback к шаблонному письму
-        emailBody = `Здравствуйте!
-
-Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
-
-Причина: ${suggestion.reason}
-
-Подходит ли вам новое время?
-
-С уважением,
-${userName}`;
-      }
-    } catch (aiError) {
-      console.error('AI generation failed, using template:', aiError);
-      // Fallback к шаблонному письму
+      const userName = userProfile?.name || 'Пользователь';
+      const newStartDate = new Date(suggestion.suggested_new_start);
+      
       emailBody = `Здравствуйте!
 
 Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
@@ -226,7 +159,6 @@ ${userName}`;
 ${userName}`;
     }
 
-    const emailSubject = `Предложение перенести: ${event.title}`;
     let emailSent = false;
     let threadId = '';
 

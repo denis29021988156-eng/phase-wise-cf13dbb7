@@ -7,6 +7,7 @@ import { MessageCircle, Send, Brain, Sparkles, ChevronDown, Calendar, Clock } fr
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import EmailPreviewDialog from '@/components/dialogs/EmailPreviewDialog';
 
 interface Message {
   id: string;
@@ -14,6 +15,13 @@ interface Message {
   content: string;
   timestamp: Date;
   suggestionId?: string; // ID предложения по переносу
+}
+
+interface EmailPreview {
+  subject: string;
+  body: string;
+  recipients: string[];
+  eventTitle: string;
 }
 
 const Chat = () => {
@@ -25,6 +33,10 @@ const Chat = () => {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [showFullHistory, setShowFullHistory] = useState(false);
   const [movingSuggestion, setMovingSuggestion] = useState<string | null>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [emailPreview, setEmailPreview] = useState<EmailPreview | null>(null);
+  const [currentSuggestionId, setCurrentSuggestionId] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
@@ -225,30 +237,68 @@ const Chat = () => {
     if (!user) return;
     
     setMovingSuggestion(suggestionId);
+    setCurrentSuggestionId(suggestionId);
     
     try {
-      const { data, error } = await supabase.functions.invoke('ai-handle-event-move', {
+      // Сначала сгенерировать preview
+      const { data, error } = await supabase.functions.invoke('ai-generate-email-preview', {
         body: { suggestionId }
       });
 
       if (error) throw error;
 
+      if (data?.preview) {
+        setEmailPreview(data.preview);
+        setPreviewDialogOpen(true);
+      }
+    } catch (error) {
+      console.error('Error generating email preview:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось сгенерировать preview письма',
+        variant: 'destructive',
+      });
+    } finally {
+      setMovingSuggestion(null);
+    }
+  };
+
+  const handleSendEmail = async (editedSubject: string, editedBody: string) => {
+    if (!user || !currentSuggestionId) return;
+    
+    setSendingEmail(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-handle-event-move', {
+        body: { 
+          suggestionId: currentSuggestionId,
+          customSubject: editedSubject,
+          customBody: editedBody
+        }
+      });
+
+      if (error) throw error;
+
       // Обновить статус предложения локально
-      setPendingSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+      setPendingSuggestions(prev => prev.filter(s => s.id !== currentSuggestionId));
 
       toast({
         title: 'Отправлено',
         description: data.message || 'Письмо отправлено участникам',
       });
+
+      setPreviewDialogOpen(false);
+      setCurrentSuggestionId(null);
+      setEmailPreview(null);
     } catch (error) {
-      console.error('Error handling event move:', error);
+      console.error('Error sending email:', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось отправить письмо',
         variant: 'destructive',
       });
     } finally {
-      setMovingSuggestion(null);
+      setSendingEmail(false);
     }
   };
 
@@ -462,6 +512,20 @@ const Chat = () => {
           ))}
         </div>
       </div>
+
+      {/* Email Preview Dialog */}
+      {emailPreview && (
+        <EmailPreviewDialog
+          open={previewDialogOpen}
+          onOpenChange={setPreviewDialogOpen}
+          subject={emailPreview.subject}
+          body={emailPreview.body}
+          recipients={emailPreview.recipients}
+          eventTitle={emailPreview.eventTitle}
+          onSend={handleSendEmail}
+          sending={sendingEmail}
+        />
+      )}
     </div>
   );
 };

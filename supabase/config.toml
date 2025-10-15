@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.ai-week-planner]
 verify_jwt = false
 
+[functions.ai-generate-email-preview]
+verify_jwt = true
+
 [functions.ai-handle-event-move]
 verify_jwt = true
 
