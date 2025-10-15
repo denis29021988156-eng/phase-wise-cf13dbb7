@@ -296,7 +296,18 @@ const AllEvents = () => {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-foreground">{event.title}</h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-foreground">{event.title}</h3>
+                              <div className={`px-2 py-0.5 rounded-full text-xs ${
+                                event.source === 'google' 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : event.source === 'outlook'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-purple-100 text-purple-800'
+                              }`}>
+                                {event.source === 'google' ? 'Google' : event.source === 'outlook' ? 'Outlook' : 'Ручной'}
+                              </div>
+                            </div>
                             <div className="flex items-center text-xs text-muted-foreground gap-1 mt-1">
                               <Clock className="h-3 w-3" />
                               {format(new Date(event.start_time), 'HH:mm')}–

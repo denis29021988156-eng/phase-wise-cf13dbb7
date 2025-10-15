@@ -845,9 +845,11 @@ const Calendar = () => {
                         <div className={`px-2 py-1 rounded-full text-xs ${
                           event.source === 'google' 
                             ? 'bg-blue-100 text-blue-800' 
+                            : event.source === 'outlook'
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-purple-100 text-purple-800'
                         }`}>
-                          {event.source === 'google' ? 'Google' : 'Ручной'}
+                          {event.source === 'google' ? 'Google' : event.source === 'outlook' ? 'Outlook' : 'Ручной'}
                         </div>
                         <Button
                           variant="ghost"
