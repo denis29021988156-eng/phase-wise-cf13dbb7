@@ -60,7 +60,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         scopes: 'openid profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send',
         queryParams: {
           access_type: 'offline',
-          prompt: 'consent'
+          prompt: 'consent',
+          include_granted_scopes: 'true',
         }
       }
     });
@@ -81,7 +82,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         scopes: 'openid profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send',
         queryParams: {
           access_type: 'offline',
-          prompt: 'consent'
+          prompt: 'consent',
+          include_granted_scopes: 'true',
         }
       }
     });

@@ -26,7 +26,8 @@ export const useGoogleTokens = () => {
               provider: 'google',
               access_token: providerToken,
               refresh_token: providerRefreshToken || null,
-              expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
+              // Store null so backend refresh function always refreshes when needed
+              expires_at: null,
             });
           
           console.log('Google tokens stored successfully');
