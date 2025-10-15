@@ -242,26 +242,29 @@ ${userName}`;
           // Microsoft Graph API с таймаутом
           const sendResponse = await withTimeout(
             fetch(
-            'https://graph.microsoft.com/v1.0/me/sendMail',
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                message: {
-                  subject: emailSubject,
-                  body: {
-                    contentType: 'Text',
-                    content: emailBody
-                  },
-                  toRecipients: participants.map(email => ({
-                    emailAddress: { address: email }
-                  }))
-                }
-              }),
-            }
+              'https://graph.microsoft.com/v1.0/me/sendMail',
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  message: {
+                    subject: emailSubject,
+                    body: {
+                      contentType: 'Text',
+                      content: emailBody
+                    },
+                    toRecipients: participants.map(email => ({
+                      emailAddress: { address: email }
+                    }))
+                  }
+                }),
+              }
+            ),
+            45000,
+            'Microsoft Graph send email'
           );
 
           if (sendResponse.ok) {
