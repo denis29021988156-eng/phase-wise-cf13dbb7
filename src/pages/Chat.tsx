@@ -368,60 +368,6 @@ const Chat = () => {
                 </div>
               ) : (
                 <>
-                  {/* Показать pending предложения вверху */}
-                  {pendingSuggestions.map((suggestion) => (
-                    <div key={suggestion.id} className="border border-primary/20 rounded-lg p-4 bg-primary/5">
-                      <div className="flex items-start space-x-3">
-                        <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground mb-2">
-                            {suggestion.suggestion_text}
-                          </p>
-                          <p className="text-xs text-muted-foreground mb-3">
-                            {suggestion.reason}
-                          </p>
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
-                            <Clock className="h-3 w-3" />
-                            <span>
-                              {new Date(suggestion.suggested_new_start).toLocaleDateString('ru-RU', {
-                                weekday: 'short',
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleMoveSuggestion(suggestion.id)}
-                              disabled={movingSuggestion === suggestion.id}
-                              className="bg-primary hover:bg-primary/90"
-                            >
-                              {movingSuggestion === suggestion.id ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
-                                  Отправляю...
-                                </>
-                              ) : (
-                                '✉️ Написать участникам'
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleRejectSuggestion(suggestion.id)}
-                              disabled={movingSuggestion === suggestion.id}
-                            >
-                              Отклонить
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
                   {displayedMessages.map((msg) => (
                 <div
                   key={msg.id}
@@ -461,6 +407,61 @@ const Chat = () => {
                   </div>
                 </div>
               )}
+
+              {/* Показать pending предложения внизу диалога */}
+              {pendingSuggestions.map((suggestion) => (
+                <div key={suggestion.id} className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                  <div className="flex items-start space-x-3">
+                    <Calendar className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground mb-2">
+                        {suggestion.suggestion_text}
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        {suggestion.reason}
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {new Date(suggestion.suggested_new_start).toLocaleDateString('ru-RU', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleMoveSuggestion(suggestion.id)}
+                          disabled={movingSuggestion === suggestion.id}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          {movingSuggestion === suggestion.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                              Отправляю...
+                            </>
+                          ) : (
+                            '✉️ Написать участникам'
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRejectSuggestion(suggestion.id)}
+                          disabled={movingSuggestion === suggestion.id}
+                        >
+                          Отклонить
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
               <div ref={messagesEndRef} />
                 </>
               )}
