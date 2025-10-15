@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logRetryAttempt, logOperationMetric, logErrorNotification, withTimeout, OperationTimer } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const timer = new OperationTimer();
+  let userId: string | undefined;
 
   try {
     const supabaseClient = createClient(
@@ -48,7 +52,7 @@ serve(async (req) => {
     }
 
     const event = suggestion.events;
-    const userId = suggestion.user_id;
+    userId = suggestion.user_id;
 
     // Определить провайдера календаря
     let emailProvider = 'google';
@@ -188,7 +192,7 @@ ${userName}`;
     while (sendRetries > 0 && !emailSent) {
       try {
         if (emailProvider === 'google') {
-          // Отправить через Gmail API
+          // Отправить через Gmail API с таймаутом
           const message = [
             'Content-Type: text/plain; charset=utf-8',
             'MIME-Version: 1.0',
@@ -203,16 +207,20 @@ ${userName}`;
             .replace(/\//g, '_')
             .replace(/=+$/, '');
 
-          const sendResponse = await fetch(
-            'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+          const sendResponse = await withTimeout(
+            fetch(
+              'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
             {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ raw: encodedMessage }),
-            }
+                body: JSON.stringify({ raw: encodedMessage }),
+              }
+            ),
+            45000, // 45 секунд таймаут для отправки email
+            'Gmail send email'
           );
 
           if (sendResponse.ok) {
@@ -220,11 +228,20 @@ ${userName}`;
             emailSent = true;
             threadId = sendData.threadId;
           } else if (sendResponse.status >= 500) {
+            await logRetryAttempt({
+              supabaseClient,
+              userId: userId!,
+              operationType: 'email_send_gmail',
+              attemptNumber: 4 - sendRetries,
+              httpStatus: sendResponse.status,
+              errorMessage: `Gmail API error: ${sendResponse.status}`,
+            });
             throw new Error('Server error, retrying...');
           }
         } else {
-          // Microsoft Graph API
-          const sendResponse = await fetch(
+          // Microsoft Graph API с таймаутом
+          const sendResponse = await withTimeout(
+            fetch(
             'https://graph.microsoft.com/v1.0/me/sendMail',
             {
               method: 'POST',
@@ -250,6 +267,14 @@ ${userName}`;
           if (sendResponse.ok) {
             emailSent = true;
           } else if (sendResponse.status >= 500) {
+            await logRetryAttempt({
+              supabaseClient,
+              userId: userId!,
+              operationType: 'email_send_microsoft',
+              attemptNumber: 4 - sendRetries,
+              httpStatus: sendResponse.status,
+              errorMessage: `Microsoft Graph API error: ${sendResponse.status}`,
+            });
             throw new Error('Server error, retrying...');
           }
         }
@@ -258,11 +283,42 @@ ${userName}`;
         sendRetries--;
       } catch (error) {
         console.error(`Send attempt failed, ${sendRetries - 1} retries left:`, error);
+        
+        await logRetryAttempt({
+          supabaseClient,
+          userId: userId!,
+          operationType: 'email_send',
+          attemptNumber: 4 - sendRetries,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
+        
         sendRetries--;
         if (sendRetries > 0) {
           await new Promise(resolve => setTimeout(resolve, 1000 * (4 - sendRetries)));
         }
       }
+    }
+
+    // Логировать результат отправки
+    await logOperationMetric({
+      supabaseClient,
+      operationType: 'email_send',
+      status: emailSent ? 'success' : 'error',
+      executionTimeMs: timer.getElapsedMs(),
+      userId: userId!,
+      errorDetails: emailSent ? undefined : 'Failed to send email after retries',
+      metadata: { participants_count: participants.length },
+    });
+
+    if (!emailSent) {
+      await logErrorNotification({
+        supabaseClient,
+        errorType: 'email_send_failure',
+        severity: 'high',
+        message: `Не удалось отправить письмо для события "${event.title}" после 3 попыток`,
+        operationType: 'email_send',
+        userId: userId!,
+      });
     }
 
     // Обновить статус предложения
@@ -301,6 +357,33 @@ ${userName}`;
 
   } catch (error) {
     console.error('Error in ai-handle-event-move:', error);
+    
+    // Логировать ошибку
+    if (userId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      );
+      
+      await logOperationMetric({
+        supabaseClient,
+        operationType: 'email_send',
+        status: 'error',
+        executionTimeMs: timer.getElapsedMs(),
+        userId,
+        errorDetails: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      await logErrorNotification({
+        supabaseClient,
+        errorType: 'event_move_failure',
+        severity: 'high',
+        message: `Ошибка при обработке переноса события: ${error instanceof Error ? error.message : 'Unknown'}`,
+        operationType: 'event_move',
+        userId,
+      });
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',

@@ -47,3 +47,6 @@ verify_jwt = true
 
 [functions.refresh-microsoft-token]
 verify_jwt = true
+
+[functions.get-ai-stats]
+verify_jwt = true

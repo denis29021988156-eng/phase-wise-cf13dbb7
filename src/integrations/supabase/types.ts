@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_error_notifications: {
+        Row: {
+          created_at: string
+          error_type: string
+          id: string
+          message: string
+          metadata: Json | null
+          notified: boolean | null
+          notified_at: string | null
+          operation_type: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_type: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          notified?: boolean | null
+          notified_at?: string | null
+          operation_type?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_type?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          notified?: boolean | null
+          notified_at?: string | null
+          operation_type?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_operation_metrics: {
+        Row: {
+          created_at: string
+          error_details: string | null
+          execution_time_ms: number | null
+          id: string
+          metadata: Json | null
+          operation_type: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_details?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          operation_type: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_details?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          operation_type?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_retry_logs: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          error_message: string | null
+          http_status: number | null
+          id: string
+          metadata: Json | null
+          operation_type: string
+          user_id: string
+        }
+        Insert: {
+          attempt_number: number
+          created_at?: string
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          metadata?: Json | null
+          operation_type: string
+          user_id: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          metadata?: Json | null
+          operation_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -353,6 +464,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_ai_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_rejected_suggestions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -365,6 +480,10 @@ export type Database = {
           event_title: string
         }
         Returns: string
+      }
+      get_ai_stats: {
+        Args: { days_back?: number }
+        Returns: Json
       }
     }
     Enums: {

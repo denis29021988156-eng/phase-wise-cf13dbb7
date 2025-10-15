@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logRetryAttempt, logOperationMetric, logErrorNotification, withTimeout, OperationTimer } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const timer = new OperationTimer();
+  
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -136,13 +139,14 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
 
               const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
               
-              // Retry логика для API calls
+              // Retry логика для API calls с таймаутом 30 секунд
               let aiResponse;
               let retries = 3;
               
               while (retries > 0) {
                 try {
-                  aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                  aiResponse = await withTimeout(
+                    fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                       'Authorization': `Bearer ${openAIApiKey}`,
@@ -156,12 +160,26 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
                       ],
                       max_completion_tokens: 250, // Новые модели используют max_completion_tokens
                     }),
-                  });
+                  }),
+                  30000, // 30 секунд таймаут
+                  'OpenAI API call'
+                );
                   
                   if (aiResponse.ok) break;
                   
                   if (aiResponse.status === 429 || aiResponse.status >= 500) {
                     retries--;
+                    
+                    // Логировать retry
+                    await logRetryAttempt({
+                      supabaseClient,
+                      userId: user_id,
+                      operationType: 'ai_week_analysis',
+                      attemptNumber: 4 - retries,
+                      httpStatus: aiResponse.status,
+                      errorMessage: `HTTP ${aiResponse.status}`,
+                    });
+                    
                     if (retries > 0) {
                       await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries))); // Exponential backoff
                       continue;
@@ -170,6 +188,16 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
                   break;
                 } catch (error) {
                   retries--;
+                  
+                  // Логировать retry при exception
+                  await logRetryAttempt({
+                    supabaseClient,
+                    userId: user_id,
+                    operationType: 'ai_week_analysis',
+                    attemptNumber: 4 - retries,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                  });
+                  
                   if (retries === 0) throw error;
                   await new Promise(resolve => setTimeout(resolve, 1000));
                 }
@@ -244,6 +272,18 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
 
     console.log(`AI week planner completed: ${totalSuggestions} suggestions created`);
 
+    // Логировать успешное выполнение
+    await logOperationMetric({
+      supabaseClient,
+      operationType: 'week_planner',
+      status: 'success',
+      executionTimeMs: timer.getElapsedMs(),
+      metadata: {
+        suggestions_created: totalSuggestions,
+        users_processed: users?.length || 0,
+      },
+    });
+
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -257,6 +297,34 @@ ${recentLogs?.map(log => `${log.date}: Энергия ${log.energy}/10, Сон $
 
   } catch (error) {
     console.error('Error in ai-week-planner:', error);
+    
+    // Логировать критическую ошибку
+    try {
+      await logOperationMetric({
+        supabaseClient: createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+        ),
+        operationType: 'week_planner',
+        status: 'error',
+        executionTimeMs: timer.getElapsedMs(),
+        errorDetails: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      await logErrorNotification({
+        supabaseClient: createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+        ),
+        errorType: 'week_planner_failure',
+        severity: 'critical',
+        message: `AI week planner failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        operationType: 'week_planner',
+      });
+    } catch (logError) {
+      console.error('Failed to log error:', logError);
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',
