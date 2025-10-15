@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.get-ai-stats]
 verify_jwt = true
+
+[functions.connect-microsoft]
+verify_jwt = true

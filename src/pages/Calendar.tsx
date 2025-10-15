@@ -32,7 +32,7 @@ interface UserCycle {
 }
 
 const Calendar = () => {
-  const { user, linkMicrosoftIdentity } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -536,13 +536,17 @@ const Calendar = () => {
             <Button
               onClick={async () => {
                 try {
-                  await linkMicrosoftIdentity();
-                  toast({
-                    title: "Успешно",
-                    description: "Outlook подключается...",
-                  });
+                  const { data, error } = await supabase.functions.invoke('connect-microsoft');
+                  
+                  if (error) throw error;
+                  
+                  if (data?.authUrl) {
+                    window.location.href = data.authUrl;
+                  } else {
+                    throw new Error('No auth URL received');
+                  }
                 } catch (error) {
-                  console.error('Error linking Microsoft account:', error);
+                  console.error('Error connecting Microsoft account:', error);
                   toast({
                     title: "Ошибка",
                     description: "Не удалось подключить Outlook",
