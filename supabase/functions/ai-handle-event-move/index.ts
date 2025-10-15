@@ -228,11 +228,14 @@ ${userName}`;
       try {
         if (emailProvider === 'google') {
           // Отправить через Gmail API с таймаутом
+          // Кодируем Subject в формат RFC 2047 для правильной UTF-8 кодировки
+          const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(emailSubject)))}?=`;
+          
           const message = [
             'Content-Type: text/plain; charset=utf-8',
             'MIME-Version: 1.0',
             `To: ${participants.join(', ')}`,
-            `Subject: ${emailSubject}`,
+            `Subject: ${subjectEncoded}`,
             '',
             emailBody
           ].join('\n');
