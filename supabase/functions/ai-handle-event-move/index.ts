@@ -93,11 +93,12 @@ serve(async (req) => {
     }
 
     // Получить токен доступа
+    const providerName = emailProvider === 'microsoft' ? 'azure' : 'google';
     const { data: tokenData } = await supabaseClient
       .from('user_tokens')
       .select('access_token')
       .eq('user_id', userId)
-      .eq('provider', emailProvider)
+      .eq('provider', providerName)
       .single();
 
     if (!tokenData) {

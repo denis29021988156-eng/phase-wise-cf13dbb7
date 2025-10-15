@@ -171,15 +171,6 @@ serve(async (req) => {
 
     const userName = profile?.name ? profile.name : 'дорогая';
 
-    // Build user profile context
-    let profileContext = '';
-    if (profile?.age || profile?.height || profile?.weight) {
-      profileContext = '\n📋 Данные пользователя:\n';
-      if (profile.age) profileContext += `• Возраст: ${profile.age} лет\n`;
-      if (profile.height) profileContext += `• Рост: ${profile.height} см\n`;
-      if (profile.weight) profileContext += `• Вес: ${profile.weight} кг\n`;
-    }
-
     const prompt = `
 Оцени запланированное событие с учётом текущей фазы менструального цикла пользовательницы и её самочувствия, после чего предоставь свои рекомендации.
 
