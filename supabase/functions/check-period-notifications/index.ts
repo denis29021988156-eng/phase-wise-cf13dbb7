@@ -19,7 +19,6 @@ serve(async (req) => {
 
     console.log('Starting period notification check...');
 
-    // Получаем всех пользователей с данными о цикле
     const { data: cycles, error: cyclesError } = await supabaseAdmin
       .from('user_cycles')
       .select('user_id, start_date, cycle_length');
@@ -45,27 +44,22 @@ serve(async (req) => {
 
     for (const cycle of cycles) {
       try {
-        // Рассчитываем следующую дату менструации
         const startDate = new Date(cycle.start_date);
         const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         const cycleDay = (daysSinceStart % cycle.cycle_length) + 1;
         
-        // Дней до следующей менструации
         const daysUntilNext = cycle.cycle_length - cycleDay + 1;
         
-        // Дата следующей менструации
         const nextPeriodDate = new Date(today);
         nextPeriodDate.setDate(today.getDate() + daysUntilNext);
         const nextPeriodDateStr = nextPeriodDate.toISOString().split('T')[0];
 
         console.log(`User ${cycle.user_id}: ${daysUntilNext} days until next period`);
 
-        // Проверяем нужно ли отправить уведомление (за 5, 3 или 1 день)
         const notificationDays = [5, 3, 1];
         
         for (const daysBefore of notificationDays) {
           if (daysUntilNext === daysBefore) {
-            // Проверяем, не создано ли уже уведомление
             const { data: existingNotification } = await supabaseAdmin
               .from('notifications')
               .select('id')
@@ -75,19 +69,18 @@ serve(async (req) => {
               .maybeSingle();
 
             if (!existingNotification) {
-              // Создаем уведомление
               const messages: Record<number, { title: string; message: string }> = {
                 5: {
                   title: '📅 Напоминание о менструации',
-                  message: `Через 5 дней начнется новый цикл. Самое время позаботиться о себе и подготовиться.`
+                  message: 'Через 5 дней начнется новый цикл. Самое время позаботиться о себе и подготовиться.'
                 },
                 3: {
                   title: '🌸 Скоро начало цикла',
-                  message: `Через 3 дня начнется менструация. Проверьте, всё ли необходимое у вас под рукой.`
+                  message: 'Через 3 дня начнется менструация. Проверьте, всё ли необходимое у вас под рукой.'
                 },
                 1: {
                   title: '💫 Завтра начало цикла',
-                  message: `Завтра начнется менструация. Позаботьтесь о комфорте и не планируйте слишком много дел.`
+                  message: 'Завтра начнется менструация. Позаботьтесь о комфорте и не планируйте слишком много дел.'
                 }
               };
 
