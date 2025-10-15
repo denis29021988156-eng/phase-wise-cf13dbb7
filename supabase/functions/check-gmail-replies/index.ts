@@ -100,7 +100,9 @@ serve(async (req) => {
             );
 
             if (!threadResponse.ok) {
-              console.error(`Failed to fetch thread ${suggestion.email_thread_id}`);
+              const errorText = await threadResponse.text();
+              console.error(`Failed to fetch thread ${suggestion.email_thread_id}:`, threadResponse.status, errorText);
+              errorCount++;
               continue;
             }
 
