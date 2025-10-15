@@ -251,7 +251,7 @@ const Calendar = () => {
         .from('user_tokens')
         .select('access_token')
         .eq('user_id', user.id)
-        .eq('provider', 'microsoft')
+        .eq('provider', 'azure')
         .maybeSingle();
 
       // If no token exists, link Microsoft identity first
