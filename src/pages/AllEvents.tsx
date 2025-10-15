@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
+import MoveEventDialog from '@/components/dialogs/MoveEventDialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Event {
@@ -26,6 +27,7 @@ const AllEvents = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [editEventOpen, setEditEventOpen] = useState(false);
+  const [moveEventOpen, setMoveEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [syncingGoogle, setSyncingGoogle] = useState(false);
@@ -141,6 +143,44 @@ const AllEvents = () => {
   const handleEditEvent = (event: Event) => {
     setSelectedEvent(event);
     setEditEventOpen(true);
+  };
+
+  const handleMoveEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setMoveEventOpen(true);
+  };
+
+  const handleMoveSubmit = async (newStartTime: string, newEndTime: string, reason: string) => {
+    if (!user || !selectedEvent) return;
+
+    try {
+      const { error } = await supabase
+        .from('event_move_suggestions')
+        .insert({
+          user_id: user.id,
+          event_id: selectedEvent.id,
+          suggested_new_start: newStartTime,
+          suggested_new_end: newEndTime,
+          reason: reason,
+          suggestion_text: `Перенести "${selectedEvent.title}" на ${format(new Date(newStartTime), 'd MMMM, HH:mm', { locale: ru })}`,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Предложение создано',
+        description: 'Перейдите в чат, чтобы отправить письмо участникам',
+      });
+    } catch (error) {
+      console.error('Error creating move suggestion:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать предложение о переносе',
+        variant: 'destructive',
+      });
+      throw error;
+    }
   };
 
   const getSourceColor = (source: string) => {
@@ -267,6 +307,15 @@ const AllEvents = () => {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => handleMoveEvent(event)}
+                              className="h-8 w-8 p-0"
+                              title="Перенести событие"
+                            >
+                              <ArrowRightLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleEditEvent(event)}
                               className="h-8 w-8 p-0"
                             >
@@ -314,6 +363,13 @@ const AllEvents = () => {
         onOpenChange={setEditEventOpen}
         event={selectedEvent}
         onEventUpdated={loadAllEvents}
+      />
+
+      <MoveEventDialog
+        open={moveEventOpen}
+        onOpenChange={setMoveEventOpen}
+        event={selectedEvent}
+        onMove={handleMoveSubmit}
       />
     </div>
   );
