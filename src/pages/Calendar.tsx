@@ -32,7 +32,7 @@ interface UserCycle {
 }
 
 const Calendar = () => {
-  const { user, linkGoogleIdentity, linkMicrosoftIdentity } = useAuth();
+  const { user, linkGoogleIdentity, linkMicrosoftIdentity, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -223,6 +223,18 @@ const Calendar = () => {
         } catch (err: any) {
           const msg = String(err?.message || err);
           console.error('Link Google identity error:', err);
+
+          // If identity is already linked elsewhere or already linked, fallback to sign-in via Google
+          if (msg.includes('already linked')) {
+            try {
+              localStorage.setItem('pendingGoogleSync', 'true');
+              await signInWithGoogle();
+              return;
+            } catch (signinErr) {
+              console.error('Google sign-in fallback failed:', signinErr);
+            }
+          }
+
           toast({
             title: "Не удалось подключить календарь",
             description: msg.includes('manual_linking_disabled') || msg.includes('Manual linking is disabled')
