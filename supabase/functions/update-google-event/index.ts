@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    const authToken = authHeader?.replace('Bearer ', '') || '';
+    
     const { userId, eventId, eventData } = await req.json();
     console.log('Update Google event request:', { userId, eventId });
 
@@ -143,6 +146,9 @@ Deno.serve(async (req) => {
               cycleLength: cycleData.cycle_length,
               startDate: cycleData.start_date
             }
+          },
+          headers: {
+            Authorization: `Bearer ${authToken}`
           }
         });
 

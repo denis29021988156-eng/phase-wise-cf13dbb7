@@ -12,7 +12,7 @@ async function findMicrosoftEventId(supabase: any, userId: string, title: string
       .from('user_tokens')
       .select('access_token')
       .eq('user_id', userId)
-      .eq('provider', 'azure')
+      .eq('provider', 'microsoft')
       .maybeSingle();
 
     if (!tokenData?.access_token) return null;
@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    const authToken = authHeader?.replace('Bearer ', '') || '';
+    
     const { userId, eventId, eventData } = await req.json();
     console.log('Update Outlook event request:', { userId, eventId });
 
@@ -143,6 +146,9 @@ Deno.serve(async (req) => {
               cycleLength: cycleData.cycle_length,
               startDate: cycleData.start_date
             }
+          },
+          headers: {
+            Authorization: `Bearer ${authToken}`
           }
         });
 

@@ -28,6 +28,9 @@ Deno.serve(async (req) => {
     }
 
     const { userId } = await req.json();
+    
+    // Store auth token for passing to other functions
+    const authToken = token;
 
     if (!userId || userId !== user.id) {
       return new Response(
@@ -270,6 +273,9 @@ console.log('Using access token (masked):', maskToken(accessToken));
                     cycleLength: cycleData.cycle_length,
                     startDate: cycleData.start_date
                   }
+                },
+                headers: {
+                  Authorization: `Bearer ${authToken}`
                 }
               });
 
@@ -340,6 +346,9 @@ console.log('Using access token (masked):', maskToken(accessToken));
                 cycleLength: cycleData.cycle_length,
                 startDate: cycleData.start_date
               }
+            },
+            headers: {
+              Authorization: `Bearer ${authToken}`
             }
           });
 

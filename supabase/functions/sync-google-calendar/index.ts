@@ -13,6 +13,9 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    const authToken = authHeader?.replace('Bearer ', '') || '';
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -164,6 +167,9 @@ serve(async (req) => {
                     cycleLength: cycleData.cycle_length,
                     startDate: cycleData.start_date
                   }
+                },
+                headers: {
+                  Authorization: `Bearer ${authToken}`
                 }
               });
 
@@ -231,6 +237,9 @@ serve(async (req) => {
                 cycleLength: cycleData.cycle_length,
                 startDate: cycleData.start_date
               }
+            },
+            headers: {
+              Authorization: `Bearer ${authToken}`
             }
           });
 
