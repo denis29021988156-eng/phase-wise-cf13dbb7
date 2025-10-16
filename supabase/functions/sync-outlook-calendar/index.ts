@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       .from('user_tokens')
       .select('access_token, refresh_token, expires_at')
       .eq('user_id', userId)
-      .eq('provider', 'azure')
+      .eq('provider', 'microsoft')
       .single();
 
     if (tokenError || !tokenData) {
@@ -108,7 +108,7 @@ if (!accessToken) {
             expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
           })
           .eq('user_id', userId)
-          .eq('provider', 'azure');
+          .eq('provider', 'microsoft');
       }
     }
 
@@ -158,7 +158,7 @@ console.log('Using access token (masked):', maskToken(accessToken));
               expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
             })
             .eq('user_id', userId)
-            .eq('provider', 'azure');
+            .eq('provider', 'microsoft');
 
           finalResponse = await fetch(
             `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}&$orderby=start/dateTime`,
