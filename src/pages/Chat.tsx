@@ -43,8 +43,13 @@ const Chat = () => {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!loadingHistory) {
+      // Прокрутка вниз к последнему сообщению
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [messages, loadingHistory]);
 
   // Load chat history and suggestions when component mounts
   useEffect(() => {

@@ -83,6 +83,10 @@ serve(async (req) => {
 
     const accessToken = refreshResponse.data.access_token;
 
+    // Получить email пользователя
+    const { data: authUser } = await supabaseClient.auth.getUser();
+    const userEmail = authUser?.user?.email?.toLowerCase();
+
     // Получить участников события
     try {
       if (emailProvider === 'google' && event.google_event_id) {
@@ -99,7 +103,8 @@ serve(async (req) => {
           const eventData = await eventResponse.json();
           participants = (eventData.attendees || [])
             .filter((a: any) => a.email)
-            .map((a: any) => a.email);
+            .map((a: any) => a.email)
+            .filter((email: string) => email.toLowerCase() !== userEmail); // Исключить отправителя
         }
       } else if (emailProvider === 'microsoft' && event.google_event_id) {
         const eventResponse = await fetch(
@@ -115,7 +120,8 @@ serve(async (req) => {
           const eventData = await eventResponse.json();
           participants = (eventData.attendees || [])
             .filter((a: any) => a.emailAddress?.address)
-            .map((a: any) => a.emailAddress.address);
+            .map((a: any) => a.emailAddress.address)
+            .filter((email: string) => email.toLowerCase() !== userEmail); // Исключить отправителя
         }
       }
     } catch (error) {
