@@ -251,7 +251,7 @@ const Calendar = () => {
         .from('user_tokens')
         .select('access_token')
         .eq('user_id', user.id)
-        .eq('provider', 'azure')
+        .eq('provider', 'microsoft')
         .maybeSingle();
 
       // If no token exists, link Microsoft identity first
@@ -602,26 +602,8 @@ const Calendar = () => {
             </Button>
           ) : (
             <Button
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase.functions.invoke('connect-microsoft');
-                  
-                  if (error) throw error;
-                  
-                  if (data?.authUrl) {
-                    window.location.href = data.authUrl;
-                  } else {
-                    throw new Error('No auth URL received');
-                  }
-                } catch (error) {
-                  console.error('Error connecting Microsoft account:', error);
-                  toast({
-                    title: "Ошибка",
-                    description: "Не удалось подключить Outlook",
-                    variant: "destructive",
-                  });
-                }
-              }}
+              onClick={handleSyncOutlook}
+              disabled={outlookLoading}
               size="sm"
               variant="outline"
               className="flex-1"
