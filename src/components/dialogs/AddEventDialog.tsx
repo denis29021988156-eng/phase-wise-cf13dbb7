@@ -48,11 +48,12 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
           .from('user_tokens')
           .select('access_token')
           .eq('user_id', user.id)
-          .eq('provider', 'microsoft')
+          .in('provider', ['microsoft', 'azure'])
           .maybeSingle();
         
         setHasGoogleToken(!!googleData?.access_token);
         setHasMicrosoftToken(!!microsoftData?.access_token);
+        if (microsoftData?.access_token) setSyncToOutlook(true);
       }
     };
 

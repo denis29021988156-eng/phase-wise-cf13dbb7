@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
       .from('user_tokens')
       .select('access_token, refresh_token, expires_at')
       .eq('user_id', userId)
-      .eq('provider', 'microsoft')
-      .single();
+      .in('provider', ['microsoft', 'azure'])
+      .maybeSingle();
 
     if (tokenError || !tokenData) {
       console.error('Error fetching Microsoft token:', tokenError);
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
             expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
           })
           .eq('user_id', userId)
-          .eq('provider', 'microsoft');
+          .in('provider', ['microsoft', 'azure']);
       }
     }
 

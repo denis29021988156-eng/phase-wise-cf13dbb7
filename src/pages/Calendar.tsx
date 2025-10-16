@@ -83,8 +83,10 @@ const Calendar = () => {
           .from('user_tokens')
           .select('access_token')
           .eq('user_id', user.id)
-          .eq('provider', 'microsoft')
+          .in('provider', ['microsoft', 'azure'])
           .maybeSingle();
+        
+        setHasMicrosoftToken(!!data);
         
         setHasMicrosoftToken(!!data);
       } catch (error) {
@@ -251,7 +253,7 @@ const Calendar = () => {
         .from('user_tokens')
         .select('access_token')
         .eq('user_id', user.id)
-        .eq('provider', 'microsoft')
+        .in('provider', ['microsoft', 'azure'])
         .maybeSingle();
 
       // If no token exists, link Microsoft identity first
@@ -869,7 +871,7 @@ const Calendar = () => {
               onClick={() => setAddEventOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Добавить
+              Добавить событие
             </Button>
           </div>
         </CardHeader>
