@@ -90,6 +90,11 @@ Deno.serve(async (req) => {
     }
 
     // Create event in Outlook Calendar
+    const timeZone = eventData.timeZone || 'UTC';
+    const sanitize = (s: string) => s.replace(/Z$/, '').replace(/\.\d+$/, '');
+    const startLocal = sanitize(eventData.startTimeLocal || eventData.startTime);
+    const endLocal = sanitize(eventData.endTimeLocal || eventData.endTime);
+
     const eventBody = {
       subject: eventData.title,
       body: {
@@ -97,12 +102,12 @@ Deno.serve(async (req) => {
         content: eventData.description || ''
       },
       start: {
-        dateTime: eventData.startTime,
-        timeZone: 'UTC'
+        dateTime: startLocal,
+        timeZone: timeZone
       },
       end: {
-        dateTime: eventData.endTime,
-        timeZone: 'UTC'
+        dateTime: endLocal,
+        timeZone: timeZone
       }
     };
 

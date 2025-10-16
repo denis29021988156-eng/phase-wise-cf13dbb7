@@ -977,15 +977,6 @@ const Calendar = () => {
                   <CalendarDays className="h-12 w-12 opacity-50" />
                 </div>
                 <p>На этот день событий нет</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4"
-                  onClick={() => setAddEventOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Добавить событие
-                </Button>
               </div>
             );
           })()}
