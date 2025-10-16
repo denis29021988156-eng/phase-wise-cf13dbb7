@@ -32,7 +32,7 @@ interface UserCycle {
 }
 
 const Calendar = () => {
-  const { user, linkGoogleIdentity, linkMicrosoftIdentity, signInWithGoogle } = useAuth();
+  const { user, session, linkGoogleIdentity, linkMicrosoftIdentity, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -92,11 +92,34 @@ const Calendar = () => {
             loadEvents();
             toast({ title: 'Календарь синхронизирован', description: 'События Google загружены' });
           } else {
-            // Do not auto re-link to avoid infinite redirects
+            // Try to upsert tokens from current session and then sync
+            try {
+              const providerToken = session?.provider_token;
+              const providerRefreshToken = session?.provider_refresh_token;
+              const hasGoogleIdentity = !!session?.user?.identities?.some(i => i.provider === 'google');
+              if (providerToken && hasGoogleIdentity) {
+                await supabase.from('user_profiles').upsert({ user_id: user.id }, { onConflict: 'user_id' });
+                await supabase.from('user_tokens').upsert({
+                  user_id: user.id,
+                  provider: 'google',
+                  access_token: providerToken,
+                  refresh_token: providerRefreshToken || null,
+                  expires_at: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+                }, { onConflict: 'user_id,provider' });
+
+                await supabase.functions.invoke('sync-google-calendar', { body: { userId: user.id } });
+                loadEvents();
+                toast({ title: 'Календарь синхронизирован', description: 'События Google загружены' });
+                return;
+              }
+            } catch (sessErr) {
+              console.warn('Pending sync: could not upsert tokens from session', sessErr);
+            }
+
+            // Show neutral hint instead of destructive error
             toast({
-              title: 'Google аккаунт не привязан',
-              description: 'Эта учётка Google уже связана с другим пользователем или привязка отменена. Откройте меню и подключите Google вручную.',
-              variant: 'destructive'
+              title: 'Нужно подключить Google',
+              description: 'Откройте меню и нажмите «Подключить Google календарь».',
             });
           }
         }, 1200);
@@ -210,21 +233,51 @@ const Calendar = () => {
         .eq('provider', 'google')
         .maybeSingle();
 
-      // If no token exists, link Google identity first
+      // If no token exists, try to persist tokens from current session first
       if (!tokenData) {
+        // 1) Try to upsert from current session (after Google sign-in token is available here)
+        try {
+          const providerToken = session?.provider_token;
+          const providerRefreshToken = session?.provider_refresh_token;
+          const hasGoogleIdentity = !!session?.user?.identities?.some(i => i.provider === 'google');
+
+          if (providerToken && hasGoogleIdentity) {
+            await supabase.from('user_profiles').upsert({ user_id: user.id }, { onConflict: 'user_id' });
+            await supabase.from('user_tokens').upsert({
+              user_id: user.id,
+              provider: 'google',
+              access_token: providerToken,
+              refresh_token: providerRefreshToken || null,
+              expires_at: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
+            }, { onConflict: 'user_id,provider' });
+
+            // Proceed straight to sync
+            const { data, error } = await supabase.functions.invoke('sync-google-calendar', {
+              body: { userId: user.id }
+            });
+            if (error) throw error;
+            if (data?.success) {
+              toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+              loadEvents();
+              return;
+            }
+          }
+        } catch (sessErr) {
+          console.warn('Session token upsert failed, will try linking:', sessErr);
+        }
+
+        // 2) Fallback to linking flow
         toast({
           title: "Подключение Google",
           description: "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Google...",
         });
         try {
-          // Mark that we need to sync after OAuth return
           localStorage.setItem('pendingGoogleSync', 'true');
           await linkGoogleIdentity();
         } catch (err: any) {
           const msg = String(err?.message || err);
           console.error('Link Google identity error:', err);
 
-          // If identity is already linked elsewhere or already linked, fallback to sign-in via Google
           if (msg.includes('already linked')) {
             try {
               localStorage.setItem('pendingGoogleSync', 'true');
@@ -245,7 +298,7 @@ const Calendar = () => {
             variant: "destructive",
           });
         }
-        return; // After redirect, user will be back and can sync again
+        return; // After redirect/sign-in
       }
 
       // Token exists, proceed with sync
