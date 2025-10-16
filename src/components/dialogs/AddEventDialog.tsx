@@ -22,7 +22,9 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [syncToGoogle, setSyncToGoogle] = useState(false);
+  const [syncToOutlook, setSyncToOutlook] = useState(false);
   const [hasGoogleToken, setHasGoogleToken] = useState(false);
+  const [hasMicrosoftToken, setHasMicrosoftToken] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     date: selectedDate,
@@ -31,22 +33,30 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
     description: '',
   });
 
-  // Check if user has Google token when dialog opens
+  // Check if user has Google and Microsoft tokens when dialog opens
   useEffect(() => {
-    const checkGoogleToken = async () => {
+    const checkTokens = async () => {
       if (open && user) {
-        const { data } = await supabase
+        const { data: googleData } = await supabase
           .from('user_tokens')
           .select('access_token')
           .eq('user_id', user.id)
           .eq('provider', 'google')
           .maybeSingle();
         
-        setHasGoogleToken(!!data?.access_token);
+        const { data: microsoftData } = await supabase
+          .from('user_tokens')
+          .select('access_token')
+          .eq('user_id', user.id)
+          .eq('provider', 'microsoft')
+          .maybeSingle();
+        
+        setHasGoogleToken(!!googleData?.access_token);
+        setHasMicrosoftToken(!!microsoftData?.access_token);
       }
     };
 
-    checkGoogleToken();
+    checkTokens();
   }, [open, user]);
 
   // Update form date when selectedDate changes
@@ -131,6 +141,10 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         }
       }
 
+      // Track successful syncs
+      let googleSynced = false;
+      let outlookSynced = false;
+
       // Add to Google Calendar if sync is enabled
       if (syncToGoogle && hasGoogleToken) {
         try {
@@ -150,33 +164,83 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
 
           if (googleError) {
             console.error('Google Calendar sync error:', googleError);
-            toast({
-              title: 'Событие добавлено',
-              description: 'Событие создано, но не удалось синхронизировать с Google Calendar',
-              variant: "default",
-            });
           } else if (googleResult?.success) {
+            googleSynced = true;
             // Update the event with Google Calendar ID
             if (googleResult.googleEventId) {
               await supabase
                 .from('events')
-                .update({ google_event_id: googleResult.googleEventId })
+                .update({ 
+                  google_event_id: googleResult.googleEventId,
+                  source: 'google'
+                })
                 .eq('id', eventData.id);
             }
-
-            toast({
-              title: 'Событие добавлено',
-              description: 'Событие успешно добавлено и синхронизировано с Google Calendar',
-            });
           }
         } catch (googleError) {
           console.error('Error syncing with Google Calendar:', googleError);
-          toast({
-            title: 'Событие добавлено',
-            description: 'Событие создано, но не удалось синхронизировать с Google Calendar',
-            variant: "default",
-          });
         }
+      }
+
+      // Add to Outlook Calendar if sync is enabled
+      if (syncToOutlook && hasMicrosoftToken) {
+        try {
+          console.log('Adding event to Outlook Calendar...');
+          
+          const { data: outlookResult, error: outlookError } = await supabase.functions.invoke('add-to-outlook-calendar', {
+            body: {
+              userId: user.id,
+              eventData: {
+                title: formData.title,
+                description: formData.description,
+                startTime: startDateTime.toISOString(),
+                endTime: endDateTime.toISOString()
+              }
+            }
+          });
+
+          if (outlookError) {
+            console.error('Outlook Calendar sync error:', outlookError);
+          } else if (outlookResult?.success) {
+            outlookSynced = true;
+            // Update the event with Microsoft event ID
+            if (outlookResult.microsoftEventId) {
+              await supabase
+                .from('events')
+                .update({ 
+                  microsoft_event_id: outlookResult.microsoftEventId,
+                  source: 'outlook'
+                })
+                .eq('id', eventData.id);
+            }
+          }
+        } catch (outlookError) {
+          console.error('Error syncing with Outlook Calendar:', outlookError);
+        }
+      }
+
+      // Show appropriate toast message
+      if (googleSynced && outlookSynced) {
+        toast({
+          title: 'Событие добавлено',
+          description: 'Событие успешно добавлено и синхронизировано с Google Calendar и Outlook',
+        });
+      } else if (googleSynced) {
+        toast({
+          title: 'Событие добавлено',
+          description: 'Событие успешно добавлено и синхронизировано с Google Calendar',
+        });
+      } else if (outlookSynced) {
+        toast({
+          title: 'Событие добавлено',
+          description: 'Событие успешно добавлено и синхронизировано с Outlook',
+        });
+      } else if ((syncToGoogle && hasGoogleToken) || (syncToOutlook && hasMicrosoftToken)) {
+        toast({
+          title: 'Событие добавлено',
+          description: 'Событие создано, но возникла ошибка синхронизации',
+          variant: "default",
+        });
       } else {
         toast({
           title: 'Событие добавлено',
@@ -289,6 +353,19 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               />
               <Label htmlFor="syncToGoogle" className="text-sm">
                 Синхронизировать с Google Calendar
+              </Label>
+            </div>
+          )}
+
+          {hasMicrosoftToken && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="syncToOutlook"
+                checked={syncToOutlook}
+                onCheckedChange={setSyncToOutlook}
+              />
+              <Label htmlFor="syncToOutlook" className="text-sm">
+                Синхронизировать с Outlook
               </Label>
             </div>
           )}

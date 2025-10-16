@@ -856,12 +856,22 @@ const Calendar = () => {
       {/* Events for Selected Date */}
       <Card id="events-section">
         <CardHeader>
-          <CardTitle className="text-lg">
-            События на {new Date(selectedDate).toLocaleDateString('ru-RU', { 
-              day: 'numeric', 
-              month: 'long' 
-            })}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">
+              События на {new Date(selectedDate).toLocaleDateString('ru-RU', { 
+                day: 'numeric', 
+                month: 'long' 
+              })}
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setAddEventOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Добавить
+            </Button>
+          </div>
         </CardHeader>
         
         <CardContent>

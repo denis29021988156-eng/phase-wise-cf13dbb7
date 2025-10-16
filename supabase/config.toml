@@ -24,6 +24,9 @@ verify_jwt = true
 [functions.add-to-google-calendar]
 verify_jwt = true
 
+[functions.add-to-outlook-calendar]
+verify_jwt = true
+
 [functions.ai-chat]
 verify_jwt = true
 
