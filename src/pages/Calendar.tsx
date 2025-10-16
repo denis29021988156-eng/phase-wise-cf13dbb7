@@ -70,6 +70,16 @@ const Calendar = () => {
     if (user) {
       loadUserCycle();
       loadEvents();
+      
+      // Check if we need to sync Google Calendar after OAuth return
+      const pendingSync = localStorage.getItem('pendingGoogleSync');
+      if (pendingSync === 'true') {
+        localStorage.removeItem('pendingGoogleSync');
+        // Small delay to ensure tokens are properly stored
+        setTimeout(() => {
+          handleConnectGoogleCalendar();
+        }, 1500);
+      }
     }
   }, [user, selectedDate]);
 
@@ -186,6 +196,8 @@ const Calendar = () => {
           description: "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Google...",
         });
         try {
+          // Mark that we need to sync after OAuth return
+          localStorage.setItem('pendingGoogleSync', 'true');
           await linkGoogleIdentity();
         } catch (err: any) {
           const msg = String(err?.message || err);
