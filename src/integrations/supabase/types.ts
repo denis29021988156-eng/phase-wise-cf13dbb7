@@ -440,7 +440,7 @@ export type Database = {
           access_token: string | null
           created_at: string | null
           expires_at: string | null
-          provider: string | null
+          provider: string
           refresh_token: string | null
           updated_at: string | null
           user_id: string
@@ -449,7 +449,7 @@ export type Database = {
           access_token?: string | null
           created_at?: string | null
           expires_at?: string | null
-          provider?: string | null
+          provider?: string
           refresh_token?: string | null
           updated_at?: string | null
           user_id: string
@@ -458,7 +458,7 @@ export type Database = {
           access_token?: string | null
           created_at?: string | null
           expires_at?: string | null
-          provider?: string | null
+          provider?: string
           refresh_token?: string | null
           updated_at?: string | null
           user_id?: string

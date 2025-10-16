@@ -72,8 +72,10 @@ const Calendar = () => {
       loadEvents();
       
       // Check if we need to sync Google Calendar after OAuth return
-      const pendingSync = localStorage.getItem('pendingGoogleSync');
-      if (pendingSync === 'true') {
+      const pendingGoogleSync = localStorage.getItem('pendingGoogleSync');
+      const pendingOutlookSync = localStorage.getItem('pendingOutlookSync');
+      
+      if (pendingGoogleSync === 'true') {
         localStorage.removeItem('pendingGoogleSync');
         // Small delay to ensure tokens are properly stored
         setTimeout(async () => {
@@ -128,6 +130,35 @@ const Calendar = () => {
             toast({
               title: 'Нужно подключить Google',
               description: 'Откройте меню и нажмите «Подключить Google календарь».',
+            });
+          }
+        }, 1200);
+      }
+
+      // Check if we need to sync Outlook Calendar after OAuth return
+      if (pendingOutlookSync === 'true') {
+        localStorage.removeItem('pendingOutlookSync');
+        setTimeout(async () => {
+          const { data: tokenData } = await supabase
+            .from('user_tokens')
+            .select('access_token')
+            .eq('user_id', user.id)
+            .in('provider', ['microsoft', 'azure'])
+            .maybeSingle();
+
+          if (tokenData?.access_token) {
+            const { data, error } = await supabase.functions.invoke('sync-outlook-calendar', { body: { userId: user.id } });
+            if (error || !data?.success) {
+              console.error('Outlook sync failed during pendingSync:', error || data);
+              toast({ title: 'Ошибка синхронизации', description: data?.error || (error as any)?.message || 'Не удалось загрузить события из Outlook', variant: 'destructive' });
+            } else {
+              loadEvents();
+              toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.inserted || 0} событий из Outlook` });
+            }
+          } else {
+            toast({
+              title: 'Нужно подключить Outlook',
+              description: 'Откройте меню и нажмите «Подключить Outlook календарь».',
             });
           }
         }, 1200);
