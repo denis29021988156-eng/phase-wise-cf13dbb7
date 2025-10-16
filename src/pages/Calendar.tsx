@@ -76,9 +76,30 @@ const Calendar = () => {
       if (pendingSync === 'true') {
         localStorage.removeItem('pendingGoogleSync');
         // Small delay to ensure tokens are properly stored
-        setTimeout(() => {
-          handleConnectGoogleCalendar();
-        }, 1500);
+        setTimeout(async () => {
+          // Try to sync only if token exists; otherwise, stop to avoid redirect loop
+          const { data: tokenData } = await supabase
+            .from('user_tokens')
+            .select('access_token')
+            .eq('user_id', user.id)
+            .eq('provider', 'google')
+            .maybeSingle();
+
+          if (tokenData?.access_token) {
+            await supabase.functions.invoke('sync-google-calendar', {
+              body: { userId: user.id }
+            });
+            loadEvents();
+            toast({ title: 'Календарь синхронизирован', description: 'События Google загружены' });
+          } else {
+            // Do not auto re-link to avoid infinite redirects
+            toast({
+              title: 'Google аккаунт не привязан',
+              description: 'Эта учётка Google уже связана с другим пользователем или привязка отменена. Откройте меню и подключите Google вручную.',
+              variant: 'destructive'
+            });
+          }
+        }, 1200);
       }
     }
   }, [user, selectedDate]);
