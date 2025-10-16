@@ -267,7 +267,9 @@ const Calendar = () => {
           console.error('Link Microsoft identity error:', err);
           toast({
             title: "Не удалось подключить календарь",
-            description: msg.includes('manual_linking_disabled') || msg.includes('Manual linking is disabled')
+            description: msg.includes('Identity is already linked')
+              ? "Этот Microsoft аккаунт уже используется другим пользователем в приложении. Выйдите и войдите через Microsoft, чтобы использовать Outlook календарь."
+              : msg.includes('manual_linking_disabled') || msg.includes('Manual linking is disabled')
               ? "В Supabase отключён manual linking. Включите manual linking в настройках провайдера Microsoft и повторите попытку."
               : msg.includes('unauthorized_client')
               ? "Настройка Microsoft OAuth некорректна (unauthorized_client). Проверьте тип аккаунтов и Redirect URI в Azure."
