@@ -12,7 +12,6 @@ import AllEvents from './AllEvents';
 import Profile from './Profile';
 import Chat from './Chat';
 import Symptoms from './Symptoms';
-import AIMonitoring from './AIMonitoring';
 import CycleSetup from './CycleSetup';
 
 const Index = () => {
@@ -127,8 +126,6 @@ const Index = () => {
         return <Chat />;
       case 'symptoms':
         return <Symptoms />;
-      case 'ai-monitoring':
-        return <AIMonitoring />;
       default:
         return <Calendar />;
     }

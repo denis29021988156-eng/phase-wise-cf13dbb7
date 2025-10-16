@@ -1,4 +1,4 @@
-import { Calendar, User, MessageCircle, LogOut, List, Heart, Activity } from 'lucide-react';
+import { Calendar, User, MessageCircle, LogOut, List, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +34,6 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'profile', label: 'Профиль', icon: User },
     { id: 'chat', label: 'Gaia', icon: MessageCircle },
     { id: 'symptoms', label: 'Симптомы', icon: Heart },
-    { id: 'ai-monitoring', label: 'AI Монитор', icon: Activity },
   ];
 
   return (
