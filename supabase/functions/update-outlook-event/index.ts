@@ -5,24 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to find Google event ID by title and time
-async function findGoogleEventId(supabase: any, userId: string, title: string, startTime: string) {
+// Helper function to find Microsoft event ID by title and time
+async function findMicrosoftEventId(supabase: any, userId: string, title: string, startTime: string) {
   try {
     const { data: tokenData } = await supabase
       .from('user_tokens')
       .select('access_token')
       .eq('user_id', userId)
-      .eq('provider', 'google')
+      .eq('provider', 'azure')
       .maybeSingle();
 
     if (!tokenData?.access_token) return null;
 
     const startDate = new Date(startTime);
-    const timeMin = new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString(); // 1 day before
-    const timeMax = new Date(startDate.getTime() + 24 * 60 * 60 * 1000).toISOString(); // 1 day after
+    const timeMin = new Date(startDate.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    const timeMax = new Date(startDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
     const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`,
+      `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${timeMin}&endDateTime=${timeMax}`,
       {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
@@ -33,15 +33,15 @@ async function findGoogleEventId(supabase: any, userId: string, title: string, s
     if (!calendarResponse.ok) return null;
 
     const calendarData = await calendarResponse.json();
-    const events = calendarData.items || [];
+    const events = calendarData.value || [];
 
     // Find event by title and approximate time (within 1 hour)
     for (const event of events) {
-      if (event.summary === title && event.start?.dateTime) {
+      if (event.subject === title && event.start?.dateTime) {
         const eventStartTime = new Date(event.start.dateTime);
         const timeDiff = Math.abs(eventStartTime.getTime() - startDate.getTime());
-        if (timeDiff < 60 * 60 * 1000) { // Within 1 hour
-          console.log(`Found Google event by title and time: ${event.id}`);
+        if (timeDiff < 60 * 60 * 1000) {
+          console.log(`Found Microsoft event by title and time: ${event.id}`);
           return event.id;
         }
       }
@@ -49,7 +49,7 @@ async function findGoogleEventId(supabase: any, userId: string, title: string, s
 
     return null;
   } catch (error) {
-    console.error('Error finding Google event ID:', error);
+    console.error('Error finding Microsoft event ID:', error);
     return null;
   }
 }
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
   try {
     const { userId, eventId, eventData } = await req.json();
-    console.log('Update Google event request:', { userId, eventId });
+    console.log('Update Outlook event request:', { userId, eventId });
 
     if (!userId || !eventId || !eventData) {
       return new Response(
@@ -74,10 +74,10 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the event and its Google event ID
+    // Get the event and its Microsoft event ID
     const { data: eventRecord, error: getEventError } = await supabase
       .from('events')
-      .select('google_event_id, title, start_time, source')
+      .select('microsoft_event_id, title, start_time, source')
       .eq('id', eventId)
       .eq('user_id', userId)
       .single();
@@ -90,12 +90,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    let foundGoogleEventId = eventRecord.google_event_id;
+    let foundMicrosoftEventId = eventRecord.microsoft_event_id;
     
-    // If no google_event_id but event source is google, try to find by title and time
-    if (!foundGoogleEventId && eventRecord.source === 'google') {
-      console.log('No google_event_id found, but event is from google. Searching by title and time...');
-      foundGoogleEventId = await findGoogleEventId(supabase, userId, eventRecord.title, eventRecord.start_time);
+    // If no microsoft_event_id but event source is outlook, try to find by title and time
+    if (!foundMicrosoftEventId && eventRecord.source === 'outlook') {
+      console.log('No microsoft_event_id found, but event is from outlook. Searching by title and time...');
+      foundMicrosoftEventId = await findMicrosoftEventId(supabase, userId, eventRecord.title, eventRecord.start_time);
     }
 
     // Update local database first
@@ -170,20 +170,23 @@ Deno.serve(async (req) => {
       // Continue anyway - event update succeeded
     }
 
-    // If event has Google event ID, update it in Google Calendar too
-    if (foundGoogleEventId) {
+    // If event has Microsoft event ID, update it in Outlook Calendar too
+    if (foundMicrosoftEventId) {
       const { data: tokenData } = await supabase
         .from('user_tokens')
         .select('access_token, refresh_token')
         .eq('user_id', userId)
-        .eq('provider', 'google')
+        .eq('provider', 'azure')
         .maybeSingle();
 
       if (tokenData?.access_token) {
         try {
-          const googleEvent = {
-            summary: eventData.title,
-            description: eventData.description || '',
+          const microsoftEvent = {
+            subject: eventData.title,
+            body: {
+              contentType: 'text',
+              content: eventData.description || ''
+            },
             start: {
               dateTime: eventData.startTime,
               timeZone: 'UTC',
@@ -195,46 +198,46 @@ Deno.serve(async (req) => {
           };
 
           const updateResponse = await fetch(
-            `https://www.googleapis.com/calendar/v3/calendars/primary/events/${foundGoogleEventId}`,
+            `https://graph.microsoft.com/v1.0/me/events/${foundMicrosoftEventId}`,
             {
               method: 'PATCH',
               headers: {
                 'Authorization': `Bearer ${tokenData.access_token}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify(googleEvent),
+              body: JSON.stringify(microsoftEvent),
             }
           );
 
           if (updateResponse.status === 401) {
             console.log('Token expired, attempting refresh');
-            const refreshed = await supabase.functions.invoke('refresh-google-token', {
+            const refreshed = await supabase.functions.invoke('refresh-microsoft-token', {
               body: { user_id: userId }
             });
 
             if (refreshed.data?.access_token) {
               const retryResponse = await fetch(
-                `https://www.googleapis.com/calendar/v3/calendars/primary/events/${foundGoogleEventId}`,
+                `https://graph.microsoft.com/v1.0/me/events/${foundMicrosoftEventId}`,
                 {
                   method: 'PATCH',
                   headers: {
                     'Authorization': `Bearer ${refreshed.data.access_token}`,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify(googleEvent),
+                  body: JSON.stringify(microsoftEvent),
                 }
               );
 
               if (!retryResponse.ok) {
-                throw new Error('Failed to update Google Calendar after token refresh');
+                throw new Error('Failed to update Outlook Calendar after token refresh');
               }
             }
           } else if (!updateResponse.ok) {
             const errorText = await updateResponse.text();
-            console.error('Google Calendar update error:', errorText);
+            console.error('Outlook Calendar update error:', errorText);
           }
-        } catch (googleError) {
-          console.error('Error updating Google Calendar:', googleError);
+        } catch (outlookError) {
+          console.error('Error updating Outlook Calendar:', outlookError);
           // Continue anyway - local update succeeded
         }
       }
@@ -246,7 +249,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in update-google-event:', error);
+    console.error('Error in update-outlook-event:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

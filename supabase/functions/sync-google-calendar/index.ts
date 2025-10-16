@@ -133,6 +133,58 @@ serve(async (req) => {
 
         if (existingEvent) {
           console.log('Event already exists:', googleEvent.summary);
+          
+          // Check if event has AI suggestion
+          const { data: existingSuggestion } = await supabaseClient
+            .from('event_ai_suggestions')
+            .select('id')
+            .eq('event_id', existingEvent.id)
+            .single();
+          
+          // If no suggestion exists, generate one
+          if (!existingSuggestion) {
+            try {
+              const eventDate = new Date(startTime);
+              const startDate = new Date(cycleData.start_date);
+              const diffInDays = Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+              const eventCycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+              const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
+
+              console.log(`Generating missing AI suggestion for existing event "${googleEvent.summary || 'Без названия'}" on cycle day ${adjustedCycleDay}`);
+
+              const { data: suggestionData, error: suggestionError } = await supabaseClient.functions.invoke('generate-ai-suggestion', {
+                body: {
+                  event: {
+                    title: googleEvent.summary || 'Событие из Google Calendar',
+                    start_time: startTime.toISOString(),
+                    description: googleEvent.description || ''
+                  },
+                  cycleData: {
+                    cycleDay: adjustedCycleDay,
+                    cycleLength: cycleData.cycle_length,
+                    startDate: cycleData.start_date
+                  }
+                }
+              });
+
+              if (!suggestionError && suggestionData?.suggestion) {
+                await supabaseClient
+                  .from('event_ai_suggestions')
+                  .insert({
+                    event_id: existingEvent.id,
+                    suggestion: suggestionData.suggestion,
+                    justification: suggestionData.justification || `ИИ-совет для ${adjustedCycleDay} дня цикла (продолжительность ${cycleData.cycle_length} дней)`,
+                    decision: 'generated'
+                  });
+
+                eventsWithSuggestions++;
+                console.log(`AI suggestion created for existing event: ${googleEvent.summary || 'Без названия'}`);
+              }
+            } catch (aiError) {
+              console.error('Error generating AI suggestion for existing event:', googleEvent.summary, aiError);
+            }
+          }
+          
           continue;
         }
 

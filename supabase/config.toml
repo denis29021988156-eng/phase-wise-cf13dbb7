@@ -56,3 +56,12 @@ verify_jwt = true
 
 [functions.check-gmail-replies]
 verify_jwt = false
+
+[functions.update-outlook-event]
+verify_jwt = true
+
+[functions.setup-gmail-webhook]
+verify_jwt = true
+
+[functions.gmail-webhook-receiver]
+verify_jwt = false

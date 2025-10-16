@@ -237,6 +237,61 @@ console.log('Using access token (masked):', maskToken(accessToken));
         .single();
 
       if (existingEvent) {
+        console.log('Event already exists:', outlookEvent.subject);
+        
+        // Check if event has AI suggestion
+        if (cycleData) {
+          const { data: existingSuggestion } = await supabase
+            .from('event_ai_suggestions')
+            .select('id')
+            .eq('event_id', existingEvent.id)
+            .single();
+          
+          // If no suggestion exists, generate one
+          if (!existingSuggestion) {
+            try {
+              const eventDate = new Date(startTime);
+              const startDate = new Date(cycleData.start_date);
+              const diffInDays = Math.floor((eventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+              const eventCycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+              const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
+
+              console.log(`Generating missing AI suggestion for existing event "${outlookEvent.subject}" on cycle day ${adjustedCycleDay}`);
+
+              const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
+                body: {
+                  event: {
+                    title: outlookEvent.subject || 'Без названия',
+                    start_time: startTime,
+                    description: outlookEvent.bodyPreview || ''
+                  },
+                  cycleData: {
+                    cycleDay: adjustedCycleDay,
+                    cycleLength: cycleData.cycle_length,
+                    startDate: cycleData.start_date
+                  }
+                }
+              });
+
+              if (!suggestionError && suggestionData?.suggestion) {
+                await supabase
+                  .from('event_ai_suggestions')
+                  .insert({
+                    event_id: existingEvent.id,
+                    suggestion: suggestionData.suggestion,
+                    justification: suggestionData.justification || `ИИ-совет для ${adjustedCycleDay} дня цикла`,
+                    decision: 'generated'
+                  });
+
+                suggestionsCount++;
+                console.log(`AI suggestion created for existing event: ${outlookEvent.subject}`);
+              }
+            } catch (aiError) {
+              console.error('Error generating AI suggestion for existing event:', outlookEvent.subject, aiError);
+            }
+          }
+        }
+        
         skippedCount++;
         continue;
       }
