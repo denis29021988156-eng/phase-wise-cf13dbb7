@@ -86,11 +86,14 @@ const Calendar = () => {
             .maybeSingle();
 
           if (tokenData?.access_token) {
-            await supabase.functions.invoke('sync-google-calendar', {
-              body: { userId: user.id }
-            });
-            loadEvents();
-            toast({ title: 'Календарь синхронизирован', description: 'События Google загружены' });
+            const { data, error } = await supabase.functions.invoke('sync-google-calendar', { body: { userId: user.id } });
+            if (error || !data?.success) {
+              console.error('Google sync failed during pendingSync:', error || data);
+              toast({ title: 'Ошибка синхронизации', description: data?.error || (error as any)?.message || 'Не удалось загрузить события из Google', variant: 'destructive' });
+            } else {
+              loadEvents();
+              toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+            }
           } else {
             // Try to upsert tokens from current session and then sync
             try {
@@ -107,9 +110,14 @@ const Calendar = () => {
                   expires_at: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
                 }, { onConflict: 'user_id,provider' });
 
-                await supabase.functions.invoke('sync-google-calendar', { body: { userId: user.id } });
-                loadEvents();
-                toast({ title: 'Календарь синхронизирован', description: 'События Google загружены' });
+                const { data, error } = await supabase.functions.invoke('sync-google-calendar', { body: { userId: user.id } });
+                if (error || !data?.success) {
+                  console.error('Google sync failed after session upsert:', error || data);
+                  toast({ title: 'Ошибка синхронизации', description: data?.error || (error as any)?.message || 'Не удалось загрузить события из Google', variant: 'destructive' });
+                } else {
+                  loadEvents();
+                  toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+                }
                 return;
               }
             } catch (sessErr) {
@@ -361,6 +369,7 @@ const Calendar = () => {
           description: "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Microsoft...",
         });
         try {
+          localStorage.setItem('pendingOutlookSync', 'true');
           await linkMicrosoftIdentity();
         } catch (err: any) {
           const msg = String(err?.message || err);
