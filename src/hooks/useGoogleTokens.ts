@@ -19,6 +19,11 @@ export const useGoogleTokens = () => {
       
       if (providerToken && googleIdentity) {
         try {
+          // Ensure profile exists first to avoid FK constraint errors
+          await supabase
+            .from('user_profiles')
+            .upsert({ user_id: user.id }, { onConflict: 'user_id' });
+
           await supabase
             .from('user_tokens')
             .upsert({
@@ -26,9 +31,10 @@ export const useGoogleTokens = () => {
               provider: 'google',
               access_token: providerToken,
               refresh_token: providerRefreshToken || null,
-              // Store null so backend refresh function always refreshes when needed
-              expires_at: null,
-            });
+              expires_at: session.expires_at 
+                ? new Date(session.expires_at * 1000).toISOString() 
+                : null,
+            }, { onConflict: 'user_id,provider' });
           
           console.log('Google tokens stored successfully');
         } catch (error) {

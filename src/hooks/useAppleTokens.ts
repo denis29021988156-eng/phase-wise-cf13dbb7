@@ -19,6 +19,11 @@ export const useAppleTokens = () => {
       
       if (providerToken && appleIdentity) {
         try {
+          // Ensure profile exists first to avoid FK constraint errors
+          await supabase
+            .from('user_profiles')
+            .upsert({ user_id: user.id }, { onConflict: 'user_id' });
+
           await supabase
             .from('user_tokens')
             .upsert({
@@ -27,7 +32,7 @@ export const useAppleTokens = () => {
               access_token: providerToken,
               refresh_token: providerRefreshToken || null,
               expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null
-            });
+            }, { onConflict: 'user_id,provider' });
           
           console.log('Apple tokens stored successfully');
         } catch (error) {
