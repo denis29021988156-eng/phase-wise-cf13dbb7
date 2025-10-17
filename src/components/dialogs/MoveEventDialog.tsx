@@ -110,7 +110,18 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
                 id="newStartTime"
                 type="time"
                 value={newStartTime}
-                onChange={(e) => setNewStartTime(e.target.value)}
+                onChange={(e) => {
+                  const startTime = e.target.value;
+                  setNewStartTime(startTime);
+                  
+                  // Automatically set end time to 1 hour after start time
+                  if (startTime) {
+                    const [hours, minutes] = startTime.split(':');
+                    const endHour = (parseInt(hours) + 1) % 24;
+                    const autoEndTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+                    setNewEndTime(autoEndTime);
+                  }
+                }}
               />
             </div>
 
