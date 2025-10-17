@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       .select('access_token, refresh_token, expires_at')
       .eq('user_id', userId)
       .eq('provider', 'microsoft')
-      .single();
+      .maybeSingle();
 
     if (tokenError || !tokenData) {
       console.error('Error fetching Microsoft tokens:', tokenError);

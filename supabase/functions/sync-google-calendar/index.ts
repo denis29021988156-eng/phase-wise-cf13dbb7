@@ -95,20 +95,46 @@ serve(async (req) => {
       }
     );
 
-    if (!calendarResponse.ok) {
-      const errorText = await calendarResponse.text();
+    // Handle 401 by attempting a token refresh and retrying once
+    let finalResponse = calendarResponse;
+    if (!finalResponse.ok && finalResponse.status === 401) {
+      console.log('401 from Google Calendar API. Attempting token refresh and retry...');
+      const refreshResponse = await supabaseClient.functions.invoke('refresh-google-token', {
+        body: { user_id: userId }
+      });
+
+      if (!refreshResponse.error && refreshResponse.data?.access_token) {
+        const newAccessToken = refreshResponse.data.access_token;
+        console.log('Token refreshed, retrying calendar request...');
+        
+        finalResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now.toISOString()}&timeMax=${weekLater.toISOString()}&singleEvents=true&orderBy=startTime`,
+          {
+            headers: {
+              'Authorization': `Bearer ${newAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      } else {
+        console.error('Token refresh failed:', refreshResponse.error);
+      }
+    }
+
+    if (!finalResponse.ok) {
+      const errorText = await finalResponse.text();
       console.error('Google Calendar API error:', errorText);
       
-      if (calendarResponse.status === 401) {
+      if (finalResponse.status === 401) {
         throw new Error('Токен Google Calendar истек. Войдите заново через Google.');
-      } else if (calendarResponse.status === 403) {
+      } else if (finalResponse.status === 403) {
         throw new Error('Нет доступа к Google Calendar. Проверьте разрешения.');
       } else {
         throw new Error('Ошибка загрузки событий из Google Calendar. Попробуйте позже.');
       }
     }
 
-    const calendarData = await calendarResponse.json();
+    const calendarData = await finalResponse.json();
     const googleEvents = calendarData.items || [];
 
     console.log(`Found ${googleEvents.length} events from Google Calendar`);

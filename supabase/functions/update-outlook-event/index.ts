@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
         .from('user_tokens')
         .select('access_token, refresh_token')
         .eq('user_id', userId)
-        .eq('provider', 'azure')
+        .in('provider', ['microsoft', 'azure'])
         .maybeSingle();
 
       if (tokenData?.access_token) {
