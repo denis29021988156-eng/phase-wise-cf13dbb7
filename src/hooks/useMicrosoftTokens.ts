@@ -17,7 +17,13 @@ export const useMicrosoftTokens = () => {
         identity => identity.provider === 'azure'
       );
       
-      if (providerToken && azureIdentity) {
+      // CRITICAL: Only store Microsoft tokens if user logged in directly with Microsoft
+      // When linking identities, session.provider_token contains the PRIMARY provider's token
+      // Check if the current auth method is actually Microsoft/Azure
+      const isDirectMicrosoftLogin = session.user.app_metadata?.provider === 'azure' || 
+                                      session.user.app_metadata?.provider === 'microsoft';
+      
+      if (providerToken && azureIdentity && isDirectMicrosoftLogin) {
         try {
           // Ensure profile exists first to avoid FK constraint errors
           await supabase
@@ -38,6 +44,8 @@ export const useMicrosoftTokens = () => {
         } catch (error) {
           console.error('Error storing Microsoft tokens:', error);
         }
+      } else if (azureIdentity && !isDirectMicrosoftLogin) {
+        console.log('Microsoft identity linked, but not logged in with Microsoft - tokens not saved from session');
       }
     };
 
