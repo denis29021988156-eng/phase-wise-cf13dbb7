@@ -163,8 +163,18 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
             }
           });
 
-          if (googleError) {
-            console.error('Google Calendar sync error:', googleError);
+          if (googleError || !googleResult?.success) {
+            console.error('Google Calendar sync error:', googleError || googleResult?.error);
+            
+            // Check if it's a token refresh error
+            const errorMessage = googleResult?.error || (googleError as any)?.message || '';
+            if (errorMessage.includes('refresh') || errorMessage.includes('token') || errorMessage.includes('401')) {
+              toast({
+                title: 'Требуется переподключение Google',
+                description: 'Google токен устарел. Откройте меню и переподключите Google календарь.',
+                variant: 'destructive',
+              });
+            }
           } else if (googleResult?.success) {
             googleSynced = true;
             // Update the event with Google Calendar ID
@@ -207,8 +217,18 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
             }
           });
 
-          if (outlookError) {
-            console.error('Outlook Calendar sync error:', outlookError);
+          if (outlookError || !outlookResult?.success) {
+            console.error('Outlook Calendar sync error:', outlookError || outlookResult?.error);
+            
+            // Check if it's a token refresh error
+            const errorMessage = outlookResult?.error || (outlookError as any)?.message || '';
+            if (errorMessage.includes('refresh') || errorMessage.includes('token') || errorMessage.includes('401')) {
+              toast({
+                title: 'Требуется переподключение Outlook',
+                description: 'Microsoft токен устарел. Откройте меню и переподключите Outlook календарь.',
+                variant: 'destructive',
+              });
+            }
           } else if (outlookResult?.success) {
             outlookSynced = true;
             // Update the event with Microsoft event ID
