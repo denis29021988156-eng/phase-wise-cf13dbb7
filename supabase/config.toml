@@ -68,3 +68,9 @@ verify_jwt = true
 
 [functions.gmail-webhook-receiver]
 verify_jwt = false
+
+[functions.authorize-outlook-calendar]
+verify_jwt = true
+
+[functions.outlook-calendar-callback]
+verify_jwt = false

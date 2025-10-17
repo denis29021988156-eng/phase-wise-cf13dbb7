@@ -32,7 +32,7 @@ interface UserCycle {
 }
 
 const Calendar = () => {
-  const { user, session, linkGoogleIdentity, linkMicrosoftIdentity, signInWithGoogle } = useAuth();
+  const { user, session, linkGoogleIdentity, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -162,6 +162,74 @@ const Calendar = () => {
             });
           }
         }, 1200);
+      }
+
+      // Handle OAuth callback for Outlook Calendar
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const pendingOutlookCallback = localStorage.getItem('pendingOutlookCallback');
+
+      if (pendingOutlookCallback === 'true' && code && state) {
+        localStorage.removeItem('pendingOutlookCallback');
+        
+        // Clean URL without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Process OAuth callback
+        setTimeout(async () => {
+          try {
+            const { data, error } = await supabase.functions.invoke('outlook-calendar-callback', {
+              body: {
+                code,
+                state,
+                redirectUri: window.location.origin + '/dashboard'
+              }
+            });
+
+            if (error || !data?.success) {
+              console.error('OAuth callback failed:', error || data);
+              toast({
+                title: 'Ошибка подключения Outlook',
+                description: data?.error || 'Не удалось сохранить токены',
+                variant: 'destructive'
+              });
+              return;
+            }
+
+            toast({
+              title: 'Outlook подключен',
+              description: 'Календарь успешно подключен. Синхронизация...'
+            });
+
+            // Now sync the calendar
+            const { data: syncData, error: syncError } = await supabase.functions.invoke('sync-outlook-calendar', {
+              body: { userId: user.id }
+            });
+
+            if (syncError || !syncData?.success) {
+              console.error('Outlook sync failed:', syncError || syncData);
+              toast({
+                title: 'Ошибка синхронизации',
+                description: syncData?.error || 'Не удалось загрузить события',
+                variant: 'destructive'
+              });
+            } else {
+              loadEvents();
+              toast({
+                title: 'Календарь синхронизирован',
+                description: syncData.message || `Загружено ${syncData?.inserted || 0} событий из Outlook`
+              });
+            }
+          } catch (err) {
+            console.error('Error processing OAuth callback:', err);
+            toast({
+              title: 'Ошибка',
+              description: 'Произошла ошибка при подключении календаря',
+              variant: 'destructive'
+            });
+          }
+        }, 500);
       }
     }
   }, [user, selectedDate]);
@@ -393,31 +461,33 @@ const Calendar = () => {
         .in('provider', ['microsoft', 'azure'])
         .maybeSingle();
 
-      // If no token exists, link Microsoft identity first
+      // If no token exists, initiate OAuth flow
       if (!tokenData) {
         toast({
-          title: "Подключение Microsoft",
-          description: "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Microsoft...",
+          title: "Подключение Outlook",
+          description: "Перенаправление на авторизацию Microsoft...",
         });
-        try {
-          localStorage.setItem('pendingOutlookSync', 'true');
-          await linkMicrosoftIdentity();
-        } catch (err: any) {
-          const msg = String(err?.message || err);
-          console.error('Link Microsoft identity error:', err);
+        
+        // Get OAuth URL from edge function
+        const { data: authData, error: authError } = await supabase.functions.invoke('authorize-outlook-calendar');
+        
+        if (authError || !authData?.success) {
+          console.error('Failed to get OAuth URL:', authError || authData);
           toast({
-            title: "Не удалось подключить календарь",
-            description: msg.includes('Identity is already linked')
-              ? "Этот Microsoft аккаунт уже используется другим пользователем в приложении. Выйдите и войдите через Microsoft, чтобы использовать Outlook календарь."
-              : msg.includes('manual_linking_disabled') || msg.includes('Manual linking is disabled')
-              ? "В Supabase отключён manual linking. Включите manual linking в настройках провайдера Microsoft и повторите попытку."
-              : msg.includes('unauthorized_client')
-              ? "Настройка Microsoft OAuth некорректна (unauthorized_client). Проверьте тип аккаунтов и Redirect URI в Azure."
-              : "Произошла ошибка при привязке аккаунта Microsoft. Попробуйте ещё раз.",
+            title: "Ошибка подключения",
+            description: "Не удалось инициировать OAuth. Попробуйте позже.",
             variant: "destructive",
           });
+          setOutlookLoading(false);
+          return;
         }
-        return; // After redirect, user will be back and can sync again
+        
+        // Store flag to handle callback
+        localStorage.setItem('pendingOutlookCallback', 'true');
+        
+        // Redirect to Microsoft OAuth
+        window.location.href = authData.authUrl;
+        return;
       }
 
       // Token exists, proceed with sync
