@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    const authToken = authHeader?.replace('Bearer ', '') || '';
+    
     const { userId, eventId } = await req.json();
     console.log('Delete Google event request:', { userId, eventId });
 
@@ -128,7 +131,10 @@ Deno.serve(async (req) => {
           console.log('Token expired, attempting refresh');
           // Token expired, try refresh
           const refreshed = await supabase.functions.invoke('refresh-google-token', {
-            body: { user_id: userId }
+            body: { user_id: userId },
+            headers: {
+              Authorization: `Bearer ${authToken}`
+            }
           });
 
           if (refreshed.data?.access_token) {

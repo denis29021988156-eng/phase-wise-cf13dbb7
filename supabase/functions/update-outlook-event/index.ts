@@ -218,7 +218,10 @@ Deno.serve(async (req) => {
           if (updateResponse.status === 401) {
             console.log('Token expired, attempting refresh');
             const refreshed = await supabase.functions.invoke('refresh-microsoft-token', {
-              body: { user_id: userId }
+              body: { user_id: userId },
+              headers: {
+                Authorization: `Bearer ${authToken}`
+              }
             });
 
             if (refreshed.data?.access_token) {

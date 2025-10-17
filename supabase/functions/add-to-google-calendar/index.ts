@@ -34,7 +34,7 @@ serve(async (req) => {
       .select('access_token, refresh_token, expires_at')
       .eq('user_id', userId)
       .eq('provider', 'google')
-      .single();
+      .maybeSingle();
 
     if (tokenError || !tokenData) {
       console.error('No Google token found for user:', tokenError);
@@ -76,7 +76,7 @@ serve(async (req) => {
     console.log('Creating Google Calendar event:', googleEvent);
 
     // Create event in Google Calendar
-    const createResponse = await fetch(
+    let createResponse = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events',
       {
         method: 'POST',
@@ -87,6 +87,33 @@ serve(async (req) => {
         body: JSON.stringify(googleEvent),
       }
     );
+
+    // Handle 401 by attempting a token refresh and retrying once
+    if (createResponse.status === 401) {
+      console.log('401 from Google Calendar API. Attempting token refresh and retry...');
+      const refreshRetryResponse = await supabaseClient.functions.invoke('refresh-google-token', {
+        body: { user_id: userId }
+      });
+
+      if (!refreshRetryResponse.error && refreshRetryResponse.data?.access_token) {
+        const newAccessToken = refreshRetryResponse.data.access_token;
+        console.log('Token refreshed, retrying create event request...');
+        
+        createResponse = await fetch(
+          'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${newAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(googleEvent),
+          }
+        );
+      } else {
+        console.error('Token refresh failed:', refreshRetryResponse.error);
+      }
+    }
 
     if (!createResponse.ok) {
       const errorText = await createResponse.text();

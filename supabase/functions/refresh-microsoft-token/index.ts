@@ -30,17 +30,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const { userId } = await req.json();
-    if (!userId || userId !== user.id) {
+    const { user_id } = await req.json();
+    if (!user_id || user_id !== user.id) {
       return new Response(JSON.stringify({ error: 'Invalid user ID' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    console.log('Refreshing Microsoft token for user:', userId);
+    console.log('Refreshing Microsoft token for user:', user_id);
 
     const { data: tokenData, error: tokenError } = await supabase
       .from('user_tokens')
       .select('access_token, refresh_token, expires_at')
-      .eq('user_id', userId)
+      .eq('user_id', user_id)
       .eq('provider', 'microsoft')
       .single();
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
         refresh_token: refreshData.refresh_token || tokenData.refresh_token,
         expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
       })
-      .eq('user_id', userId)
+      .eq('user_id', user_id)
       .eq('provider', 'microsoft');
 
     const mask = (t?: string) => (t ? `${t.slice(0,5)}...${t.slice(-5)}` : 'undefined');
