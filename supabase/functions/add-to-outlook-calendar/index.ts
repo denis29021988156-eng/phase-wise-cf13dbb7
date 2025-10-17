@@ -90,11 +90,11 @@ Deno.serve(async (req) => {
     }
 
     // Create event in Outlook Calendar
-    // Use UTC time for consistency with Google Calendar approach
-    // Remove Z suffix and milliseconds, then specify UTC timezone
+    // Outlook works best with local time + timezone specification
+    const timeZone = eventData.timeZone || 'UTC';
     const sanitize = (s: string) => s.replace(/Z$/, '').replace(/\.\d+$/, '');
-    const startUTC = sanitize(eventData.startTime);
-    const endUTC = sanitize(eventData.endTime);
+    const startLocal = sanitize(eventData.startTimeLocal || eventData.startTime);
+    const endLocal = sanitize(eventData.endTimeLocal || eventData.endTime);
 
     const eventBody = {
       subject: eventData.title,
@@ -103,12 +103,12 @@ Deno.serve(async (req) => {
         content: eventData.description || ''
       },
       start: {
-        dateTime: startUTC,
-        timeZone: 'UTC'
+        dateTime: startLocal,
+        timeZone: timeZone
       },
       end: {
-        dateTime: endUTC,
-        timeZone: 'UTC'
+        dateTime: endLocal,
+        timeZone: timeZone
       }
     };
 

@@ -198,6 +198,10 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         try {
           console.log('Adding event to Outlook Calendar...');
           
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const startLocal = `${formData.date}T${formData.startTime}:00`;
+          const endLocal = `${formData.date}T${formData.endTime}:00`;
+          
           const { data: outlookResult, error: outlookError } = await supabase.functions.invoke('add-to-outlook-calendar', {
             body: {
               userId: user.id,
@@ -205,7 +209,10 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
                 title: formData.title,
                 description: formData.description,
                 startTime: startDateTime.toISOString(),
-                endTime: endDateTime.toISOString()
+                endTime: endDateTime.toISOString(),
+                startTimeLocal: startLocal,
+                endTimeLocal: endLocal,
+                timeZone: userTimezone
               }
             }
           });

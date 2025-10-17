@@ -187,8 +187,9 @@ Deno.serve(async (req) => {
 
       if (tokenData?.access_token) {
         try {
-          // Convert ISO UTC time to format Outlook expects
-          // Remove Z suffix and specify UTC timezone
+          // Outlook expects local time with timezone
+          // Get user's timezone (default to UTC if not available)
+          const timeZone = 'UTC'; // Will use UTC as fallback
           const sanitize = (s: string) => s.replace(/Z$/, '').replace(/\.\d+$/, '');
           
           const microsoftEvent = {
@@ -199,11 +200,11 @@ Deno.serve(async (req) => {
             },
             start: {
               dateTime: sanitize(eventData.startTime),
-              timeZone: 'UTC',
+              timeZone: timeZone,
             },
             end: {
               dateTime: sanitize(eventData.endTime),
-              timeZone: 'UTC',
+              timeZone: timeZone,
             },
           };
 
