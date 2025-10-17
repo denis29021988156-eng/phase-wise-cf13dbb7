@@ -29,8 +29,13 @@ Deno.serve(async (req) => {
 
     console.log('Generating Microsoft OAuth URL for user:', user.id);
 
+    // Get origin from request body (sent from frontend)
+    const { origin } = await req.json();
+    
     const clientId = Deno.env.get('MICROSOFT_CLIENT_ID');
-    const redirectUri = `${req.headers.get('origin')}/dashboard`;
+    const redirectUri = origin ? `${origin}/dashboard` : `${req.headers.get('origin')}/dashboard`;
+    
+    console.log('Using redirect_uri:', redirectUri);
     
     if (!clientId) {
       throw new Error('MICROSOFT_CLIENT_ID not configured');

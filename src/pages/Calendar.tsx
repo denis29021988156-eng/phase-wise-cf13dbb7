@@ -481,7 +481,8 @@ const Calendar = () => {
           return;
         }
         const { data: authData, error: authError } = await supabase.functions.invoke('authorize-outlook-calendar', {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: { origin: window.location.origin }
         });
         
         if (authError || !authData?.success) {
