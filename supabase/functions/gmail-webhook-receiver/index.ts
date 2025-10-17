@@ -39,7 +39,7 @@ serve(async (req) => {
       .from('user_profiles')
       .select('user_id')
       .ilike('name', `%${emailAddress}%`)
-      .single();
+      .maybeSingle();
 
     if (!userData) {
       console.log('User not found for email:', emailAddress);
@@ -56,7 +56,7 @@ serve(async (req) => {
       .select('access_token')
       .eq('user_id', userId)
       .eq('provider', 'google')
-      .single();
+      .maybeSingle();
 
     if (!tokenData) {
       console.log('Token not found for user:', userId);

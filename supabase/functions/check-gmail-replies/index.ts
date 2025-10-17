@@ -65,7 +65,7 @@ serve(async (req) => {
           .select('access_token, refresh_token')
           .eq('user_id', userId)
           .eq('provider', 'google')
-          .single();
+          .maybeSingle();
 
         if (tokenError || !tokenData) {
           console.error(`No token found for user ${userId}`);

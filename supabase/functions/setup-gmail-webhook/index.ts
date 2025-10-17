@@ -28,14 +28,14 @@ serve(async (req) => {
     }
 
     // Получить Google токен
-    const { data: tokenData } = await supabaseClient
+    const { data: tokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('access_token')
       .eq('user_id', user.id)
       .eq('provider', 'google')
-      .single();
+      .maybeSingle();
 
-    if (!tokenData) {
+    if (tokenError || !tokenData) {
       throw new Error('Google токен не найден');
     }
 
