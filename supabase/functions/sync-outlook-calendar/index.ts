@@ -15,7 +15,13 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -119,6 +125,7 @@ console.log('Fetching events from Microsoft Calendar...');
 console.log('Using access token (masked):', maskToken(accessToken));
 
     // Fetch events from Microsoft Graph API
+    // Request times in UTC by setting Prefer header
     const startDateTime = new Date().toISOString();
     const endDateTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
@@ -128,6 +135,7 @@ console.log('Using access token (masked):', maskToken(accessToken));
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
+          'Prefer': 'outlook.timezone="UTC"', // Request times in UTC
         },
       }
     );
@@ -169,6 +177,7 @@ console.log('Using access token (masked):', maskToken(accessToken));
               headers: {
                 Authorization: `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
+                'Prefer': 'outlook.timezone="UTC"', // Request times in UTC
               },
             }
           );
@@ -227,8 +236,33 @@ console.log('Using access token (masked):', maskToken(accessToken));
         continue;
       }
 
-      const startTime = new Date(outlookEvent.start.dateTime).toISOString();
-      const endTime = new Date(outlookEvent.end.dateTime).toISOString();
+      // With Prefer: outlook.timezone="UTC" header, Microsoft Graph returns times in UTC
+      // The dateTime will be in format: "2025-10-17T18:00:00.0000000"
+      // And timeZone will be "UTC"
+      
+      let startTime: string;
+      let endTime: string;
+      
+      try {
+        const startDateStr = outlookEvent.start.dateTime;
+        const endDateStr = outlookEvent.end.dateTime;
+        const startTZ = outlookEvent.start.timeZone || 'UTC';
+        const endTZ = outlookEvent.end.timeZone || 'UTC';
+        
+        // Since we requested UTC times, append 'Z' to indicate UTC timezone
+        startTime = new Date(startDateStr + 'Z').toISOString();
+        endTime = new Date(endDateStr + 'Z').toISOString();
+        
+        console.log(`Event: ${outlookEvent.subject}`);
+        console.log(`  Original start: ${startDateStr} (TZ: ${startTZ})`);
+        console.log(`  Converted start: ${startTime}`);
+        console.log(`  Original end: ${endDateStr} (TZ: ${endTZ})`);
+        console.log(`  Converted end: ${endTime}`);
+      } catch (parseError) {
+        console.error('Error parsing event times:', parseError);
+        skippedCount++;
+        continue;
+      }
 
       // Check if event already exists
       const { data: existingEvent } = await supabase

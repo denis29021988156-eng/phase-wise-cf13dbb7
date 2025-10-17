@@ -17,7 +17,11 @@ export const useGoogleTokens = () => {
         identity => identity.provider === 'google'
       );
       
-      if (providerToken && googleIdentity) {
+      // CRITICAL: Only store Google tokens if user logged in directly with Google
+      // When linking identities, session.provider_token contains the PRIMARY provider's token
+      const isDirectGoogleLogin = session.user.app_metadata?.provider === 'google';
+      
+      if (providerToken && googleIdentity && isDirectGoogleLogin) {
         try {
           // Ensure profile exists first to avoid FK constraint errors
           await supabase
