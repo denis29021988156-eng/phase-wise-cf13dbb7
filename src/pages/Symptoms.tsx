@@ -134,7 +134,7 @@ const Symptoms = () => {
           .from('user_cycles')
           .select('start_date, cycle_length, menstrual_length')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (cycle) {
           const today = new Date();

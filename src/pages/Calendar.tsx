@@ -248,8 +248,6 @@ const Calendar = () => {
           .maybeSingle();
         
         setHasMicrosoftToken(!!data);
-        
-        setHasMicrosoftToken(!!data);
       } catch (error) {
         console.error('Error checking Microsoft token:', error);
       } finally {

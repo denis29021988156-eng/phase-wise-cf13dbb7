@@ -94,14 +94,14 @@ serve(async (req) => {
 
     // Получить токен доступа
     const providerName = emailProvider === 'microsoft' ? 'azure' : 'google';
-    const { data: tokenData } = await supabaseClient
+    const { data: tokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('access_token')
       .eq('user_id', userId)
       .eq('provider', providerName)
-      .single();
+      .maybeSingle();
 
-    if (!tokenData) {
+    if (tokenError || !tokenData) {
       throw new Error(`Токен ${emailProvider} не найден`);
     }
 
@@ -199,11 +199,11 @@ serve(async (req) => {
         .from('user_profiles')
         .select('name')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       // Fallback на простой шаблон
       emailSubject = `Предложение перенести: ${event.title}`;
-      const userName = (await supabaseClient.from('user_profiles').select('name').eq('user_id', userId).single()).data?.name || 'Пользователь';
+      const userName = userProfile?.name || 'Пользователь';
       const newStartDate = new Date(suggestion.suggested_new_start);
       
       emailBody = `Здравствуйте!
