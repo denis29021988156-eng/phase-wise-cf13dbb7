@@ -99,6 +99,26 @@ if (!accessToken) {
         if (!refreshResponse.ok) {
           const errorText = await refreshResponse.text();
           console.error('Token refresh failed:', errorText);
+          
+          // If refresh token is invalid (AADSTS70000), delete tokens from database
+          if (errorText.includes('AADSTS70000') || errorText.includes('invalid_grant')) {
+            console.log('Refresh token invalid - deleting tokens from database');
+            await supabase
+              .from('user_tokens')
+              .delete()
+              .eq('user_id', userId)
+              .eq('provider', 'microsoft');
+            
+            return new Response(
+              JSON.stringify({ 
+                error: 'outlook_reconnect_required',
+                message: 'Microsoft токен истек. Требуется переподключение Outlook Calendar.',
+                details: errorText 
+              }),
+              { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
           return new Response(
             JSON.stringify({ error: 'Failed to refresh Microsoft token', details: errorText }),
             { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -184,6 +204,16 @@ console.log('Using access token (masked):', maskToken(accessToken));
         } else {
           const errText = await refreshResponse.text();
           console.error('Refresh after 401 failed:', errText);
+          
+          // If refresh token is invalid, delete tokens from database
+          if (errText.includes('AADSTS70000') || errText.includes('invalid_grant')) {
+            console.log('Refresh token invalid during retry - deleting tokens');
+            await supabase
+              .from('user_tokens')
+              .delete()
+              .eq('user_id', userId)
+              .eq('provider', 'microsoft');
+          }
         }
       } catch (e) {
         console.error('Unexpected error during 401 refresh flow:', e);

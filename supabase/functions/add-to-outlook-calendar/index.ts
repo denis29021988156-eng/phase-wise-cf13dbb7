@@ -89,6 +89,26 @@ Deno.serve(async (req) => {
         if (!refreshResponse.ok) {
           const errorText = await refreshResponse.text();
           console.error('Token refresh failed:', errorText);
+          
+          // If refresh token is invalid (AADSTS70000), delete tokens from database
+          if (errorText.includes('AADSTS70000') || errorText.includes('invalid_grant')) {
+            console.log('Refresh token invalid - deleting tokens from database');
+            await supabase
+              .from('user_tokens')
+              .delete()
+              .eq('user_id', userId)
+              .in('provider', ['microsoft', 'azure']);
+            
+            return new Response(
+              JSON.stringify({ 
+                success: false,
+                error: 'outlook_reconnect_required',
+                message: 'Microsoft токен истек. Требуется переподключение Outlook Calendar.'
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+            );
+          }
+          
           return new Response(
             JSON.stringify({ success: false, error: 'Failed to refresh Microsoft token' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
