@@ -5,6 +5,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Minimal IANA -> Windows time zone mapping for Outlook Graph API
+function ianaToWindowsTz(iana?: string): string {
+  if (!iana) return 'UTC';
+  const map: Record<string, string> = {
+    'UTC': 'UTC',
+    'Etc/UTC': 'UTC',
+    'Europe/Moscow': 'Russian Standard Time',
+    'Europe/Kiev': 'FLE Standard Time',
+    'Europe/Kyiv': 'FLE Standard Time',
+    'Europe/Berlin': 'W. Europe Standard Time',
+    'Europe/London': 'GMT Standard Time',
+    'Europe/Paris': 'Romance Standard Time',
+    'Asia/Dubai': 'Arabian Standard Time',
+    'Asia/Tokyo': 'Tokyo Standard Time',
+    'Asia/Shanghai': 'China Standard Time',
+    'America/Los_Angeles': 'Pacific Standard Time',
+    'America/Chicago': 'Central Standard Time',
+    'America/New_York': 'Eastern Standard Time',
+  };
+  return map[iana] || 'UTC';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -90,8 +112,8 @@ Deno.serve(async (req) => {
     }
 
     // Create event in Outlook Calendar
-    // Outlook works best with local time + timezone specification
-    const timeZone = eventData.timeZone || 'UTC';
+    // Outlook expects local time without Z and a Windows time zone ID
+    const windowsTz = ianaToWindowsTz(eventData.timeZone);
     const sanitize = (s: string) => s.replace(/Z$/, '').replace(/\.\d+$/, '');
     const startLocal = sanitize(eventData.startTimeLocal || eventData.startTime);
     const endLocal = sanitize(eventData.endTimeLocal || eventData.endTime);
@@ -104,11 +126,11 @@ Deno.serve(async (req) => {
       },
       start: {
         dateTime: startLocal,
-        timeZone: timeZone
+        timeZone: windowsTz
       },
       end: {
         dateTime: endLocal,
-        timeZone: timeZone
+        timeZone: windowsTz
       }
     };
 
