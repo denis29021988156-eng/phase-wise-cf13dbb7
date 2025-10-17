@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit, Droplet, CloudCog, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { supabase } from '@/integrations/supabase/client';
 import AddEventDialog from '@/components/dialogs/AddEventDialog';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
@@ -148,13 +149,25 @@ const Calendar = () => {
 
           if (tokenData?.access_token) {
             const { data, error } = await supabase.functions.invoke('sync-outlook-calendar', { body: { userId: user.id } });
-            if (error || !data?.success) {
-              console.error('Outlook sync failed during pendingSync:', error || data);
-              toast({ title: 'Ошибка синхронизации', description: data?.error || (error as any)?.message || 'Не удалось загрузить события из Outlook', variant: 'destructive' });
-            } else {
-              loadEvents();
-              toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.inserted || 0} событий из Outlook` });
-            }
+              if (error || !data?.success) {
+                console.error('Outlook sync failed during pendingSync:', error || data);
+                const needsReconnect =
+                  (data?.error && String(data.error).includes('outlook_reconnect_required')) ||
+                  (error && (String((error as any)?.message || '').includes('non-2xx') || String((error as any)?.name || '').includes('FunctionsFetchError')));
+                toast({
+                  title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
+                  description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (data?.error || (error as any)?.message || 'Не удалось загрузить события из Outlook'),
+                  variant: 'destructive',
+                  action: needsReconnect ? (
+                    <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
+                      Подключить заново
+                    </ToastAction>
+                  ) : undefined,
+                });
+              } else {
+                loadEvents();
+                toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.inserted || 0} событий из Outlook` });
+              }
           } else {
             toast({
               title: 'Нужно подключить Outlook',
@@ -209,10 +222,18 @@ const Calendar = () => {
 
             if (syncError || !syncData?.success) {
               console.error('Outlook sync failed:', syncError || syncData);
+              const needsReconnect =
+                (syncData?.error && String(syncData.error).includes('outlook_reconnect_required')) ||
+                (syncError && String((syncError as any)?.message || '').includes('non-2xx'));
               toast({
-                title: 'Ошибка синхронизации',
-                description: syncData?.error || 'Не удалось загрузить события',
-                variant: 'destructive'
+                title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
+                description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (syncData?.error || 'Не удалось загрузить события'),
+                variant: 'destructive',
+                action: needsReconnect ? (
+                  <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
+                    Подключить заново
+                  </ToastAction>
+                ) : undefined,
               });
             } else {
               loadEvents();
@@ -509,10 +530,16 @@ const Calendar = () => {
 
       if (error) {
         console.error('Sync error:', error);
+        const needsReconnect = String((error as any)?.message || '').includes('non-2xx');
         toast({
-          title: "Ошибка синхронизации",
-          description: error.message || "Не удалось загрузить события из Outlook",
-          variant: "destructive",
+          title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
+          description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (error.message || 'Не удалось загрузить события из Outlook'),
+          variant: 'destructive',
+          action: needsReconnect ? (
+            <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
+              Подключить заново
+            </ToastAction>
+          ) : undefined,
         });
         return;
       }
@@ -524,18 +551,30 @@ const Calendar = () => {
         });
         loadEvents();
       } else {
+        const needsReconnect = data?.error && String(data.error).includes('outlook_reconnect_required');
         toast({
-          title: "Ошибка синхронизации",
-          description: data?.error || "Не удалось синхронизировать календарь",
-          variant: "destructive",
+          title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
+          description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (data?.error || 'Не удалось синхронизировать календарь'),
+          variant: 'destructive',
+          action: needsReconnect ? (
+            <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
+              Подключить заново
+            </ToastAction>
+          ) : undefined,
         });
       }
     } catch (error: any) {
       console.error('Error syncing Outlook:', error);
+      const needsReconnect = String(error?.message || '').includes('non-2xx');
       toast({
-        title: 'Ошибка синхронизации',
-        description: error?.message || 'Не удалось загрузить события из Outlook',
+        title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
+        description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (error?.message || 'Не удалось загрузить события из Outlook'),
         variant: 'destructive',
+        action: needsReconnect ? (
+          <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
+            Подключить заново
+          </ToastAction>
+        ) : undefined,
       });
     } finally {
       setOutlookLoading(false);
