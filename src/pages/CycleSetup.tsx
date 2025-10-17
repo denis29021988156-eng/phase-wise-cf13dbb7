@@ -176,13 +176,16 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                   <Input
                     id="age"
                     type="number"
-                    min="10"
-                    max="100"
+                    min="14"
+                    max="85"
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                     className="mt-2"
                     placeholder="Укажите ваш возраст"
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    От 14 до 85 лет
+                  </p>
                 </div>
 
                 <div>
@@ -190,13 +193,16 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                   <Input
                     id="height"
                     type="number"
-                    min="100"
-                    max="250"
+                    min="120"
+                    max="220"
                     value={formData.height}
                     onChange={(e) => setFormData({ ...formData, height: e.target.value })}
                     className="mt-2"
                     placeholder="Укажите ваш рост"
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    От 120 до 220 см
+                  </p>
                 </div>
 
                 <div>
@@ -205,13 +211,16 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                     id="weight"
                     type="number"
                     step="0.1"
-                    min="20"
-                    max="300"
+                    min="30"
+                    max="150"
                     value={formData.weight}
                     onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                     className="mt-2"
                     placeholder="Укажите ваш вес"
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    От 30 до 150 кг
+                  </p>
                 </div>
               </div>
 

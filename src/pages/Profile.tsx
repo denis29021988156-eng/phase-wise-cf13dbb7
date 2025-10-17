@@ -17,11 +17,17 @@ const Profile = () => {
     cycle_length: 28,
     menstrual_length: 5,
   });
+  const [profileData, setProfileData] = useState({
+    age: '',
+    height: '',
+    weight: '',
+  });
 
   // Load user cycle data
   useEffect(() => {
     if (user) {
       loadUserCycle();
+      loadUserProfile();
     }
   }, [user]);
 
@@ -77,13 +83,41 @@ const Profile = () => {
     }
   };
 
+  const loadUserProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('age, height, weight')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading user profile:', error);
+        return;
+      }
+
+      if (data) {
+        setProfileData({
+          age: data.age?.toString() || '',
+          height: data.height?.toString() || '',
+          weight: data.weight?.toString() || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Update cycle data
+      const { error: cycleError } = await supabase
         .from('user_cycles')
         .upsert({
           user_id: user.id,
@@ -92,14 +126,26 @@ const Profile = () => {
           menstrual_length: formData.menstrual_length,
         });
 
-      if (error) throw error;
+      if (cycleError) throw cycleError;
+
+      // Update profile data
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          age: profileData.age ? parseInt(profileData.age) : null,
+          height: profileData.height ? parseInt(profileData.height) : null,
+          weight: profileData.weight ? parseFloat(profileData.weight) : null,
+        }, { onConflict: 'user_id' });
+
+      if (profileError) throw profileError;
 
       toast({
         title: 'Настройки сохранены',
-        description: 'Ваши данные о цикле успешно обновлены',
+        description: 'Ваши данные успешно обновлены',
       });
     } catch (error) {
-      console.error('Error saving cycle data:', error);
+      console.error('Error saving data:', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось сохранить данные',
@@ -281,6 +327,58 @@ const Profile = () => {
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Обычно от 3 до 7 дней
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="age">Возраст (лет)</Label>
+              <Input
+                id="age"
+                type="number"
+                min="14"
+                max="85"
+                value={profileData.age}
+                onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
+                className="mt-2"
+                placeholder="Укажите ваш возраст"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                От 14 до 85 лет
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="height">Рост (см)</Label>
+              <Input
+                id="height"
+                type="number"
+                min="120"
+                max="220"
+                value={profileData.height}
+                onChange={(e) => setProfileData({ ...profileData, height: e.target.value })}
+                className="mt-2"
+                placeholder="Укажите ваш рост"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                От 120 до 220 см
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="weight">Вес (кг)</Label>
+              <Input
+                id="weight"
+                type="number"
+                step="0.1"
+                min="30"
+                max="150"
+                value={profileData.weight}
+                onChange={(e) => setProfileData({ ...profileData, weight: e.target.value })}
+                className="mt-2"
+                placeholder="Укажите ваш вес"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                От 30 до 150 кг
               </p>
             </div>
 
