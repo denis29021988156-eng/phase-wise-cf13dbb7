@@ -171,16 +171,23 @@ serve(async (req) => {
         const moods = (todaySymptoms.mood || []).map((m: string) => moodLabels[m] || m);
         const symptoms = (todaySymptoms.physical_symptoms || []).map((s: string) => physicalLabels[s] || s);
 
+        // Проверяем, обновлялись ли данные недавно (в течение последних 30 минут)
+        const updatedAt = new Date(todaySymptoms.updated_at || todaySymptoms.created_at);
+        const now = new Date();
+        const minutesSinceUpdate = (now.getTime() - updatedAt.getTime()) / (1000 * 60);
+        const isRecentlyUpdated = minutesSinceUpdate < 30;
+
         symptomContext = `
-Сегодняшнее самочувствие:
+Сегодняшнее самочувствие${isRecentlyUpdated ? ' (🍎 данные синхронизированы с Apple Health)' : ''}:
 - Индекс самочувствия: ${wellnessIndex}/100 ${wellnessIndex <= 30 ? '(низкий - нужен отдых)' : wellnessIndex <= 60 ? '(средний)' : '(отличный)'}
 - Энергия: ${todaySymptoms.energy}/5
-- Качество сна: ${todaySymptoms.sleep_quality}/5
-- Уровень стресса: ${todaySymptoms.stress_level}/5
+${todaySymptoms.sleep_quality ? `- Качество сна: ${todaySymptoms.sleep_quality}/5${isRecentlyUpdated ? ' (из Apple Health)' : ''}` : ''}
+${todaySymptoms.stress_level ? `- Уровень стресса: ${todaySymptoms.stress_level}/5${isRecentlyUpdated ? ' (рассчитан из HRV Apple Health)' : ''}` : ''}
 ${moods.length > 0 ? `- Настроение: ${moods.join(', ')}` : ''}
 ${symptoms.length > 0 ? `- Физические ощущения: ${symptoms.join(', ')}` : ''}
 
 ВАЖНО: Учитывай текущее самочувствие в своих советах! Если индекс низкий или высокий стресс - рекомендуй более щадящий режим.
+${isRecentlyUpdated ? '⚠️ Данные о сне и стрессе получены из Apple Health - это объективные показатели, которые нужно учесть!' : ''}
 `;
       }
 

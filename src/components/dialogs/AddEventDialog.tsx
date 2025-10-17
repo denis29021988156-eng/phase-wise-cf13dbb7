@@ -107,6 +107,19 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         .eq('user_id', user.id)
         .maybeSingle();
 
+      // Try to sync Apple Health data before generating AI suggestion
+      let healthDataSynced = false;
+      try {
+        console.log('Attempting to sync Apple Health data...');
+        const { syncAppleHealthData } = await import('@/utils/syncAppleHealth');
+        healthDataSynced = await syncAppleHealthData(user.id);
+        if (healthDataSynced) {
+          console.log('Apple Health data synced successfully');
+        }
+      } catch (healthError) {
+        console.log('Could not sync Apple Health data:', healthError);
+      }
+
       // Generate AI suggestion if cycle data exists (calculate cycle day for this specific event date)
       if (cycleData && eventData) {
         const eventDate = new Date(formData.date);
@@ -129,7 +142,8 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
                 cycleLength: cycleData.cycle_length,
                 startDate: cycleData.start_date
               },
-              timezone: userTimezone
+              timezone: userTimezone,
+              healthDataSynced: healthDataSynced
             }
           });
 

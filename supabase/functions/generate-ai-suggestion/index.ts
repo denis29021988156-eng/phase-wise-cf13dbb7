@@ -55,10 +55,11 @@ serve(async (req) => {
       }
     );
 
-    const { event, cycleData, timezone = 'UTC' } = await req.json();
+    const { event, cycleData, timezone = 'UTC', healthDataSynced = false } = await req.json();
 
     console.log('Generating AI suggestion for event:', event.title);
     console.log('Cycle data:', cycleData);
+    console.log('Health data synced from Apple Health:', healthDataSynced);
 
     // Get user from auth
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -118,11 +119,25 @@ serve(async (req) => {
         cramps: 'спазмы', headache: 'головная боль', bloating: 'вздутие'
       };
       
-      healthContext += '\n📊 ДАННЫЕ О САМОЧУВСТВИИ СЕГОДНЯ:\n';
+      healthContext += '\n📊 ДАННЫЕ О САМОЧУВСТВИИ СЕГОДНЯ';
+      if (healthDataSynced) {
+        healthContext += ' (🍎 синхронизировано с Apple Health)';
+      }
+      healthContext += ':\n';
       healthContext += `- Индекс самочувствия: ${todaySymptoms.wellness_index}/100\n`;
       healthContext += `- Энергия: ${todaySymptoms.energy}/5\n`;
-      healthContext += `- Качество сна: ${todaySymptoms.sleep_quality}/5\n`;
-      healthContext += `- Уровень стресса: ${todaySymptoms.stress_level}/5\n`;
+      
+      if (todaySymptoms.sleep_quality) {
+        healthContext += `- Качество сна: ${todaySymptoms.sleep_quality}/5`;
+        if (healthDataSynced) healthContext += ' (из Apple Health)';
+        healthContext += '\n';
+      }
+      
+      if (todaySymptoms.stress_level) {
+        healthContext += `- Уровень стресса: ${todaySymptoms.stress_level}/5`;
+        if (healthDataSynced) healthContext += ' (рассчитан из HRV Apple Health)';
+        healthContext += '\n';
+      }
       
       if (todaySymptoms.mood && todaySymptoms.mood.length > 0) {
         healthContext += `- Настроение: ${todaySymptoms.mood.map((m: string) => moodLabels[m] || m).join(', ')}\n`;
@@ -131,6 +146,11 @@ serve(async (req) => {
       if (todaySymptoms.physical_symptoms && todaySymptoms.physical_symptoms.length > 0) {
         healthContext += `- Физические симптомы: ${todaySymptoms.physical_symptoms.map((s: string) => physicalLabels[s] || s).join(', ')}\n`;
       }
+      
+      if (healthDataSynced) {
+        healthContext += '\n⚠️ ВАЖНО: Данные о сне и стрессе получены из Apple Health - это объективные показатели здоровья, которые ОБЯЗАТЕЛЬНО нужно учесть в рекомендациях!\n';
+      }
+      
       healthContext += '\n';
     }
     

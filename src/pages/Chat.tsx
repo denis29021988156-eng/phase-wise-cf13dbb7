@@ -57,6 +57,17 @@ const Chat = () => {
 
     const loadChatHistory = async () => {
       try {
+        // Try to sync Apple Health data before loading chat
+        try {
+          const { syncAppleHealthData } = await import('@/utils/syncAppleHealth');
+          const synced = await syncAppleHealthData(user.id);
+          if (synced) {
+            console.log('Apple Health data synced before chat session');
+          }
+        } catch (healthError) {
+          console.log('Could not sync Apple Health data:', healthError);
+        }
+
         const { data: chatHistory, error } = await supabase
           .from('chat_messages')
           .select('*')
