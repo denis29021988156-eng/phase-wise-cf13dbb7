@@ -187,16 +187,16 @@ Deno.serve(async (req) => {
 
       if (tokenData?.access_token) {
         try {
+          // Google Calendar expects dateTime in ISO format with Z for UTC
+          // Don't specify timeZone when using UTC ISO strings
           const googleEvent = {
             summary: eventData.title,
             description: eventData.description || '',
             start: {
-              dateTime: eventData.startTime,
-              timeZone: 'UTC',
+              dateTime: eventData.startTime, // Already in UTC (ISO format with Z)
             },
             end: {
-              dateTime: eventData.endTime,
-              timeZone: 'UTC',
+              dateTime: eventData.endTime, // Already in UTC (ISO format with Z)
             },
           };
 

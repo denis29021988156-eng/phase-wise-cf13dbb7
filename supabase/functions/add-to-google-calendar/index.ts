@@ -60,16 +60,16 @@ serve(async (req) => {
     const accessToken = refreshResponse.data.access_token;
 
     // Prepare event data for Google Calendar
+    // Google Calendar accepts dateTime in RFC3339 format with timezone
+    // Since we receive UTC time (ISO string), we just pass it as is
     const googleEvent = {
       summary: eventData.title,
       description: eventData.description || '',
       start: {
-        dateTime: eventData.startTime,
-        timeZone: 'Europe/Moscow',
+        dateTime: eventData.startTime, // Already in UTC (ISO format with Z)
       },
       end: {
-        dateTime: eventData.endTime,
-        timeZone: 'Europe/Moscow',
+        dateTime: eventData.endTime, // Already in UTC (ISO format with Z)
       },
     };
 

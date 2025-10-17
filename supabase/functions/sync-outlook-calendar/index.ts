@@ -249,17 +249,29 @@ console.log('Using access token (masked):', maskToken(accessToken));
         const startTZ = outlookEvent.start.timeZone || 'UTC';
         const endTZ = outlookEvent.end.timeZone || 'UTC';
         
-        // Since we requested UTC times, append 'Z' to indicate UTC timezone
-        startTime = new Date(startDateStr + 'Z').toISOString();
-        endTime = new Date(endDateStr + 'Z').toISOString();
-        
-        console.log(`Event: ${outlookEvent.subject}`);
+        console.log(`\n=== Event: ${outlookEvent.subject} ===`);
         console.log(`  Original start: ${startDateStr} (TZ: ${startTZ})`);
-        console.log(`  Converted start: ${startTime}`);
         console.log(`  Original end: ${endDateStr} (TZ: ${endTZ})`);
-        console.log(`  Converted end: ${endTime}`);
+        
+        // Since we requested UTC times with Prefer: outlook.timezone="UTC",
+        // Microsoft returns times in UTC format but without Z suffix
+        // We need to add Z to indicate it's UTC time
+        const startWithZ = startDateStr.includes('Z') ? startDateStr : startDateStr + 'Z';
+        const endWithZ = endDateStr.includes('Z') ? endDateStr : endDateStr + 'Z';
+        
+        startTime = new Date(startWithZ).toISOString();
+        endTime = new Date(endWithZ).toISOString();
+        
+        console.log(`  Parsed as UTC: ${startTime} to ${endTime}`);
+        
+        // Verify parsing
+        const startDate = new Date(startTime);
+        if (isNaN(startDate.getTime())) {
+          throw new Error(`Invalid start time: ${startDateStr}`);
+        }
       } catch (parseError) {
         console.error('Error parsing event times:', parseError);
+        console.error('  Event data:', JSON.stringify(outlookEvent, null, 2));
         skippedCount++;
         continue;
       }
