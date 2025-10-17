@@ -409,6 +409,7 @@ export type Database = {
           height: number | null
           id: string
           name: string | null
+          timezone: string | null
           updated_at: string
           user_id: string
           weight: number | null
@@ -419,6 +420,7 @@ export type Database = {
           height?: number | null
           id?: string
           name?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
           weight?: number | null
@@ -429,6 +431,7 @@ export type Database = {
           height?: number | null
           id?: string
           name?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
           weight?: number | null

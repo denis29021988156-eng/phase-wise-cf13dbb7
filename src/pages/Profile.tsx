@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Save, User, Calendar, Settings } from 'lucide-react';
+import { Save, User, Calendar, Settings, Globe } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TimezoneWarning } from '@/components/TimezoneWarning';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -21,7 +23,23 @@ const Profile = () => {
     age: '',
     height: '',
     weight: '',
+    timezone: 'Europe/Moscow',
   });
+
+  const timezones = [
+    { value: 'Europe/Moscow', label: 'Москва (UTC+3)' },
+    { value: 'Europe/Kiev', label: 'Киев (UTC+2)' },
+    { value: 'Europe/Berlin', label: 'Берлин (UTC+1)' },
+    { value: 'Europe/London', label: 'Лондон (UTC+0)' },
+    { value: 'Europe/Paris', label: 'Париж (UTC+1)' },
+    { value: 'Asia/Dubai', label: 'Дубай (UTC+4)' },
+    { value: 'Asia/Tokyo', label: 'Токио (UTC+9)' },
+    { value: 'Asia/Shanghai', label: 'Шанхай (UTC+8)' },
+    { value: 'America/Los_Angeles', label: 'Лос-Анджелес (UTC-8)' },
+    { value: 'America/Chicago', label: 'Чикаго (UTC-6)' },
+    { value: 'America/New_York', label: 'Нью-Йорк (UTC-5)' },
+    { value: 'UTC', label: 'UTC' },
+  ];
 
   // Load user cycle data
   useEffect(() => {
@@ -89,7 +107,7 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('age, height, weight')
+        .select('age, height, weight, timezone')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -103,6 +121,7 @@ const Profile = () => {
           age: data.age?.toString() || '',
           height: data.height?.toString() || '',
           weight: data.weight?.toString() || '',
+          timezone: data.timezone || 'Europe/Moscow',
         });
       }
     } catch (error) {
@@ -136,6 +155,7 @@ const Profile = () => {
           age: profileData.age ? parseInt(profileData.age) : null,
           height: profileData.height ? parseInt(profileData.height) : null,
           weight: profileData.weight ? parseFloat(profileData.weight) : null,
+          timezone: profileData.timezone,
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
@@ -225,6 +245,9 @@ const Profile = () => {
           <p className="text-muted-foreground">{user?.email}</p>
         </div>
       </div>
+
+      {/* Timezone Warning */}
+      <TimezoneWarning userTimezone={profileData.timezone} />
 
       {/* Current Cycle Info */}
       {currentDay && (
@@ -379,6 +402,31 @@ const Profile = () => {
               />
               <p className="text-sm text-muted-foreground mt-1">
                 От 30 до 150 кг
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="timezone" className="flex items-center space-x-2">
+                <Globe className="h-4 w-4" />
+                <span>Часовой пояс</span>
+              </Label>
+              <Select
+                value={profileData.timezone}
+                onValueChange={(value) => setProfileData({ ...profileData, timezone: value })}
+              >
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Выберите часовой пояс" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timezones.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                Используется для синхронизации с Outlook
               </p>
             </div>
 

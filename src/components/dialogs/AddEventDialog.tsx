@@ -25,6 +25,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
   const [syncToOutlook, setSyncToOutlook] = useState(false);
   const [hasGoogleToken, setHasGoogleToken] = useState(false);
   const [hasMicrosoftToken, setHasMicrosoftToken] = useState(false);
+  const [userTimezone, setUserTimezone] = useState('Europe/Moscow');
   const [formData, setFormData] = useState({
     title: '',
     date: selectedDate,
@@ -37,6 +38,17 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
   useEffect(() => {
     const checkTokens = async () => {
       if (open && user) {
+        // Get user timezone from profile
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('timezone')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (profileData?.timezone) {
+          setUserTimezone(profileData.timezone);
+        }
+
         const { data: googleData } = await supabase
           .from('user_tokens')
           .select('access_token')
@@ -104,8 +116,6 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
 
         try {
-          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          
           const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
             body: {
               event: {
@@ -198,7 +208,6 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         try {
           console.log('Adding event to Outlook Calendar...');
           
-          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
           const startLocal = `${formData.date}T${formData.startTime}:00`;
           const endLocal = `${formData.date}T${formData.endTime}:00`;
           

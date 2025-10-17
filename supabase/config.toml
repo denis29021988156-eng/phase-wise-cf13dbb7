@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.outlook-calendar-callback]
 verify_jwt = false
+
+[functions.check-outlook-timezone]
+verify_jwt = true
