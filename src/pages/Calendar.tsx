@@ -468,8 +468,21 @@ const Calendar = () => {
           description: "Перенаправление на авторизацию Microsoft...",
         });
         
-        // Get OAuth URL from edge function
-        const { data: authData, error: authError } = await supabase.functions.invoke('authorize-outlook-calendar');
+        // Get OAuth URL from edge function (force user JWT)
+        const accessToken = session?.access_token;
+        if (!accessToken) {
+          console.error('No session access token for Outlook auth');
+          toast({
+            title: "Нужно войти заново",
+            description: "Сессия истекла. Перезайдите и попробуйте снова.",
+            variant: "destructive",
+          });
+          setOutlookLoading(false);
+          return;
+        }
+        const { data: authData, error: authError } = await supabase.functions.invoke('authorize-outlook-calendar', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
         
         if (authError || !authData?.success) {
           console.error('Failed to get OAuth URL:', authError || authData);
