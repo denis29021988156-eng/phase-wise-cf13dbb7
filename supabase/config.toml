@@ -3,6 +3,12 @@ project_id = "pytefsexxwtlropzkmxi"
 [functions.generate-ai-suggestion]
 verify_jwt = true
 
+[functions.setup-google-calendar-watch]
+verify_jwt = true
+
+[functions.google-calendar-webhook]
+verify_jwt = false
+
 [functions.ai-week-planner]
 verify_jwt = false
 

@@ -303,6 +303,36 @@ export type Database = {
         }
         Relationships: []
       }
+      google_calendar_watch_channels: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          expiration: string
+          id: string
+          resource_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          expiration: string
+          id?: string
+          resource_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          expiration?: string
+          id?: string
+          resource_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

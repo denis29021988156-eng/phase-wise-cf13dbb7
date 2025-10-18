@@ -96,6 +96,14 @@ const Calendar = () => {
             } else {
               loadEvents();
               toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+              
+              // Set up auto-sync webhook
+              try {
+                await supabase.functions.invoke('setup-google-calendar-watch');
+                console.log('Google Calendar auto-sync enabled');
+              } catch (watchError) {
+                console.error('Failed to setup calendar watch:', watchError);
+              }
             }
           } else {
             // Try to upsert tokens from current session and then sync
@@ -385,6 +393,14 @@ const Calendar = () => {
             if (data?.success) {
               toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
               loadEvents();
+              
+              // Set up auto-sync webhook
+              try {
+                await supabase.functions.invoke('setup-google-calendar-watch');
+                console.log('Google Calendar auto-sync enabled');
+              } catch (watchError) {
+                console.error('Failed to setup calendar watch:', watchError);
+              }
               return;
             }
           }
@@ -448,6 +464,14 @@ const Calendar = () => {
           description: data.message || `Загружено ${data?.eventsCount || 0} событий`,
         });
         loadEvents();
+        
+        // Set up auto-sync webhook
+        try {
+          await supabase.functions.invoke('setup-google-calendar-watch');
+          console.log('Google Calendar auto-sync enabled');
+        } catch (watchError) {
+          console.error('Failed to setup calendar watch:', watchError);
+        }
       } else {
         toast({
           title: "Ошибка",
