@@ -10,26 +10,36 @@ const corsHeaders = {
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 // Определяем фазы цикла и их описания
-const getCyclePhase = (cycleDay: number, cycleLength: number = 28, menstrualLength: number = 5) => {
+const getCyclePhase = (cycleDay: number, cycleLength: number = 28, menstrualLength: number = 5, language: string = 'ru') => {
+  const isEnglish = language === 'en';
+  
   if (cycleDay >= 1 && cycleDay <= menstrualLength) {
     return {
-      phase: 'Менструация',
-      description: 'снижение энергии, потребность в отдыхе, возможные болевые ощущения, эмоциональная чувствительность'
+      phase: isEnglish ? 'Menstruation' : 'Менструация',
+      description: isEnglish 
+        ? 'reduced energy, need for rest, possible pain, emotional sensitivity'
+        : 'снижение энергии, потребность в отдыхе, возможные болевые ощущения, эмоциональная чувствительность'
     };
   } else if (cycleDay >= menstrualLength + 1 && cycleDay <= 13) {
     return {
-      phase: 'Фолликулярная фаза',
-      description: 'повышение энергии, улучшение настроения, активность, хорошая концентрация'
+      phase: isEnglish ? 'Follicular Phase' : 'Фолликулярная фаза',
+      description: isEnglish
+        ? 'increased energy, improved mood, activity, good concentration'
+        : 'повышение энергии, улучшение настроения, активность, хорошая концентрация'
     };
   } else if (cycleDay >= 14 && cycleDay <= 16) {
     return {
-      phase: 'Овуляция',
-      description: 'пик энергии, социальная активность, повышенная привлекательность, возможны тянущие боли'
+      phase: isEnglish ? 'Ovulation' : 'Овуляция',
+      description: isEnglish
+        ? 'peak energy, social activity, increased attractiveness, possible pulling pain'
+        : 'пик энергии, социальная активность, повышенная привлекательность, возможны тянущие боли'
     };
   } else {
     return {
-      phase: 'Лютеиновая фаза',
-      description: 'постепенное снижение энергии, возможная раздражительность, потребность в комфорте, изменения аппетита'
+      phase: isEnglish ? 'Luteal Phase' : 'Лютеиновая фаза',
+      description: isEnglish
+        ? 'gradual decrease in energy, possible irritability, need for comfort, appetite changes'
+        : 'постепенное снижение энергии, возможная раздражительность, потребность в комфорте, изменения аппетита'
     };
   }
 };
@@ -56,6 +66,8 @@ serve(async (req) => {
     );
 
     const { event, cycleData, timezone = 'UTC', healthDataSynced = false } = await req.json();
+    const language = cycleData.language || 'ru';
+    const isEnglish = language === 'en';
 
     console.log('Generating AI suggestion for event:', event.title);
     console.log('Cycle data:', cycleData);
@@ -78,12 +90,20 @@ serve(async (req) => {
     let profileContext = '';
     if (profile) {
       const profileParts = [];
-      if (profile.age) profileParts.push(`Возраст: ${profile.age} лет`);
-      if (profile.height) profileParts.push(`Рост: ${profile.height} см`);
-      if (profile.weight) profileParts.push(`Вес: ${profile.weight} кг`);
+      if (isEnglish) {
+        if (profile.age) profileParts.push(`Age: ${profile.age} years`);
+        if (profile.height) profileParts.push(`Height: ${profile.height} cm`);
+        if (profile.weight) profileParts.push(`Weight: ${profile.weight} kg`);
+      } else {
+        if (profile.age) profileParts.push(`Возраст: ${profile.age} лет`);
+        if (profile.height) profileParts.push(`Рост: ${profile.height} см`);
+        if (profile.weight) profileParts.push(`Вес: ${profile.weight} кг`);
+      }
       
       if (profileParts.length > 0) {
-        profileContext = `\n\nДанные пользователя:\n${profileParts.join('\n')}\n(Используй для персонализации советов по активности и питанию)`;
+        profileContext = isEnglish 
+          ? `\n\nUser data:\n${profileParts.join('\n')}\n(Use for personalized activity and nutrition advice)`
+          : `\n\nДанные пользователя:\n${profileParts.join('\n')}\n(Используй для персонализации советов по активности и питанию)`;
       }
     }
 
@@ -110,45 +130,83 @@ serve(async (req) => {
     
     // Add symptom data if available
     if (todaySymptoms) {
-      const moodLabels: Record<string, string> = {
-        happy: 'радость', calm: 'спокойствие', anxious: 'тревога',
-        irritable: 'раздражение', sad: 'грусть', motivated: 'вдохновение'
+      const moodLabels: Record<string, Record<string, string>> = {
+        en: {
+          happy: 'joy', calm: 'calmness', anxious: 'anxiety',
+          irritable: 'irritation', sad: 'sadness', motivated: 'motivation'
+        },
+        ru: {
+          happy: 'радость', calm: 'спокойствие', anxious: 'тревога',
+          irritable: 'раздражение', sad: 'грусть', motivated: 'вдохновение'
+        }
       };
-      const physicalLabels: Record<string, string> = {
-        pain: 'боль', fatigue: 'усталость', energy: 'бодрость',
-        cramps: 'спазмы', headache: 'головная боль', bloating: 'вздутие'
+      const physicalLabels: Record<string, Record<string, string>> = {
+        en: {
+          pain: 'pain', fatigue: 'fatigue', energy: 'energy',
+          cramps: 'cramps', headache: 'headache', bloating: 'bloating'
+        },
+        ru: {
+          pain: 'боль', fatigue: 'усталость', energy: 'бодрость',
+          cramps: 'спазмы', headache: 'головная боль', bloating: 'вздутие'
+        }
       };
       
-      healthContext += '\n📊 ДАННЫЕ О САМОЧУВСТВИИ СЕГОДНЯ';
+      const lang = isEnglish ? 'en' : 'ru';
+      
+      healthContext += isEnglish 
+        ? '\n📊 TODAY\'S WELL-BEING DATA'
+        : '\n📊 ДАННЫЕ О САМОЧУВСТВИИ СЕГОДНЯ';
       if (healthDataSynced) {
-        healthContext += ' (🍎 синхронизировано с Apple Health)';
+        healthContext += isEnglish 
+          ? ' (🍎 synced with Apple Health)'
+          : ' (🍎 синхронизировано с Apple Health)';
       }
       healthContext += ':\n';
-      healthContext += `- Индекс самочувствия: ${todaySymptoms.wellness_index}/100\n`;
-      healthContext += `- Энергия: ${todaySymptoms.energy}/5\n`;
+      healthContext += isEnglish
+        ? `- Well-being index: ${todaySymptoms.wellness_index}/100\n`
+        : `- Индекс самочувствия: ${todaySymptoms.wellness_index}/100\n`;
+      healthContext += isEnglish
+        ? `- Energy: ${todaySymptoms.energy}/5\n`
+        : `- Энергия: ${todaySymptoms.energy}/5\n`;
       
       if (todaySymptoms.sleep_quality) {
-        healthContext += `- Качество сна: ${todaySymptoms.sleep_quality}/5`;
-        if (healthDataSynced) healthContext += ' (из Apple Health)';
+        healthContext += isEnglish
+          ? `- Sleep quality: ${todaySymptoms.sleep_quality}/5`
+          : `- Качество сна: ${todaySymptoms.sleep_quality}/5`;
+        if (healthDataSynced) {
+          healthContext += isEnglish ? ' (from Apple Health)' : ' (из Apple Health)';
+        }
         healthContext += '\n';
       }
       
       if (todaySymptoms.stress_level) {
-        healthContext += `- Уровень стресса: ${todaySymptoms.stress_level}/5`;
-        if (healthDataSynced) healthContext += ' (рассчитан из HRV Apple Health)';
+        healthContext += isEnglish
+          ? `- Stress level: ${todaySymptoms.stress_level}/5`
+          : `- Уровень стресса: ${todaySymptoms.stress_level}/5`;
+        if (healthDataSynced) {
+          healthContext += isEnglish 
+            ? ' (calculated from HRV Apple Health)'
+            : ' (рассчитан из HRV Apple Health)';
+        }
         healthContext += '\n';
       }
       
       if (todaySymptoms.mood && todaySymptoms.mood.length > 0) {
-        healthContext += `- Настроение: ${todaySymptoms.mood.map((m: string) => moodLabels[m] || m).join(', ')}\n`;
+        healthContext += isEnglish
+          ? `- Mood: ${todaySymptoms.mood.map((m: string) => moodLabels[lang][m] || m).join(', ')}\n`
+          : `- Настроение: ${todaySymptoms.mood.map((m: string) => moodLabels[lang][m] || m).join(', ')}\n`;
       }
       
       if (todaySymptoms.physical_symptoms && todaySymptoms.physical_symptoms.length > 0) {
-        healthContext += `- Физические симптомы: ${todaySymptoms.physical_symptoms.map((s: string) => physicalLabels[s] || s).join(', ')}\n`;
+        healthContext += isEnglish
+          ? `- Physical symptoms: ${todaySymptoms.physical_symptoms.map((s: string) => physicalLabels[lang][s] || s).join(', ')}\n`
+          : `- Физические симптомы: ${todaySymptoms.physical_symptoms.map((s: string) => physicalLabels[lang][s] || s).join(', ')}\n`;
       }
       
       if (healthDataSynced) {
-        healthContext += '\n⚠️ ВАЖНО: Данные о сне и стрессе получены из Apple Health - это объективные показатели здоровья, которые ОБЯЗАТЕЛЬНО нужно учесть в рекомендациях!\n';
+        healthContext += isEnglish
+          ? '\n⚠️ IMPORTANT: Sleep and stress data obtained from Apple Health - these are objective health indicators that MUST be considered in recommendations!\n'
+          : '\n⚠️ ВАЖНО: Данные о сне и стрессе получены из Apple Health - это объективные показатели здоровья, которые ОБЯЗАТЕЛЬНО нужно учесть в рекомендациях!\n';
       }
       
       healthContext += '\n';
@@ -156,17 +214,21 @@ serve(async (req) => {
     
     // Add chat context
     if (recentMessages && recentMessages.length > 0) {
-      const healthKeywords = ['болею', 'болит', 'устала', 'плохо', 'больно', 'недомогание', 'головная боль', 'спина', 'живот', 'тошнит', 'слабость'];
+      const healthKeywords = isEnglish
+        ? ['sick', 'hurts', 'tired', 'bad', 'pain', 'unwell', 'headache', 'back', 'stomach', 'nausea', 'weakness']
+        : ['болею', 'болит', 'устала', 'плохо', 'больно', 'недомогание', 'головная боль', 'спина', 'живот', 'тошнит', 'слабость'];
       const relevantMessages = recentMessages.filter(msg => 
         healthKeywords.some(keyword => msg.content.toLowerCase().includes(keyword))
       );
       
       if (relevantMessages.length > 0) {
-        healthContext += `💬 Контекст из недавних сообщений:\n${relevantMessages.map(msg => `- ${msg.content}`).join('\n')}\n`;
+        healthContext += isEnglish
+          ? `💬 Context from recent messages:\n${relevantMessages.map(msg => `- ${msg.content}`).join('\n')}\n`
+          : `💬 Контекст из недавних сообщений:\n${relevantMessages.map(msg => `- ${msg.content}`).join('\n')}\n`;
       }
     }
 
-    const { phase, description } = getCyclePhase(cycleData.cycleDay, cycleData.cycleLength, cycleData.menstrualLength || 5);
+    const { phase, description } = getCyclePhase(cycleData.cycleDay, cycleData.cycleLength, cycleData.menstrualLength || 5, language);
     // Используем локальное время, если оно передано, иначе форматируем из ISO
     const eventTime = event.start_time_local || new Date(event.start_time).toLocaleTimeString('ru-RU', {
       hour: '2-digit',
@@ -180,18 +242,54 @@ serve(async (req) => {
     let timeOfDayContext = '';
     
     if (eventHour >= 5 && eventHour < 7) {
-      timeOfDayContext = ' (очень раннее утро - важно учесть, что организм может быть не готов к активности)';
+      timeOfDayContext = isEnglish 
+        ? ' (very early morning - important to consider that the body may not be ready for activity)'
+        : ' (очень раннее утро - важно учесть, что организм может быть не готов к активности)';
     } else if (eventHour >= 7 && eventHour < 9) {
-      timeOfDayContext = ' (раннее утро)';
+      timeOfDayContext = isEnglish ? ' (early morning)' : ' (раннее утро)';
     } else if (eventHour >= 22 || eventHour < 5) {
-      timeOfDayContext = ' (поздний вечер/ночь - важно учесть влияние на сон и восстановление)';
+      timeOfDayContext = isEnglish
+        ? ' (late evening/night - important to consider impact on sleep and recovery)'
+        : ' (поздний вечер/ночь - важно учесть влияние на сон и восстановление)';
     } else if (eventHour >= 20 && eventHour < 22) {
-      timeOfDayContext = ' (вечер)';
+      timeOfDayContext = isEnglish ? ' (evening)' : ' (вечер)';
     }
 
-    const userName = profile?.name ? profile.name : 'дорогая';
+    const userName = profile?.name ? profile.name : (isEnglish ? 'dear' : 'дорогая');
 
-    const prompt = `
+    const prompt = isEnglish ? `
+Evaluate the planned event considering the user's current menstrual cycle phase and well-being, then provide your recommendations.
+
+Context:
+• Cycle day: ${cycleData.cycleDay} (${phase})
+• Characteristics: ${description}
+• Event: «${event.title}»
+• Event time: ${eventTime}${timeOfDayContext}
+${healthContext ? '• Additional well-being information: ' + healthContext + '' : ''}
+${profileContext}
+
+IMPORTANT: Your response should be BRIEF - maximum 3-4 sentences (20-25% shorter than usual format).
+
+Task: Write a brief but informative assessment of this event for ${userName}, considering their cycle, condition AND EVENT TIME. The response should:
+• Briefly describe how the current cycle phase affects energy and well-being
+• MUST consider the event timing (if it's early morning or late evening - give specific recommendations!)
+• Provide 1-2 practical tips for event preparation
+• If well-being data is available, consider it in the response
+
+Start the response by addressing ${userName} with one of these phrases:
+• "${userName}, look…"
+• "Listen, ${userName}…"
+• "You know, ${userName}…"
+• "${userName}, let's discuss…"
+
+Reference on cycle phases:
+• Days 1–5 – Menstruation: reduced energy, fatigue, need for rest
+• Days 6–13 – Follicular phase: increased energy, improved mood and concentration
+• Days 14–16 – Ovulation: peak energy and endurance, high activity
+• Days 17+ – Luteal phase: decreased energy, possible irritability
+
+REMEMBER: Response should be very brief (3-4 sentences) and must consider event timing!
+` : `
 Оцени запланированное событие с учётом текущей фазы менструального цикла пользовательницы и её самочувствия, после чего предоставь свои рекомендации.
 
 Контекст:
@@ -234,7 +332,12 @@ ${profileContext}
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'Ты — продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, КРАТКИЕ и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы. Отвечай на русском языке, используя простой и понятный стиль изложения. Тон ответа должен быть дружелюбным, участливым и поддерживающим. ВАЖНО: твои ответы должны быть короткими - максимум 3-4 предложения, но при этом информативными и полезными.' },
+          { 
+            role: 'system', 
+            content: isEnglish 
+              ? 'You are an advanced and caring virtual assistant for women\'s health with deep understanding of the menstrual cycle and women\'s overall well-being. Your main goal is to provide competent, BRIEF and personalized recommendations based on the current cycle phase and the user\'s condition. Respond in English, using a simple and clear style. The tone should be friendly, caring and supportive. IMPORTANT: your responses should be short - maximum 3-4 sentences, but informative and useful.'
+              : 'Ты — продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, КРАТКИЕ и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы. Отвечай на русском языке, используя простой и понятный стиль изложения. Тон ответа должен быть дружелюбным, участливым и поддерживающим. ВАЖНО: твои ответы должны быть короткими - максимум 3-4 предложения, но при этом информативными и полезными.'
+          },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -250,7 +353,9 @@ ${profileContext}
 
     const data = await response.json();
     const suggestion = data.choices[0].message.content;
-    const justification = `ИИ-совет для ${phase.toLowerCase()} (${cycleData.cycleDay} день цикла)`;
+    const justification = isEnglish 
+      ? `AI advice for ${phase.toLowerCase()} (cycle day ${cycleData.cycleDay})`
+      : `ИИ-совет для ${phase.toLowerCase()} (${cycleData.cycleDay} день цикла)`;
 
     console.log('Generated AI suggestion:', suggestion);
 

@@ -197,10 +197,12 @@ const Chat = () => {
     setLoading(true);
 
     try {
+      const currentLanguage = localStorage.getItem('language') || 'ru';
       const { data: aiResponseData, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: currentMessage,
-          userId: user.id
+          userId: user.id,
+          language: currentLanguage
         }
       });
 

@@ -56,7 +56,7 @@ serve(async (req) => {
       }
     );
 
-    const { message, userId } = await req.json();
+    const { message, userId, language = 'ru' } = await req.json();
 
     console.log('Processing AI chat message for user:', userId);
     console.log('User message:', message);
@@ -229,7 +229,27 @@ ${isRecentlyUpdated ? '⚠️ Данные о сне и стрессе полу�
     }
 
     // Build system prompt with user profile data
-    let systemPrompt = `Ты — Gaia, продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, подробные и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы.
+    const isEnglish = language === 'en';
+    let systemPrompt = isEnglish 
+      ? `You are Gaia, an advanced and caring virtual assistant for women's health with deep understanding of the menstrual cycle and women's overall well-being. Your main goal is to provide competent, detailed, and personalized recommendations based on the current cycle phase and the user's condition.
+
+Your capabilities:
+• You have access to the user's Gmail and can check incoming emails with responses about event postponements
+• You can analyze the calendar and suggest optimal event rescheduling based on the menstrual cycle
+• You can draft and send emails to event participants suggesting postponements
+• You track the user's health and well-being based on symptom data
+
+Communication rules:
+• Respond in English, using a simple and clear style, but maintain professional accuracy in details.
+• The tone should be friendly, caring, and supportive, showing empathy and respect.
+• Avoid highly specialized medical terminology — explain necessary concepts in an accessible way for users without medical education.
+• Don't ask clarifying questions — the user can't respond. Immediately provide useful information, assessments, and advice according to the request.
+• When the user asks to check email or send a message - inform that the system automatically checks Gmail every 5 minutes and processes responses. Suggest checking the "AI Monitoring" page to verify email processing status.
+
+${cycleContext}
+
+${symptomContext}`
+      : `Ты — Gaia, продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, подробные и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы.
 
 Твои возможности:
 • Ты имеешь доступ к Gmail пользовательницы и можешь проверять входящие письма с ответами о переносе событий
@@ -257,7 +277,14 @@ ${symptomContext}`;
       systemPrompt += '\nИспользуй эти данные для более персонализированных рекомендаций по питанию, физической активности и общему самочувствию.\n';
     }
 
-    systemPrompt += `
+    systemPrompt += isEnglish 
+      ? `
+Reference (for you): Menstrual cycle phases and their typical impact on well-being:
+• Days 1–5 – Menstruation: reduced energy, possible fatigue, painful sensations, increased need for rest.
+• Days 6–13 – Follicular phase: gradual increase in energy, improved mood and concentration, feeling of inspiration.
+• Days 14–16 – Ovulation: peak energy and endurance, high social activity, maximum concentration.
+• Days 17+ – Luteal phase: gradual decrease in energy, possible mood swings, irritability, decreased concentration.`
+      : `
 Справка (для тебя): Фазы менструального цикла и их типичное влияние на самочувствие:
 • Дни 1–5 – Менструация: сниженная энергия, возможны усталость, болезненные ощущения, повышенная потребность в отдыхе.
 • Дни 6–13 – Фолликулярная фаза: постепенный подъём энергии, улучшение настроения и концентрации, чувство воодушевления.
@@ -266,18 +293,18 @@ ${symptomContext}`;
 
     // Add name context
     if (profile.name) {
-      systemPrompt += `
-
-Имя пользователя: ${profile.name}. Обращайся по имени, когда даешь важные советы.`;
+      systemPrompt += isEnglish
+        ? `\n\nUser's name: ${profile.name}. Address them by name when giving important advice.`
+        : `\n\nИмя пользователя: ${profile.name}. Обращайся по имени, когда даешь важные советы.`;
     } else if (!chatHistory || chatHistory.length === 0) {
-      systemPrompt += `
-
-Это первое общение. Познакомься и мягко спроси как зовут, чтобы обращаться по имени.`;
+      systemPrompt += isEnglish
+        ? `\n\nThis is the first interaction. Introduce yourself and gently ask their name to address them personally.`
+        : `\n\nЭто первое общение. Познакомься и мягко спроси как зовут, чтобы обращаться по имени.`;
     }
 
-    systemPrompt += `
-
-Используй эту информацию при формулировании ответа, чтобы сделать рекомендации максимально точными и полезными для пользовательницы.`;
+    systemPrompt += isEnglish
+      ? `\n\nUse this information when formulating your response to make recommendations as accurate and useful as possible for the user.`
+      : `\n\nИспользуй эту информацию при формулировании ответа, чтобы сделать рекомендации максимально точными и полезными для пользовательницы.`;
 
     // Build messages array for OpenAI
     const messages = [{ role: 'system', content: systemPrompt }];

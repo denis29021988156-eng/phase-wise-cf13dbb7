@@ -129,6 +129,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         const adjustedCycleDay = eventCycleDay > 0 ? eventCycleDay : cycleData.cycle_length + eventCycleDay;
 
         try {
+          const currentLanguage = localStorage.getItem('language') || 'ru';
           const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
             body: {
               event: {
@@ -139,6 +140,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               },
               cycleData: {
                 cycleDay: adjustedCycleDay,
+                language: currentLanguage,
                 cycleLength: cycleData.cycle_length,
                 startDate: cycleData.start_date
               },
