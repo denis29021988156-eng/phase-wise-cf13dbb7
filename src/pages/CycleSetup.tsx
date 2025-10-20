@@ -19,10 +19,22 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
   const [loading, setLoading] = useState(false);
   const { t, i18n } = useTranslation();
 
-  const toggleLanguage = () => {
+  const toggleLanguage = async () => {
     const newLang = i18n.language === 'en' ? 'ru' : 'en';
     i18n.changeLanguage(newLang);
     localStorage.setItem('language', newLang);
+    
+    // Save language preference to database if user is logged in
+    if (user) {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          language: newLang
+        }, {
+          onConflict: 'user_id'
+        });
+    }
   };
   const [formData, setFormData] = useState({
     start_date: '',
@@ -64,7 +76,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
         throw cycleError;
       }
 
-      // Save or update profile data with age, height, weight
+      // Save or update profile data with age, height, weight, and language
       const { error: profileError } = await supabase
         .from('user_profiles')
         .upsert({
@@ -72,6 +84,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
           age: formData.age ? parseInt(formData.age) : null,
           height: formData.height ? parseInt(formData.height) : null,
           weight: formData.weight ? parseFloat(formData.weight) : null,
+          language: i18n.language,
         }, {
           onConflict: 'user_id'
         });

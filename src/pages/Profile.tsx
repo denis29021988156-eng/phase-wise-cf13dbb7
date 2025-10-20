@@ -10,6 +10,7 @@ import { Save, User, Calendar, Settings, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimezoneWarning } from '@/components/TimezoneWarning';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n/config';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -158,6 +159,7 @@ const Profile = () => {
           height: profileData.height ? parseInt(profileData.height) : null,
           weight: profileData.weight ? parseFloat(profileData.weight) : null,
           timezone: profileData.timezone,
+          language: i18n.language,
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;

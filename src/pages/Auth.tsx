@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Calendar, Brain, Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -14,10 +15,22 @@ const Auth = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  const toggleLanguage = () => {
+  const toggleLanguage = async () => {
     const newLang = i18n.language === 'en' ? 'ru' : 'en';
     i18n.changeLanguage(newLang);
     localStorage.setItem('language', newLang);
+    
+    // Save language preference to database if user is logged in
+    if (user) {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          language: newLang
+        }, {
+          onConflict: 'user_id'
+        });
+    }
   };
 
   // Redirect authenticated users to dashboard

@@ -255,6 +255,15 @@ console.log('Using access token (masked):', maskToken(accessToken));
       console.log('No cycle data found, skipping AI suggestions');
     }
 
+    // Get user language preference
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('language')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    const userLanguage = userProfile?.language || 'ru';
+
     let insertedCount = 0;
     let skippedCount = 0;
     let suggestionsCount = 0;
@@ -347,7 +356,8 @@ console.log('Using access token (masked):', maskToken(accessToken));
                   cycleData: {
                     cycleDay: adjustedCycleDay,
                     cycleLength: cycleData.cycle_length,
-                    startDate: cycleData.start_date
+                    startDate: cycleData.start_date,
+                    language: userLanguage
                   }
                 },
                 headers: {
@@ -420,7 +430,8 @@ console.log('Using access token (masked):', maskToken(accessToken));
               cycleData: {
                 cycleDay: adjustedCycleDay,
                 cycleLength: cycleData.cycle_length,
-                startDate: cycleData.start_date
+                startDate: cycleData.start_date,
+                language: userLanguage
               }
             },
             headers: {

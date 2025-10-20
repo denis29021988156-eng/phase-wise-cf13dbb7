@@ -74,6 +74,15 @@ serve(async (req) => {
       throw new Error('Данные о цикле не найдены. Настройте цикл в профиле.');
     }
 
+    // Get user language preference
+    const { data: userProfile } = await supabaseClient
+      .from('user_profiles')
+      .select('language')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    const userLanguage = userProfile?.language || 'ru';
+
     // Calculate current cycle day
     const today = new Date();
     const startDate = new Date(cycleData.start_date);
@@ -191,7 +200,8 @@ serve(async (req) => {
                   cycleData: {
                     cycleDay: adjustedCycleDay,
                     cycleLength: cycleData.cycle_length,
-                    startDate: cycleData.start_date
+                    startDate: cycleData.start_date,
+                    language: userLanguage
                   }
                 },
                 headers: {
@@ -261,7 +271,8 @@ serve(async (req) => {
               cycleData: {
                 cycleDay: adjustedCycleDay,
                 cycleLength: cycleData.cycle_length,
-                startDate: cycleData.start_date
+                startDate: cycleData.start_date,
+                language: userLanguage
               }
             },
             headers: {
