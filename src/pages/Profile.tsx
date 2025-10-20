@@ -196,13 +196,13 @@ const Profile = () => {
 
   const getCyclePhase = (cycleDay: number) => {
     if (cycleDay >= 1 && cycleDay <= formData.menstrual_length) {
-      return { name: 'Менструация', color: 'text-red-500' };
+      return { name: t('profile.menstruation'), color: 'text-red-500' };
     } else if (cycleDay >= formData.menstrual_length + 1 && cycleDay <= 13) {
-      return { name: 'Фолликулярная фаза', color: 'text-green-500' };
+      return { name: t('profile.follicular'), color: 'text-green-500' };
     } else if (cycleDay >= 14 && cycleDay <= 16) {
-      return { name: 'Овуляция', color: 'text-purple-500' };
+      return { name: t('profile.ovulation'), color: 'text-purple-500' };
     } else {
-      return { name: 'Лютеиновая фаза', color: 'text-blue-500' };
+      return { name: t('profile.luteal'), color: 'text-blue-500' };
     }
   };
 
@@ -225,7 +225,8 @@ const Profile = () => {
       nextPeriod.setDate(startDate.getDate() + cycles * formData.cycle_length);
     }
 
-    return nextPeriod.toLocaleDateString('ru-RU', {
+    const locale = t('nav.logout') === 'Logout' ? 'en-US' : 'ru-RU';
+    return nextPeriod.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
     });
@@ -351,7 +352,7 @@ const Profile = () => {
                 required
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Обычно от 3 до 7 дней
+                {t('profile.usuallyDays')}
               </p>
             </div>
 

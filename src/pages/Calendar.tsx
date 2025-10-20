@@ -843,7 +843,7 @@ const Calendar = () => {
           className="flex-1 border-primary/50 text-primary hover:bg-primary/10"
         >
           <Droplet className="h-4 w-4 mr-1.5" />
-          Месячные
+          {t('calendar.period')}
         </Button>
         <Button
           onClick={handleConnectGoogleCalendar}
@@ -854,7 +854,7 @@ const Calendar = () => {
           {googleLoading ? (
             <div className="flex items-center gap-1.5">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent"></div>
-              <span className="text-xs">Синхр...</span>
+              <span className="text-xs">{t('calendar.syncing')}</span>
             </div>
           ) : (
             <>
@@ -879,7 +879,7 @@ const Calendar = () => {
               {outlookLoading ? (
                 <div className="flex items-center gap-1.5">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-secondary-foreground border-t-transparent"></div>
-                  <span className="text-xs">Синхр...</span>
+                  <span className="text-xs">{t('calendar.syncing')}</span>
                 </div>
               ) : (
                 <>
@@ -915,13 +915,14 @@ const Calendar = () => {
                 // Show month and year for the selected date if it's different from the first week date
                 const selectedDateObj = new Date(selectedDate);
                 const firstWeekDate = weekDates[0];
+                const locale = i18n.language === 'ru' ? 'ru-RU' : 'en-US';
                 
                 if (selectedDateObj.getMonth() !== firstWeekDate.getMonth() || 
                     selectedDateObj.getFullYear() !== firstWeekDate.getFullYear()) {
-                  return selectedDateObj.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+                  return selectedDateObj.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
                 }
                 
-                return firstWeekDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+                return firstWeekDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
               })()}
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={() => navigateWeek('next')}>
@@ -971,7 +972,7 @@ const Calendar = () => {
                   }}
                 >
                   <span className={`text-xs mb-1 ${selected ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
-                    {date.toLocaleDateString('ru-RU', { weekday: 'short' })}
+                    {date.toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { weekday: 'short' })}
                   </span>
                   <span className={`text-lg font-semibold ${selected ? 'text-primary-foreground' : ''}`}>
                     {date.getDate()}
@@ -1001,12 +1002,12 @@ const Calendar = () => {
               {showFullCalendar ? (
                 <>
                   <ChevronUp className="h-4 w-4 mr-2" />
-                  Свернуть календарь
+                  {t('calendar.collapseCalendar')}
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-4 w-4 mr-2" />
-                  Развернуть календарь
+                  {t('calendar.expandCalendar')}
                 </>
               )}
             </Button>
@@ -1019,12 +1020,20 @@ const Calendar = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg text-center">
-              Следующие 30 дней
+              {t('calendar.next30days')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-2 text-center text-sm mb-4">
-              {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day) => (
+              {[
+                t('calendar.monday'),
+                t('calendar.tuesday'),
+                t('calendar.wednesday'),
+                t('calendar.thursday'),
+                t('calendar.friday'),
+                t('calendar.saturday'),
+                t('calendar.sunday')
+              ].map((day) => (
                 <div key={day} className="font-medium text-muted-foreground py-2">
                   {day}
                 </div>
@@ -1122,19 +1131,19 @@ const Calendar = () => {
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.4)' }}></div>
-                <span className="text-muted-foreground">Менструация</span>
+                <span className="text-muted-foreground">{t('profile.menstruation')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(59, 130, 246, 0.4)' }}></div>
-                <span className="text-muted-foreground">Фолликулярная</span>
+                <span className="text-muted-foreground">{t('profile.follicular')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(234, 179, 8, 0.4)' }}></div>
-                <span className="text-muted-foreground">Овуляция</span>
+                <span className="text-muted-foreground">{t('profile.ovulation')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(168, 85, 247, 0.4)' }}></div>
-                <span className="text-muted-foreground">Лютеиновая</span>
+                <span className="text-muted-foreground">{t('profile.luteal')}</span>
               </div>
             </div>
           </CardContent>
@@ -1197,14 +1206,14 @@ const Calendar = () => {
                             ? 'bg-green-100 text-green-800'
                             : 'bg-purple-100 text-purple-800'
                         }`}>
-                          {event.source === 'google' ? 'Google' : event.source === 'outlook' ? 'Outlook' : 'Ручной'}
+                          {event.source === 'google' ? 'Google' : event.source === 'outlook' ? 'Outlook' : t('allEvents.manual')}
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleMoveEvent(event)}
                           className="h-8 w-8 p-0"
-                          title="Перенести событие"
+                          title={t('allEvents.moveEvent')}
                         >
                           <ArrowRightLeft className="h-4 w-4" />
                         </Button>
