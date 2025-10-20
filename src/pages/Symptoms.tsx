@@ -60,12 +60,12 @@ const Symptoms = () => {
   ];
 
   const moodOptions = [
-    { id: 'happy', label: '😊 Радость', value: 20 },
-    { id: 'calm', label: '🧘 Спокойствие', value: 15 },
-    { id: 'anxious', label: '😰 Тревога', value: -15 },
-    { id: 'irritable', label: '😡 Раздражение', value: -12 },
-    { id: 'sad', label: '😢 Грусть', value: -10 },
-    { id: 'motivated', label: '✨ Вдохновение', value: 18 }
+    { id: 'happy', label: `😊 ${t('symptoms.moodHappy')}`, value: 20 },
+    { id: 'calm', label: `🧘 ${t('symptoms.moodCalm')}`, value: 15 },
+    { id: 'anxious', label: `😰 ${t('symptoms.moodAnxious')}`, value: -15 },
+    { id: 'irritable', label: `😡 ${t('symptoms.moodIrritable')}`, value: -12 },
+    { id: 'sad', label: `😢 ${t('symptoms.moodSad')}`, value: -10 },
+    { id: 'motivated', label: `✨ ${t('symptoms.moodMotivated')}`, value: 18 }
   ];
 
   // Загрузка истории за последние 7 дней
@@ -144,26 +144,28 @@ const Symptoms = () => {
           const cycleStart = new Date(cycle.start_date);
           const daysSinceStart = Math.floor((today.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24));
           
-          const fallbackPredictions = Array.from({ length: 30 }, (_, i) => {
-            const cycleDay = ((daysSinceStart + i + 1) % (cycle.cycle_length || 28)) + 1;
-            let wellness = 50;
-            
-            if (cycleDay <= (cycle.menstrual_length || 5)) {
-              wellness = 40 + Math.random() * 15;
-            } else if (cycleDay <= 13) {
-              wellness = 60 + Math.random() * 20;
-            } else if (cycleDay <= 15) {
-              wellness = 75 + Math.random() * 20;
-            } else {
-              wellness = 45 + Math.random() * 25;
-            }
-            
-            return {
-              day: i + 1,
-              wellness: Math.round(wellness),
-              note: 'Базовый прогноз по фазе цикла'
-            };
-          });
+            const fallbackPredictions = Array.from({ length: 30 }, (_, i) => {
+              const cycleDay = ((daysSinceStart + i + 1) % (cycle.cycle_length || 28)) + 1;
+              let wellness = 50;
+              
+              if (cycleDay <= (cycle.menstrual_length || 5)) {
+                wellness = 40 + Math.random() * 15;
+              } else if (cycleDay <= 13) {
+                wellness = 60 + Math.random() * 20;
+              } else if (cycleDay <= 15) {
+                wellness = 75 + Math.random() * 20;
+              } else {
+                wellness = 45 + Math.random() * 25;
+              }
+              
+              return {
+                day: i + 1,
+                wellness: Math.round(wellness),
+                note: i18n.language === 'en' 
+                  ? 'Basic forecast based on cycle phase'
+                  : 'Базовый прогноз по фазе цикла'
+              };
+            });
           
           setPredictions(fallbackPredictions);
         }
@@ -297,14 +299,14 @@ const Symptoms = () => {
       }
       
       toast({
-        title: 'Сохранено! ✨',
+        title: t('symptoms.savedSuccess'),
         description: getFeedbackText(wellnessIndex),
       });
     } catch (error) {
       console.error('Error saving symptoms:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось сохранить данные',
+        title: t('allEvents.deleteError'),
+        description: t('symptoms.saveError'),
         variant: 'destructive',
       });
     } finally {
@@ -341,14 +343,14 @@ const Symptoms = () => {
       setCurrentLog(updated);
       
       toast({
-        title: 'Синхронизировано ✅',
-        description: 'Данные из Apple Health загружены',
+        title: t('symptoms.syncedSuccess'),
+        description: t('symptoms.dataLoadedFromHealth'),
       });
     } catch (error) {
       console.error('Sync error:', error);
       toast({
-        title: 'Ошибка синхронизации',
-        description: 'Не удалось загрузить данные из Apple Health',
+        title: t('symptoms.syncError'),
+        description: t('symptoms.couldNotLoadHealth'),
         variant: 'destructive',
       });
     } finally {
@@ -361,8 +363,8 @@ const Symptoms = () => {
     
     if (!available) {
       toast({
-        title: 'Недоступно',
-        description: 'Apple Health доступно только на iOS',
+        title: t('symptoms.unavailable'),
+        description: t('symptoms.healthOnlyIOS'),
         variant: 'destructive',
       });
       return;
@@ -372,13 +374,13 @@ const Symptoms = () => {
     
     if (authorized) {
       toast({
-        title: 'Подключено! 🎉',
-        description: 'Apple Health успешно подключено',
+        title: t('symptoms.connected'),
+        description: t('symptoms.healthConnected'),
       });
     } else {
       toast({
-        title: 'Отклонено',
-        description: 'Разрешите доступ к Apple Health в настройках',
+        title: t('symptoms.declined'),
+        description: t('symptoms.allowHealthAccess'),
         variant: 'destructive',
       });
     }
@@ -468,7 +470,7 @@ const Symptoms = () => {
       {/* Индекс самочувствия */}
       <Card className="border-border/50 shadow-[var(--shadow-soft)]">
         <CardHeader className="text-center">
-          <CardTitle className="text-lg">Индекс самочувствия</CardTitle>
+          <CardTitle className="text-lg">{t('symptoms.wellnessIndex')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center space-y-4">
           <div className="relative w-40 h-40">
@@ -523,7 +525,7 @@ const Symptoms = () => {
 
             {/* Настроение */}
             <TabsContent value="mood" className="space-y-4">
-              <h3 className="font-medium text-sm">Настроение</h3>
+              <h3 className="font-medium text-sm">{t('symptoms.mood')}</h3>
               <div className="flex flex-wrap gap-2">
                 {moodOptions.map(option => (
                   <Badge
@@ -540,7 +542,7 @@ const Symptoms = () => {
 
             {/* Энергия */}
             <TabsContent value="energy" className="space-y-4">
-              <h3 className="font-medium text-sm">Уровень энергии: {currentLog.energy}/5</h3>
+              <h3 className="font-medium text-sm">{t('symptoms.energyLevel')}: {currentLog.energy}/5</h3>
               <Slider
                 value={[currentLog.energy]}
                 onValueChange={([value]) => setCurrentLog({ ...currentLog, energy: value })}
@@ -550,15 +552,15 @@ const Symptoms = () => {
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Низкий</span>
-                <span>Высокий</span>
+                <span>{t('symptoms.low')}</span>
+                <span>{t('symptoms.high')}</span>
               </div>
             </TabsContent>
 
             {/* Сон и стресс */}
             <TabsContent value="sleep" className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-medium text-sm">Качество сна: {currentLog.sleep_quality}/5</h3>
+                <h3 className="font-medium text-sm">{t('symptoms.sleepQuality')}: {currentLog.sleep_quality}/5</h3>
                 <Slider
                   value={[currentLog.sleep_quality]}
                   onValueChange={([value]) => setCurrentLog({ ...currentLog, sleep_quality: value })}
@@ -570,7 +572,7 @@ const Symptoms = () => {
               </div>
               
               <div className="space-y-4">
-                <h3 className="font-medium text-sm">Уровень стресса: {currentLog.stress_level}/5</h3>
+                <h3 className="font-medium text-sm">{t('symptoms.stressLevel')}: {currentLog.stress_level}/5</h3>
                 <Slider
                   value={[currentLog.stress_level]}
                   onValueChange={([value]) => setCurrentLog({ ...currentLog, stress_level: value })}
@@ -602,7 +604,7 @@ const Symptoms = () => {
                 className="flex-1"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Синхронизация...' : 'Загрузить из Health'}
+                {syncing ? t('symptoms.syncing') : t('symptoms.loadFromHealth')}
               </Button>
             )}
           </div>
@@ -621,23 +623,23 @@ const Symptoms = () => {
       <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-[#FDFCFB] to-white animate-fade-in">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-            Энергетический баланс
+            {t('symptoms.energyBalance')}
           </CardTitle>
-          <p className="text-sm text-[#374151] mt-1">Ваша ресурсность за последние 15 дней и прогноз на 30 дней</p>
+          <p className="text-sm text-[#374151] mt-1">{t('symptoms.energyBalanceDesc')}</p>
         </CardHeader>
         <CardContent className="pt-4">
           {isLoadingPredictions ? (
             <div className="h-80 flex flex-col items-center justify-center gap-4">
               <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
-              <p className="text-[#374151] font-medium">Загрузка прогноза...</p>
+              <p className="text-[#374151] font-medium">{t('symptoms.loadingForecast')}</p>
             </div>
           ) : history.length === 0 ? (
             <div className="h-80 flex flex-col items-center justify-center gap-3 text-center px-4">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
                 <Brain className="w-10 h-10 text-purple-500" />
               </div>
-              <p className="text-[#374151] font-medium">Начните добавлять данные</p>
-              <p className="text-sm text-gray-500">График появится после сохранения первой записи</p>
+              <p className="text-[#374151] font-medium">{t('symptoms.startAddingData')}</p>
+              <p className="text-sm text-gray-500">{t('symptoms.chartWillAppear')}</p>
             </div>
           ) : (
             <>
@@ -710,11 +712,11 @@ const Symptoms = () => {
               <div className="flex items-center justify-center gap-8 mt-6 px-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-1 rounded-full bg-gradient-to-r from-purple-500 to-purple-300 shadow-sm" />
-                  <span className="text-sm text-[#374151] font-medium">Фактические данные</span>
+                  <span className="text-sm text-[#374151] font-medium">{t('symptoms.actualData')}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-1 rounded-full border-2 border-dashed border-pink-400" />
-                  <span className="text-sm text-[#374151] font-medium">Прогноз ИИ</span>
+                  <span className="text-sm text-[#374151] font-medium">{t('symptoms.aiForecast')}</span>
                 </div>
               </div>
             </>
@@ -726,13 +728,13 @@ const Symptoms = () => {
       {history.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">История (7 дней)</CardTitle>
+            <CardTitle className="text-lg">{t('symptoms.history7days')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between gap-2">
               {history.reverse().map((day) => {
                 const date = new Date(day.date);
-                const dayName = date.toLocaleDateString('ru-RU', { weekday: 'short' });
+                const dayName = date.toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { weekday: 'short' });
                 
                 return (
                   <div key={day.date} className="flex flex-col items-center gap-2">

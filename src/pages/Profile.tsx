@@ -243,7 +243,7 @@ const Profile = () => {
           <User className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Профиль</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('profile.title')}</h1>
           <p className="text-muted-foreground">{user?.email}</p>
         </div>
       </div>
@@ -257,22 +257,22 @@ const Profile = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-primary" />
-              <span>Текущий цикл</span>
+              <span>{t('profile.currentCycle')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="text-2xl font-bold text-primary">{currentDay}</div>
-                <div className="text-sm text-muted-foreground">День цикла</div>
+                <div className="text-sm text-muted-foreground">{t('profile.cycleDay')}</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-accent/5 border border-accent/20">
                 <div className="text-2xl font-bold text-accent">{formData.cycle_length}</div>
-                <div className="text-sm text-muted-foreground">Длительность цикла</div>
+                <div className="text-sm text-muted-foreground">{t('profile.cycleLength')}</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-secondary/5 border border-secondary/20">
                 <div className="text-2xl font-bold text-secondary">{formData.menstrual_length}</div>
-                <div className="text-sm text-muted-foreground">Длительность месячных</div>
+                <div className="text-sm text-muted-foreground">{t('profile.menstrualLength')}</div>
               </div>
             </div>
             
@@ -280,7 +280,7 @@ const Profile = () => {
             {currentPhase && (
               <div className="mt-4 p-4 rounded-lg bg-muted/30 border border-muted">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Текущая фаза:</span>
+                  <span className="text-sm text-muted-foreground">{t('profile.currentPhase')}</span>
                   <span className={`font-semibold ${currentPhase.color}`}>{currentPhase.name}</span>
                 </div>
               </div>
@@ -290,7 +290,7 @@ const Profile = () => {
             {nextPeriod && (
               <div className="mt-3 p-4 rounded-lg bg-muted/30 border border-muted">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Следующие месячные:</span>
+                  <span className="text-sm text-muted-foreground">{t('profile.nextPeriod')}</span>
                   <span className="font-semibold text-foreground">{nextPeriod}</span>
                 </div>
               </div>
@@ -356,7 +356,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <Label htmlFor="age">Возраст (лет)</Label>
+              <Label htmlFor="age">{t('profile.ageYears')}</Label>
               <Input
                 id="age"
                 type="number"
@@ -365,15 +365,15 @@ const Profile = () => {
                 value={profileData.age}
                 onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
                 className="mt-2"
-                placeholder="Укажите ваш возраст"
+                placeholder={t('profile.agePlaceholder')}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                От 14 до 85 лет
+                {t('profile.ageRange')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="height">Рост (см)</Label>
+              <Label htmlFor="height">{t('profile.heightCm')}</Label>
               <Input
                 id="height"
                 type="number"
@@ -382,15 +382,15 @@ const Profile = () => {
                 value={profileData.height}
                 onChange={(e) => setProfileData({ ...profileData, height: e.target.value })}
                 className="mt-2"
-                placeholder="Укажите ваш рост"
+                placeholder={t('profile.heightPlaceholder')}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                От 120 до 220 см
+                {t('profile.heightRange')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="weight">Вес (кг)</Label>
+              <Label htmlFor="weight">{t('profile.weightKg')}</Label>
               <Input
                 id="weight"
                 type="number"
@@ -400,24 +400,24 @@ const Profile = () => {
                 value={profileData.weight}
                 onChange={(e) => setProfileData({ ...profileData, weight: e.target.value })}
                 className="mt-2"
-                placeholder="Укажите ваш вес"
+                placeholder={t('profile.weightPlaceholder')}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                От 30 до 150 кг
+                {t('profile.weightRange')}
               </p>
             </div>
 
             <div>
               <Label htmlFor="timezone" className="flex items-center space-x-2">
                 <Globe className="h-4 w-4" />
-                <span>Часовой пояс</span>
+                <span>{t('profile.timezone')}</span>
               </Label>
               <Select
                 value={profileData.timezone}
                 onValueChange={(value) => setProfileData({ ...profileData, timezone: value })}
               >
                 <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Выберите часовой пояс" />
+                  <SelectValue placeholder={t('profile.timezonePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {timezones.map((tz) => (
@@ -428,7 +428,7 @@ const Profile = () => {
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground mt-1">
-                Используется для синхронизации с Outlook
+                {t('profile.timezoneUsed')}
               </p>
             </div>
 
@@ -456,7 +456,7 @@ const Profile = () => {
       {/* Calendar Connection */}
       <Card>
         <CardHeader>
-          <CardTitle>Подключение календаря</CardTitle>
+          <CardTitle>{t('profile.calendarConnection')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
@@ -470,8 +470,8 @@ const Profile = () => {
                 </svg>
               </div>
               <div>
-                <p className="font-medium">Google Календарь</p>
-                <p className="text-sm text-muted-foreground">Подключен</p>
+                <p className="font-medium">{t('profile.googleCalendar')}</p>
+                <p className="text-sm text-muted-foreground">{t('profile.connected')}</p>
               </div>
             </div>
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
