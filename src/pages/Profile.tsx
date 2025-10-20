@@ -9,10 +9,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Save, User, Calendar, Settings, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimezoneWarning } from '@/components/TimezoneWarning';
+import { useTranslation } from 'react-i18next';
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     start_date: '',
@@ -161,14 +163,14 @@ const Profile = () => {
       if (profileError) throw profileError;
 
       toast({
-        title: 'Настройки сохранены',
-        description: 'Ваши данные успешно обновлены',
+        title: t('profile.saveSettings'),
+        description: t('profile.saveError'),
       });
     } catch (error) {
       console.error('Error saving data:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось сохранить данные',
+        title: t('allEvents.deleteError'),
+        description: t('profile.saveError'),
         variant: 'destructive',
       });
     } finally {
@@ -302,13 +304,13 @@ const Profile = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Settings className="h-5 w-5 text-primary" />
-            <span>Данные о цикле</span>
+            <span>{t('profile.cycleData')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="start_date">Дата начала последней менструации</Label>
+              <Label htmlFor="start_date">{t('profile.lastPeriodStart')}</Label>
               <Input
                 id="start_date"
                 type="date"
@@ -320,7 +322,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <Label htmlFor="cycle_length">Продолжительность цикла (дни)</Label>
+              <Label htmlFor="cycle_length">{t('cycleSetup.cycleLength')}</Label>
               <Input
                 id="cycle_length"
                 type="number"
@@ -332,12 +334,12 @@ const Profile = () => {
                 required
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Обычно от 21 до 35 дней
+                {t('cycleSetup.cycleLengthHint')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="menstrual_length">Длительность месячных (дни)</Label>
+              <Label htmlFor="menstrual_length">{t('cycleSetup.menstrualLength')}</Label>
               <Input
                 id="menstrual_length"
                 type="number"
@@ -438,12 +440,12 @@ const Profile = () => {
               {loading ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
-                  <span>Сохранение...</span>
+                  <span>{t('cycleSetup.saving')}</span>
                 </div>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Сохранить настройки
+                  {t('profile.saveSettings')}
                 </>
               )}
             </Button>

@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Heart, Brain, Zap, Moon, RefreshCw, Upload } from 'lucide-react';
 import { useHealthKit } from '@/hooks/useHealthKit';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface SymptomLog {
   energy: number;
@@ -29,6 +30,7 @@ interface HistoryDay {
 const Symptoms = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const healthKit = useHealthKit();
   
   const [currentLog, setCurrentLog] = useState<SymptomLog>({
@@ -48,12 +50,12 @@ const Symptoms = () => {
 
   // Данные для выбора
   const physicalOptions = [
-    { id: 'pain', label: '🤕 Боль', value: -15 },
-    { id: 'fatigue', label: '😴 Усталость', value: -10 },
-    { id: 'energy', label: '💪 Бодрость', value: 15 },
-    { id: 'cramps', label: '🩹 Спазмы', value: -12 },
-    { id: 'headache', label: '🤯 Головная боль', value: -10 },
-    { id: 'bloating', label: '🎈 Вздутие', value: -8 }
+    { id: 'pain', label: `🤕 ${t('symptoms.pain')}`, value: -15 },
+    { id: 'fatigue', label: `😴 ${t('symptoms.fatigue')}`, value: -10 },
+    { id: 'energy', label: `💪 ${t('symptoms.energy')}`, value: 15 },
+    { id: 'cramps', label: `🩹 ${t('symptoms.cramps')}`, value: -12 },
+    { id: 'headache', label: `🤯 ${t('symptoms.headache')}`, value: -10 },
+    { id: 'bloating', label: `🎈 ${t('symptoms.bloating')}`, value: -8 }
   ];
 
   const moodOptions = [
@@ -382,9 +384,15 @@ const Symptoms = () => {
   };
 
   const getFeedbackText = (index: number) => {
-    if (index <= 30) return 'Отдохни сегодня 💧';
-    if (index <= 60) return 'Всё стабильно 😊';
-    return 'Ты в отличной форме ✨';
+    if (i18n.language === 'ru') {
+      if (index <= 30) return 'Отдохни сегодня 💧';
+      if (index <= 60) return 'Всё стабильно 😊';
+      return 'Ты в отличной форме ✨';
+    } else {
+      if (index <= 30) return 'Rest today 💧';
+      if (index <= 60) return 'Everything is stable 😊';
+      return 'You\'re in great shape ✨';
+    }
   };
 
   const getIndexColor = (index: number) => {
@@ -497,7 +505,7 @@ const Symptoms = () => {
 
             {/* Физические симптомы */}
             <TabsContent value="physical" className="space-y-4">
-              <h3 className="font-medium text-sm">Физическое состояние</h3>
+              <h3 className="font-medium text-sm">{t('symptoms.physicalState')}</h3>
               <div className="flex flex-wrap gap-2">
                 {physicalOptions.map(option => (
                   <Badge
@@ -583,7 +591,7 @@ const Symptoms = () => {
                 className="flex-1"
               >
                 <Heart className="h-4 w-4 mr-2" />
-                Подключить Apple Health
+                {t('symptoms.connectAppleHealth')}
               </Button>
             ) : (
               <Button 
@@ -603,7 +611,7 @@ const Symptoms = () => {
             disabled={loading}
             className="w-full mt-4"
           >
-            {loading ? 'Сохранение...' : 'Сохранить'}
+            {loading ? t('symptoms.saving') : t('symptoms.save')}
           </Button>
         </CardContent>
       </Card>

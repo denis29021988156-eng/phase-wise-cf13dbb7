@@ -503,7 +503,7 @@ const Chat = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Напишите ваш вопрос или расскажите о самочувствии..."
+              placeholder={t('chat.placeholder')}
               className="flex-1"
             />
             <Button
@@ -520,13 +520,13 @@ const Chat = () => {
 
       {/* Quick Suggestions */}
       <div className="mt-4 space-y-2">
-        <p className="text-sm text-muted-foreground">Быстрые вопросы:</p>
+        <p className="text-sm text-muted-foreground">{t('chat.quickQuestions')}</p>
         <div className="flex flex-wrap gap-2">
           {[
-            'Как себя чувствую сегодня?',
-            'Советы по питанию',
-            'Рекомендации по тренировкам',
-            'Управление настроением'
+            t('chat.howFeeling'),
+            t('chat.nutritionAdvice'),
+            t('chat.workoutRecommendations'),
+            i18n.language === 'ru' ? 'Управление настроением' : 'Mood management'
           ].map((suggestion) => (
             <Button
               key={suggestion}

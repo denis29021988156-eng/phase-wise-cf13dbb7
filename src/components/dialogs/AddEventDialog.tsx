@@ -337,18 +337,18 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Название события</Label>
+            <Label htmlFor="title">{t('addEvent.eventName')}</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Встреча с врачом, тренировка..."
+              placeholder={t('addEvent.eventNamePlaceholder')}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="date">Дата</Label>
+            <Label htmlFor="date">{t('addEvent.date')}</Label>
             <Input
               id="date"
               type="date"
@@ -360,7 +360,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="startTime">Время начала</Label>
+              <Label htmlFor="startTime">{t('addEvent.startTime')}</Label>
               <Input
                 id="startTime"
                 type="time"
@@ -377,7 +377,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               />
             </div>
             <div>
-              <Label htmlFor="endTime">Время окончания</Label>
+              <Label htmlFor="endTime">{t('addEvent.endTime')}</Label>
               <Input
                 id="endTime"
                 type="time"
@@ -389,12 +389,12 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
           </div>
 
           <div>
-            <Label htmlFor="description">Описание (необязательно)</Label>
+            <Label htmlFor="description">{t('addEvent.description')}</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Дополнительная информация о событии..."
+              placeholder={t('addEvent.descriptionPlaceholder')}
               rows={3}
             />
           </div>
@@ -407,7 +407,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
                 onCheckedChange={setSyncToGoogle}
               />
               <Label htmlFor="syncToGoogle" className="text-sm">
-                Синхронизировать с Google Calendar
+                {t('addEvent.syncGoogle')}
               </Label>
             </div>
           )}
@@ -420,7 +420,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
                 onCheckedChange={setSyncToOutlook}
               />
               <Label htmlFor="syncToOutlook" className="text-sm">
-                Синхронизировать с Outlook
+                {t('addEvent.syncOutlook')}
               </Label>
             </div>
           )}
@@ -432,7 +432,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Отмена
+              {t('addEvent.cancel')}
             </Button>
             <Button
               type="submit"
@@ -442,7 +442,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               {loading ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
-                  <span>{t('cycleSetup.saving')}</span>
+                  <span>{t('addEvent.adding')}</span>
                 </div>
               ) : (
                 <>

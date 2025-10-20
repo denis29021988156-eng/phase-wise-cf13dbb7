@@ -106,20 +106,44 @@
     "addEvent": "Add Event",
     "collapseCalendar": "Collapse calendar",
     "expandCalendar": "Expand calendar",
-    "googleCalendar": "Google Calendar"
+    "googleCalendar": "Google Calendar",
+    "connectOutlook": "Connect Outlook",
+    "eventsOn": "Events on",
+    "noEvents": "No events on this day"
   },
   "profile": {
     "title": "Profile",
     "saveError": "Failed to save data",
     "saveSettings": "Save Settings",
-    "googleCalendar": "Google Calendar"
+    "googleCalendar": "Google Calendar",
+    "currentCycle": "Current Cycle",
+    "cycleDay": "Cycle day",
+    "cycleLength": "Cycle length",
+    "menstrualLength": "Period length",
+    "currentPhase": "Current phase:",
+    "nextPeriod": "Next period:",
+    "cycleData": "Cycle Data",
+    "lastPeriodStart": "Last period start date",
+    "menstruation": "Menstruation",
+    "follicular": "Follicular",
+    "ovulation": "Ovulation",
+    "luteal": "Luteal"
   },
   "symptoms": {
     "title": "Symptoms",
     "saveError": "Failed to save data",
     "saving": "Saving...",
     "save": "Save",
-    "physicalSymptoms": "Physical symptoms"
+    "physicalSymptoms": "Physical symptoms",
+    "allStable": "Everything is stable 😊",
+    "physicalState": "Physical state",
+    "pain": "Pain",
+    "fatigue": "Fatigue",
+    "energy": "Energy",
+    "cramps": "Cramps",
+    "headache": "Headache",
+    "bloating": "Bloating",
+    "connectAppleHealth": "Connect Apple Health"
   },
   "addEvent": {
     "title": "Add Event",
@@ -131,7 +155,18 @@
     "addedSyncError": "Event created, but sync error occurred",
     "addedSuccess": "Event successfully added to calendar",
     "addError": "Error",
-    "addErrorDesc": "Failed to add event"
+    "addErrorDesc": "Failed to add event",
+    "eventName": "Event name",
+    "eventNamePlaceholder": "Doctor appointment, workout...",
+    "date": "Date",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "Additional event information...",
+    "syncGoogle": "Sync with Google Calendar",
+    "syncOutlook": "Sync with Outlook Calendar",
+    "cancel": "Cancel",
+    "adding": "Adding..."
   },
   "editEvent": {
     "title": "Edit Event",
@@ -167,6 +202,11 @@
     "error": "Error",
     "errorDesc": "Failed to send email",
     "rejected": "Rejected",
-    "rejectedDesc": "Proposal rejected"
+    "rejectedDesc": "Proposal rejected",
+    "placeholder": "Write your question or tell about...",
+    "quickQuestions": "Quick questions:",
+    "howFeeling": "How am I feeling today?",
+    "nutritionAdvice": "Nutrition advice",
+    "workoutRecommendations": "Workout recommendations"
   }
 }
