@@ -37,6 +37,7 @@ interface UserCycle {
 const Calendar = () => {
   const { user, session, linkGoogleIdentity, signInWithGoogle } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date());

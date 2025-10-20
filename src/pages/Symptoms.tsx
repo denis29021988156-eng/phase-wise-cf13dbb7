@@ -12,6 +12,7 @@ import { Heart, Brain, Zap, Moon, RefreshCw, Upload } from 'lucide-react';
 import { useHealthKit } from '@/hooks/useHealthKit';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n/config';
 
 interface SymptomLog {
   energy: number;
