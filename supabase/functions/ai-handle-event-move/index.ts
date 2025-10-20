@@ -27,7 +27,7 @@ serve(async (req) => {
       }
     );
 
-    const { suggestionId, customSubject, customBody } = await req.json();
+    const { suggestionId, customSubject, customBody, language = 'ru' } = await req.json();
 
     // Получить user_id из suggestion для rate limiting
     const { data: suggestionData } = await supabaseClient
@@ -43,9 +43,13 @@ serve(async (req) => {
       const rateLimit = await checkRateLimit(supabaseClient, userId, 'ai-handle-event-move');
       
       if (!rateLimit.allowed) {
+        const errorMsg = language === 'ru' 
+          ? 'Превышен лимит запросов. Попробуйте через минуту.'
+          : 'Rate limit exceeded. Please try again in a minute.';
+        
         return new Response(
           JSON.stringify({ 
-            error: 'Превышен лимит запросов. Попробуйте через минуту.',
+            error: errorMsg,
             success: false
           }),
           {
@@ -178,10 +182,14 @@ serve(async (req) => {
         .update({ status: 'completed' })
         .eq('id', suggestionId);
 
+      const noParticipantsMsg = language === 'ru' 
+        ? 'Событие перенесено (нет участников)'
+        : 'Event moved (no participants)';
+      
       return new Response(
         JSON.stringify({ 
           success: true,
-          message: 'Событие перенесено (нет участников)'
+          message: noParticipantsMsg
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -202,19 +210,34 @@ serve(async (req) => {
         .maybeSingle();
 
       // Fallback на простой шаблон
-      emailSubject = `Предложение перенести: ${event.title}`;
-      const userName = userProfile?.name || 'Пользователь';
+      const localeStr = language === 'ru' ? 'ru-RU' : 'en-US';
+      emailSubject = language === 'ru' 
+        ? `Предложение перенести: ${event.title}`
+        : `Proposal to reschedule: ${event.title}`;
+      
+      const userName = userProfile?.name || (language === 'ru' ? 'Пользователь' : 'User');
       const newStartDate = new Date(suggestion.suggested_new_start);
       
-      emailBody = `Здравствуйте!
+      emailBody = language === 'ru'
+        ? `Здравствуйте!
 
-Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
+Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString(localeStr)} на ${newStartDate.toLocaleString(localeStr)}.
 
 Причина: ${suggestion.reason}
 
 Подходит ли вам новое время?
 
 С уважением,
+${userName}`
+        : `Hello!
+
+I propose to reschedule the meeting "${event.title}" from ${new Date(event.start_time).toLocaleString(localeStr)} to ${newStartDate.toLocaleString(localeStr)}.
+
+Reason: ${suggestion.reason}
+
+Does the new time work for you?
+
+Best regards,
 ${userName}`;
     }
 
@@ -389,22 +412,32 @@ ${userName}`;
       .eq('id', suggestionId);
 
     // Добавить сообщение в чат
+    const chatMessage = emailSent
+      ? (language === 'ru' 
+          ? `✅ Письмо отправлено участникам (${participants.length} чел.). Жду ответов...`
+          : `✅ Email sent to participants (${participants.length} people). Waiting for responses...`)
+      : (language === 'ru'
+          ? '❌ Не удалось отправить письмо. Попробуй позже.'
+          : '❌ Failed to send email. Try again later.');
+    
     await supabaseClient
       .from('chat_messages')
       .insert({
         user_id: userId,
         role: 'assistant',
-        content: emailSent
-          ? `✅ Письмо отправлено участникам (${participants.length} чел.). Жду ответов...`
-          : '❌ Не удалось отправить письмо. Попробуй позже.'
+        content: chatMessage
       });
 
     console.log(`Email sent for suggestion ${suggestionId}:`, emailSent);
 
+    const responseMsg = emailSent 
+      ? (language === 'ru' ? 'Письмо отправлено' : 'Email sent')
+      : (language === 'ru' ? 'Ошибка отправки' : 'Send error');
+    
     return new Response(
       JSON.stringify({ 
         success: emailSent,
-        message: emailSent ? 'Письмо отправлено' : 'Ошибка отправки'
+        message: responseMsg
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

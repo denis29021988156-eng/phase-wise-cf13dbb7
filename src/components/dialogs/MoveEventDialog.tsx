@@ -1,10 +1,20 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Clock } from 'lucide-react';
+import { useState } from "react";
+import { format } from "date-fns";
+import { ru, enUS } from "date-fns/locale";
+import { Calendar, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 interface MoveEventDialogProps {
   open: boolean;
@@ -19,11 +29,14 @@ interface MoveEventDialogProps {
 }
 
 const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogProps) => {
+  const { t, i18n } = useTranslation();
   const [newStartDate, setNewStartDate] = useState('');
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const locale = i18n.language === 'ru' ? ru : enUS;
 
   // Reset form when dialog opens with new event
   const handleOpenChange = (isOpen: boolean) => {
@@ -66,23 +79,30 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Перенести событие
+            {t('moveEvent.title')}
           </DialogTitle>
+          <DialogDescription>
+            {i18n.language === 'ru' 
+              ? 'Создайте предложение о переносе события для участников'
+              : 'Create a proposal to move the event for participants'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="p-3 rounded-md bg-muted/50">
-            <p className="text-sm font-medium text-foreground mb-1">Текущее событие:</p>
+            <p className="text-sm font-medium text-foreground mb-1">
+              {t('moveEvent.currentDetails')}:
+            </p>
             <p className="text-sm text-muted-foreground">{event.title}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {new Date(event.start_time).toLocaleString('ru-RU', {
+              {new Date(event.start_time).toLocaleString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
                 day: 'numeric',
                 month: 'short',
                 hour: '2-digit',
                 minute: '2-digit'
               })}
               {' – '}
-              {new Date(event.end_time).toLocaleTimeString('ru-RU', {
+              {new Date(event.end_time).toLocaleTimeString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
                 hour: '2-digit',
                 minute: '2-digit'
               })}
@@ -90,7 +110,7 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="newDate">Новая дата</Label>
+            <Label htmlFor="newDate">{t('moveEvent.newDate')}</Label>
             <Input
               id="newDate"
               type="date"
@@ -104,7 +124,7 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
             <div className="space-y-2">
               <Label htmlFor="newStartTime" className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Начало
+                {t('moveEvent.newStartTime')}
               </Label>
               <Input
                 id="newStartTime"
@@ -128,7 +148,7 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
             <div className="space-y-2">
               <Label htmlFor="newEndTime" className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Конец
+                {t('moveEvent.newEndTime')}
               </Label>
               <Input
                 id="newEndTime"
@@ -140,17 +160,19 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reason">Причина переноса</Label>
+            <Label htmlFor="reason">{t('moveEvent.reason')}</Label>
             <Textarea
               id="reason"
-              placeholder="Например: Перенос по вашей рекомендации учитывая фазу цикла"
+              placeholder={t('moveEvent.reasonPlaceholder')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              Причина будет использована в письме участникам
+              {i18n.language === 'ru' 
+                ? 'Причина будет использована в письме участникам'
+                : 'The reason will be used in the email to participants'}
             </p>
           </div>
         </div>
@@ -161,7 +183,7 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Отмена
+            {t('moveEvent.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -171,10 +193,10 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent mr-2" />
-                Создаю предложение...
+                {t('moveEvent.creating')}
               </>
             ) : (
-              'Создать предложение'
+              t('moveEvent.createProposal')
             )}
           </Button>
         </DialogFooter>

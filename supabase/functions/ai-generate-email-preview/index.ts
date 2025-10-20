@@ -22,9 +22,9 @@ serve(async (req) => {
       }
     );
 
-    const { suggestionId } = await req.json();
+    const { suggestionId, language = 'ru' } = await req.json();
 
-    console.log('Generating email preview for suggestion:', suggestionId);
+    console.log('Generating email preview for suggestion:', suggestionId, 'language:', language);
 
     // Получить предложение
     const { data: suggestion, error: suggestionError } = await supabaseClient
@@ -147,7 +147,10 @@ serve(async (req) => {
     const newStartDate = new Date(suggestion.suggested_new_start);
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
-    const aiPrompt = `Ты помощник, который пишет письма от имени ${userName} для переноса встреч${profileNote}.
+    const localeStr = language === 'ru' ? 'ru-RU' : 'en-US';
+    
+    const aiPrompt = language === 'ru' 
+      ? `Ты помощник, который пишет письма от имени ${userName} для переноса встреч${profileNote}.
 
 Контекст:
 - Встреча: "${event.title}"
@@ -174,7 +177,35 @@ serve(async (req) => {
 - Спроси, подходит ли новое время
 - Не нужно подписи
 
-Напиши только текст письма, без темы.`;
+Напиши только текст письма, без темы.`
+      : `You are an assistant that writes emails on behalf of ${userName} to reschedule meetings${profileNote}.
+
+Context:
+- Meeting: "${event.title}"
+- Current time: ${new Date(event.start_time).toLocaleString('en-US', { 
+  weekday: 'long', 
+  day: 'numeric', 
+  month: 'long', 
+  hour: '2-digit', 
+  minute: '2-digit' 
+})}
+- Proposed time: ${newStartDate.toLocaleString('en-US', { 
+  weekday: 'long', 
+  day: 'numeric', 
+  month: 'long', 
+  hour: '2-digit', 
+  minute: '2-digit' 
+})}
+- Reason for rescheduling: ${suggestion.reason}
+
+TASK: Write a polite, brief email to participants proposing the change. 
+- Tone: friendly but professional
+- First person (from ${userName})
+- 3-4 sentences maximum
+- Ask if the new time works
+- No signature needed
+
+Write only the email body, without subject.`;
 
     let emailBody = '';
     let retries = 3;
@@ -189,12 +220,17 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-5-nano-2025-08-07', // Быстрая модель для генерации текста
+            model: 'gpt-5-nano-2025-08-07',
             messages: [
-              { role: 'system', content: 'Ты помощник для написания деловых писем. Пиши кратко и естественно.' },
+              { 
+                role: 'system', 
+                content: language === 'ru' 
+                  ? 'Ты помощник для написания деловых писем. Пиши кратко и естественно.' 
+                  : 'You are an assistant for writing business emails. Write concisely and naturally.'
+              },
               { role: 'user', content: aiPrompt }
             ],
-            max_completion_tokens: 200, // Новые модели используют max_completion_tokens
+            max_completion_tokens: 200,
           }),
         });
 
@@ -223,19 +259,34 @@ serve(async (req) => {
     // Fallback если AI не сработал
     if (!emailBody) {
       console.log('Using fallback template');
-      emailBody = `Здравствуйте!
+      const localeStr = language === 'ru' ? 'ru-RU' : 'en-US';
+      
+      emailBody = language === 'ru'
+        ? `Здравствуйте!
 
-Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString('ru-RU')} на ${newStartDate.toLocaleString('ru-RU')}.
+Предлагаю перенести встречу "${event.title}" с ${new Date(event.start_time).toLocaleString(localeStr)} на ${newStartDate.toLocaleString(localeStr)}.
 
 Причина: ${suggestion.reason}
 
 Подходит ли вам новое время?
 
 С уважением,
+${userName}`
+        : `Hello!
+
+I propose to reschedule the meeting "${event.title}" from ${new Date(event.start_time).toLocaleString(localeStr)} to ${newStartDate.toLocaleString(localeStr)}.
+
+Reason: ${suggestion.reason}
+
+Does the new time work for you?
+
+Best regards,
 ${userName}`;
     }
 
-    const emailSubject = `Предложение перенести: ${event.title}`;
+    const emailSubject = language === 'ru' 
+      ? `Предложение перенести: ${event.title}`
+      : `Proposal to reschedule: ${event.title}`;
 
     console.log('Email preview generated successfully');
 

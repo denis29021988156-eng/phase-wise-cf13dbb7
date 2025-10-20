@@ -258,9 +258,13 @@ const Chat = () => {
     setCurrentSuggestionId(suggestionId);
     
     try {
-      // Сначала сгенерировать preview
+      const currentLanguage = localStorage.getItem('language') || 'ru';
+      
       const { data, error } = await supabase.functions.invoke('ai-generate-email-preview', {
-        body: { suggestionId }
+        body: { 
+          suggestionId,
+          language: currentLanguage
+        }
       });
 
       if (error) throw error;
@@ -287,11 +291,14 @@ const Chat = () => {
     setSendingEmail(true);
     
     try {
+      const currentLanguage = localStorage.getItem('language') || 'ru';
+      
       const { data, error } = await supabase.functions.invoke('ai-handle-event-move', {
         body: { 
           suggestionId: currentSuggestionId,
           customSubject: editedSubject,
-          customBody: editedBody
+          customBody: editedBody,
+          language: currentLanguage
         }
       });
 

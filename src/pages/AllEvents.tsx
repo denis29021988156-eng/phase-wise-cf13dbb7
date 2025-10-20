@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Clock, Lightbulb, Trash2, Edit, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
 import MoveEventDialog from '@/components/dialogs/MoveEventDialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import i18n from '@/i18n/config';
 
 interface Event {
   id: string;
@@ -153,6 +154,11 @@ const AllEvents = () => {
   const handleMoveSubmit = async (newStartTime: string, newEndTime: string, reason: string) => {
     if (!user || !selectedEvent) return;
 
+    const locale = i18n.language === 'ru' ? ru : enUS;
+    const suggestionText = i18n.language === 'ru'
+      ? `Перенести "${selectedEvent.title}" на ${format(new Date(newStartTime), 'd MMMM, HH:mm', { locale })}`
+      : `Move "${selectedEvent.title}" to ${format(new Date(newStartTime), 'd MMMM, HH:mm', { locale })}`;
+
     try {
       const { error } = await supabase
         .from('event_move_suggestions')
@@ -162,21 +168,25 @@ const AllEvents = () => {
           suggested_new_start: newStartTime,
           suggested_new_end: newEndTime,
           reason: reason,
-          suggestion_text: `Перенести "${selectedEvent.title}" на ${format(new Date(newStartTime), 'd MMMM, HH:mm', { locale: ru })}`,
+          suggestion_text: suggestionText,
           status: 'pending'
         });
 
       if (error) throw error;
 
       toast({
-        title: 'Предложение создано',
-        description: 'Перейдите в чат, чтобы отправить письмо участникам',
+        title: i18n.language === 'ru' ? 'Предложение создано' : 'Proposal created',
+        description: i18n.language === 'ru' 
+          ? 'Перейдите в чат, чтобы отправить письмо участникам'
+          : 'Go to chat to send email to participants',
       });
     } catch (error) {
       console.error('Error creating move suggestion:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось создать предложение о переносе',
+        title: i18n.language === 'ru' ? 'Ошибка' : 'Error',
+        description: i18n.language === 'ru' 
+          ? 'Не удалось создать предложение о переносе'
+          : 'Failed to create move proposal',
         variant: 'destructive',
       });
       throw error;

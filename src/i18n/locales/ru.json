@@ -56,5 +56,20 @@
     "errorAuthDesc": "Пользователь не найден. Попробуйте войти заново.",
     "errorSave": "Ошибка сохранения",
     "errorSaveDesc": "Не удалось сохранить данные о цикле"
+  },
+  "moveEvent": {
+    "title": "Перенос события",
+    "currentDetails": "Текущие детали",
+    "eventTitle": "Событие",
+    "currentTime": "Текущее время",
+    "newDetails": "Новые детали",
+    "newDate": "Новая дата",
+    "newStartTime": "Новое время начала",
+    "newEndTime": "Новое время окончания",
+    "reason": "Причина переноса",
+    "reasonPlaceholder": "например, конфликт расписания...",
+    "cancel": "Отмена",
+    "createProposal": "Создать предложение",
+    "creating": "Создание..."
   }
 }

@@ -56,5 +56,20 @@
     "errorAuthDesc": "User not found. Please try logging in again.",
     "errorSave": "Save error",
     "errorSaveDesc": "Failed to save cycle data"
+  },
+  "moveEvent": {
+    "title": "Move Event",
+    "currentDetails": "Current Details",
+    "eventTitle": "Event",
+    "currentTime": "Current Time",
+    "newDetails": "New Details",
+    "newDate": "New Date",
+    "newStartTime": "New Start Time",
+    "newEndTime": "New End Time",
+    "reason": "Reason for Move",
+    "reasonPlaceholder": "e.g., Schedule conflict...",
+    "cancel": "Cancel",
+    "createProposal": "Create Proposal",
+    "creating": "Creating..."
   }
 }
