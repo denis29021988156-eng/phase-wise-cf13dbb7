@@ -71,5 +71,85 @@
     "cancel": "Cancel",
     "createProposal": "Create Proposal",
     "creating": "Creating..."
+  },
+  "allEvents": {
+    "title": "All Events",
+    "events": "events",
+    "event": "event",
+    "noEvents": "No events",
+    "addEventsPrompt": "Add events to the calendar",
+    "showPast": "Show past",
+    "hidePast": "Hide past",
+    "deleteConfirm": "Delete event",
+    "deleteSuccess": "Event deleted",
+    "deleteSuccessDesc": "Event successfully removed from calendar",
+    "deleteError": "Error",
+    "deleteErrorDesc": "Failed to delete event",
+    "moveEvent": "Move event",
+    "manual": "Manual",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "syncSuccess": "Calendar synced",
+    "syncedEvents": "Loaded {{count}} events",
+    "syncError": "Sync error",
+    "connectGooglePrompt": "Open menu and click 'Connect Google Calendar'",
+    "connectOutlookPrompt": "Open menu and click 'Connect Outlook Calendar'",
+    "tokenSaveError": "Failed to save tokens",
+    "calendarConnected": "Calendar connected successfully. Syncing...",
+    "outlookTokenExpired": "Token expired. Reconnect Outlook.",
+    "connectCalendarPrompt": "Calendar will be linked to your current account. Redirecting to Google authorization...",
+    "connectError": "Failed to connect calendar",
+    "deleteConfirm": "Delete event",
+    "addEvent": "Add Event",
+    "collapseCalendar": "Collapse calendar",
+    "expandCalendar": "Expand calendar",
+    "googleCalendar": "Google Calendar"
+  },
+  "profile": {
+    "title": "Profile",
+    "saveError": "Failed to save data",
+    "saveSettings": "Save Settings",
+    "googleCalendar": "Google Calendar"
+  },
+  "symptoms": {
+    "title": "Symptoms",
+    "saveError": "Failed to save data",
+    "saving": "Saving...",
+    "save": "Save",
+    "physicalSymptoms": "Physical symptoms"
+  },
+  "addEvent": {
+    "title": "Add Event",
+    "add": "Add",
+    "eventAdded": "Event added",
+    "addedAndSyncedGoogle": "Event successfully added and synced with Google Calendar",
+    "addedAndSyncedOutlook": "Event successfully added and synced with Outlook",
+    "addedAndSyncedBoth": "Event successfully added and synced with Google Calendar and Outlook",
+    "addedSyncError": "Event created, but sync error occurred",
+    "addedSuccess": "Event successfully added to calendar",
+    "addError": "Error",
+    "addErrorDesc": "Failed to add event"
+  },
+  "editEvent": {
+    "title": "Edit Event",
+    "updated": "Event updated",
+    "updatedDesc": "Changes saved successfully",
+    "updateError": "Error",
+    "updateErrorDesc": "Failed to update event"
+  },
+  "emailPreview": {
+    "title": "Email Preview",
+    "description": "Review the email before sending. You can edit it.",
+    "recipients": "Recipients:",
+    "event": "Event:",
+    "subject": "Subject",
+    "body": "Message Body",
+    "editPrompt": "You can edit the email text before sending",
+    "cancel": "Cancel",
+    "send": "Send",
+    "sending": "Sending..."
   }
 }

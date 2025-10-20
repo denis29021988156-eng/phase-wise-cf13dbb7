@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Save } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface EditEventDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface EditEventDialogProps {
 const EditEventDialog = ({ open, onOpenChange, event, onEventUpdated }: EditEventDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -94,8 +96,8 @@ const EditEventDialog = ({ open, onOpenChange, event, onEventUpdated }: EditEven
       }
 
       toast({
-        title: 'Событие обновлено',
-        description: 'Изменения успешно сохранены',
+        title: t('editEvent.updated'),
+        description: t('editEvent.updatedDesc'),
       });
 
       onEventUpdated();
@@ -103,8 +105,8 @@ const EditEventDialog = ({ open, onOpenChange, event, onEventUpdated }: EditEven
     } catch (error) {
       console.error('Error updating event:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить событие',
+        title: t('editEvent.updateError'),
+        description: t('editEvent.updateErrorDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -118,7 +120,7 @@ const EditEventDialog = ({ open, onOpenChange, event, onEventUpdated }: EditEven
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Save className="h-5 w-5 text-primary" />
-            <span>Редактировать событие</span>
+            <span>{t('editEvent.title')}</span>
           </DialogTitle>
         </DialogHeader>
 

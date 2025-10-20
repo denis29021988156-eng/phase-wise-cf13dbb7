@@ -71,5 +71,85 @@
     "cancel": "Отмена",
     "createProposal": "Создать предложение",
     "creating": "Создание..."
+  },
+  "allEvents": {
+    "title": "Все события",
+    "events": "событий",
+    "event": "событие",
+    "noEvents": "Нет событий",
+    "addEventsPrompt": "Добавьте события в календаре",
+    "showPast": "Показать прошедшие",
+    "hidePast": "Скрыть прошедшие",
+    "deleteConfirm": "Удалить событие",
+    "deleteSuccess": "Событие удалено",
+    "deleteSuccessDesc": "Событие успешно удалено из календаря",
+    "deleteError": "Ошибка",
+    "deleteErrorDesc": "Не удалось удалить событие",
+    "moveEvent": "Перенести событие",
+    "manual": "Ручной",
+    "edit": "Редактировать",
+    "delete": "Удалить"
+  },
+  "calendar": {
+    "title": "Календарь",
+    "syncSuccess": "Календарь синхронизирован",
+    "syncedEvents": "Загружено {{count}} событий",
+    "syncError": "Ошибка синхронизации",
+    "connectGooglePrompt": "Откройте меню и нажмите «Подключить Google календарь»",
+    "connectOutlookPrompt": "Откройте меню и нажмите «Подключить Outlook календарь»",
+    "tokenSaveError": "Не удалось сохранить токены",
+    "calendarConnected": "Календарь успешно подключен. Синхронизация...",
+    "outlookTokenExpired": "Срок действия токена истёк. Подключите Outlook заново.",
+    "connectCalendarPrompt": "Календарь будет привязан к вашему текущему аккаунту. Перенаправление на авторизацию Google...",
+    "connectError": "Не удалось подключить календарь",
+    "deleteConfirm": "Удалить событие",
+    "addEvent": "Добавить событие",
+    "collapseCalendar": "Свернуть календарь",
+    "expandCalendar": "Развернуть календарь",
+    "googleCalendar": "Google Календарь"
+  },
+  "profile": {
+    "title": "Профиль",
+    "saveError": "Не удалось сохранить данные",
+    "saveSettings": "Сохранить настройки",
+    "googleCalendar": "Google Календарь"
+  },
+  "symptoms": {
+    "title": "Симптомы",
+    "saveError": "Не удалось сохранить данные",
+    "saving": "Сохранение...",
+    "save": "Сохранить",
+    "physicalSymptoms": "Физические симптомы"
+  },
+  "addEvent": {
+    "title": "Добавить событие",
+    "add": "Добавить",
+    "eventAdded": "Событие добавлено",
+    "addedAndSyncedGoogle": "Событие успешно добавлено и синхронизировано с Google Calendar",
+    "addedAndSyncedOutlook": "Событие успешно добавлено и синхронизировано с Outlook",
+    "addedAndSyncedBoth": "Событие успешно добавлено и синхронизировано с Google Calendar и Outlook",
+    "addedSyncError": "Событие создано, но возникла ошибка синхронизации",
+    "addedSuccess": "Событие успешно добавлено в календарь",
+    "addError": "Ошибка",
+    "addErrorDesc": "Не удалось добавить событие"
+  },
+  "editEvent": {
+    "title": "Редактировать событие",
+    "updated": "Событие обновлено",
+    "updatedDesc": "Изменения успешно сохранены",
+    "updateError": "Ошибка",
+    "updateErrorDesc": "Не удалось обновить событие"
+  },
+  "emailPreview": {
+    "title": "Предпросмотр письма",
+    "description": "Проверьте текст письма перед отправкой. Вы можете отредактировать его.",
+    "recipients": "Получатели:",
+    "event": "Событие:",
+    "subject": "Тема",
+    "body": "Текст письма",
+    "editPrompt": "Вы можете отредактировать текст письма перед отправкой",
+    "cancel": "Отмена",
+    "send": "Отправить",
+    "sending": "Отправка..."
   }
 }

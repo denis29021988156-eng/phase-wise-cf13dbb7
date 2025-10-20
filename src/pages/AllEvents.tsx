@@ -11,6 +11,7 @@ import EditEventDialog from '@/components/dialogs/EditEventDialog';
 import MoveEventDialog from '@/components/dialogs/MoveEventDialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import i18n from '@/i18n/config';
+import { useTranslation } from 'react-i18next';
 
 interface Event {
   id: string;
@@ -25,6 +26,7 @@ interface Event {
 const AllEvents = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [editEventOpen, setEditEventOpen] = useState(false);

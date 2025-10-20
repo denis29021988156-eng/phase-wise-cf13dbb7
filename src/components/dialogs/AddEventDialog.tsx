@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface AddEventDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface AddEventDialogProps {
 const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddEventDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [syncToGoogle, setSyncToGoogle] = useState(false);
   const [syncToOutlook, setSyncToOutlook] = useState(false);

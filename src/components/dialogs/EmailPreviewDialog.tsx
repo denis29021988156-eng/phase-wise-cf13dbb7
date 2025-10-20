@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Send, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface EmailPreviewDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ const EmailPreviewDialog = ({
   onSend,
   sending,
 }: EmailPreviewDialogProps) => {
+  const { t } = useTranslation();
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
 
@@ -40,17 +42,17 @@ const EmailPreviewDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Mail className="h-5 w-5 text-primary" />
-            <span>Предпросмотр письма</span>
+            <span>{t('emailPreview.title')}</span>
           </DialogTitle>
           <DialogDescription>
-            Проверьте текст письма перед отправкой. Вы можете отредактировать его.
+            {t('emailPreview.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Recipients */}
           <div>
-            <Label className="text-sm font-medium text-muted-foreground">Кому:</Label>
+            <Label className="text-sm font-medium text-muted-foreground">{t('emailPreview.recipients')}</Label>
             <div className="mt-1 flex flex-wrap gap-2">
               {recipients.map((email, idx) => (
                 <span
@@ -65,35 +67,35 @@ const EmailPreviewDialog = ({
 
           {/* Event */}
           <div>
-            <Label className="text-sm font-medium text-muted-foreground">Событие:</Label>
+            <Label className="text-sm font-medium text-muted-foreground">{t('emailPreview.event')}</Label>
             <p className="mt-1 text-sm text-foreground">{eventTitle}</p>
           </div>
 
           {/* Subject */}
           <div>
-            <Label htmlFor="email-subject">Тема письма</Label>
+            <Label htmlFor="email-subject">{t('emailPreview.subject')}</Label>
             <Input
               id="email-subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Тема письма"
+              placeholder={t('emailPreview.subject')}
               className="mt-1"
             />
           </div>
 
           {/* Body */}
           <div>
-            <Label htmlFor="email-body">Текст письма</Label>
+            <Label htmlFor="email-body">{t('emailPreview.body')}</Label>
             <Textarea
               id="email-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Текст письма"
+              placeholder={t('emailPreview.body')}
               rows={12}
               className="mt-1 font-sans"
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Вы можете отредактировать текст письма перед отправкой
+              {t('emailPreview.editPrompt')}
             </p>
           </div>
         </div>
@@ -105,7 +107,7 @@ const EmailPreviewDialog = ({
             disabled={sending}
           >
             <X className="h-4 w-4 mr-2" />
-            Отменить
+            {t('emailPreview.cancel')}
           </Button>
           <Button
             onClick={handleSend}
@@ -115,12 +117,12 @@ const EmailPreviewDialog = ({
             {sending ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Отправляю...
+                {t('emailPreview.sending')}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Отправить письмо
+                {t('emailPreview.send')}
               </>
             )}
           </Button>
