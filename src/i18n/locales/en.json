@@ -1,0 +1,17 @@
+{
+  "nav": {
+    "tasks": "Tasks",
+    "allEvents": "All Events",
+    "profile": "Profile",
+    "chat": "Gaia",
+    "symptoms": "Symptoms",
+    "logout": "Logout"
+  },
+  "auth": {
+    "signOut": "Sign Out",
+    "signedOut": "Signed out successfully",
+    "goodbye": "Goodbye!",
+    "error": "Error",
+    "signOutError": "An error occurred while signing out"
+  }
+}
