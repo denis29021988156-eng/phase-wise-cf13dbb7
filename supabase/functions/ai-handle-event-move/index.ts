@@ -124,6 +124,10 @@ serve(async (req) => {
     // Получить участников события
     let participants: string[] = [];
     
+    // Получить email пользователя для исключения из списка получателей
+    const { data: authUser } = await supabaseClient.auth.admin.getUserById(userId);
+    const userEmail = authUser?.user?.email;
+    
     if (emailProvider === 'google') {
     // Получить детали события из Google Calendar
       const eventResponse = await fetch(
@@ -138,7 +142,7 @@ serve(async (req) => {
       if (eventResponse.ok) {
         const eventData = await eventResponse.json();
         participants = (eventData.attendees || [])
-          .filter((a: any) => a.email)
+          .filter((a: any) => a.email && a.email !== userEmail)
           .map((a: any) => a.email);
       }
     } else {
@@ -158,7 +162,7 @@ serve(async (req) => {
         if (eventResponse.ok) {
           const eventData = await eventResponse.json();
           participants = (eventData.attendees || [])
-            .filter((a: any) => a.emailAddress?.address)
+            .filter((a: any) => a.emailAddress?.address && a.emailAddress.address !== userEmail)
             .map((a: any) => a.emailAddress.address);
         }
       } catch (error) {

@@ -88,11 +88,15 @@ const Chat = () => {
           setMessages(formattedMessages);
         } else {
           // Show welcome message if no history
+          const welcomeMessage = i18n.language === 'ru' 
+            ? 'Привет, дорогая! Меня зовут Gaia, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙'
+            : 'Hello, dear! My name is Gaia, and I\'m your personal women\'s health assistant. How are you feeling today? Tell me about your well-being - I\'m here to support you! 💙';
+          
           setMessages([
             {
               id: 'welcome',
               type: 'ai',
-              content: 'Привет, дорогая! Меня зовут Gaia, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
+              content: welcomeMessage,
               timestamp: new Date(),
             }
           ]);
@@ -112,11 +116,15 @@ const Chat = () => {
       } catch (error) {
         console.error('Error loading chat history:', error);
         // Show welcome message on error
+        const welcomeMessage = i18n.language === 'ru' 
+          ? 'Привет, дорогая! Меня зовут Gaia, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙'
+          : 'Hello, dear! My name is Gaia, and I\'m your personal women\'s health assistant. How are you feeling today? Tell me about your well-being - I\'m here to support you! 💙';
+        
         setMessages([
           {
             id: 'welcome',
             type: 'ai',
-            content: 'Привет, дорогая! Меня зовут Gaia, и я твой персональный помощник по женскому здоровью. Как дела сегодня? Расскажи мне о своем самочувствии - я здесь, чтобы поддержать тебя! 💙',
+            content: welcomeMessage,
             timestamp: new Date(),
           }
         ]);

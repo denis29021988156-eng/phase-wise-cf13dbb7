@@ -95,10 +95,17 @@ const Calendar = () => {
             const { data, error } = await supabase.functions.invoke('sync-google-calendar', { body: { userId: user.id } });
             if (error || !data?.success) {
               console.error('Google sync failed during pendingSync:', error || data);
-              toast({ title: 'Ошибка синхронизации', description: data?.error || (error as any)?.message || 'Не удалось загрузить события из Google', variant: 'destructive' });
+              toast({ 
+                title: t('calendar.syncError'), 
+                description: data?.error || (error as any)?.message || t('calendar.syncErrorGoogle'), 
+                variant: 'destructive' 
+              });
             } else {
               loadEvents();
-              toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+              toast({ 
+                title: t('calendar.syncSuccess'), 
+                description: data.message || t('calendar.syncSuccessGoogle', { count: data?.eventsCount || 0 })
+              });
               
               // Set up auto-sync webhook
               try {
@@ -127,10 +134,17 @@ const Calendar = () => {
                 const { data, error } = await supabase.functions.invoke('sync-google-calendar', { body: { userId: user.id } });
                 if (error || !data?.success) {
                   console.error('Google sync failed after session upsert:', error || data);
-                  toast({ title: 'Ошибка синхронизации', description: data?.error || (error as any)?.message || 'Не удалось загрузить события из Google', variant: 'destructive' });
+                  toast({ 
+                    title: t('calendar.syncError'), 
+                    description: data?.error || (error as any)?.message || t('calendar.syncErrorGoogle'), 
+                    variant: 'destructive' 
+                  });
                 } else {
                   loadEvents();
-                  toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+                  toast({ 
+                    title: t('calendar.syncSuccess'), 
+                    description: data.message || t('calendar.syncSuccessGoogle', { count: data?.eventsCount || 0 })
+                  });
                 }
                 return;
               }
@@ -140,8 +154,8 @@ const Calendar = () => {
 
             // Show neutral hint instead of destructive error
             toast({
-              title: 'Нужно подключить Google',
-              description: 'Откройте меню и нажмите «Подключить Google календарь».',
+              title: t('calendar.needGoogle'),
+              description: t('calendar.needGoogleDesc'),
             });
           }
         }, 1200);
@@ -166,23 +180,26 @@ const Calendar = () => {
                   (data?.error && String(data.error).includes('outlook_reconnect_required')) ||
                   (error && (String((error as any)?.message || '').includes('non-2xx') || String((error as any)?.name || '').includes('FunctionsFetchError')));
                 toast({
-                  title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
-                  description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (data?.error || (error as any)?.message || 'Не удалось загрузить события из Outlook'),
+                  title: needsReconnect ? t('calendar.outlookReconnect') : t('calendar.syncError'),
+                  description: needsReconnect ? t('calendar.outlookReconnectDesc') : (data?.error || (error as any)?.message || t('calendar.syncErrorOutlook')),
                   variant: 'destructive',
                   action: needsReconnect ? (
-                    <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
-                      Подключить заново
+                    <ToastAction altText={t('calendar.reconnect')} onClick={() => handleSyncOutlook()}>
+                      {t('calendar.reconnect')}
                     </ToastAction>
                   ) : undefined,
                 });
               } else {
                 loadEvents();
-                toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.inserted || 0} событий из Outlook` });
+                toast({ 
+                  title: t('calendar.syncSuccess'), 
+                  description: data.message || t('calendar.syncSuccessOutlook', { count: data?.inserted || 0 })
+                });
               }
           } else {
             toast({
-              title: 'Нужно подключить Outlook',
-              description: 'Откройте меню и нажмите «Подключить Outlook календарь».',
+              title: t('calendar.needOutlook'),
+              description: t('calendar.needOutlookDesc'),
             });
           }
         }, 1200);
@@ -394,7 +411,10 @@ const Calendar = () => {
             });
             if (error) throw error;
             if (data?.success) {
-              toast({ title: 'Календарь синхронизирован', description: data.message || `Загружено ${data?.eventsCount || 0} событий` });
+              toast({ 
+                title: t('calendar.syncSuccess'), 
+                description: data.message || t('calendar.syncSuccessGoogle', { count: data?.eventsCount || 0 })
+              });
               loadEvents();
               
               // Set up auto-sync webhook
