@@ -135,7 +135,7 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    const userName = userProfile?.name || 'Пользователь';
+    const userName = userProfile?.name || (language === 'ru' ? 'Пользователь' : 'User');
     
     // Добавить контекст профиля для более персонализированных писем
     let profileNote = '';

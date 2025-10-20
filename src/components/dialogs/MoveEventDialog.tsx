@@ -82,9 +82,7 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
             {t('moveEvent.title')}
           </DialogTitle>
           <DialogDescription>
-            {i18n.language === 'ru' 
-              ? 'Создайте предложение о переносе события для участников'
-              : 'Create a proposal to move the event for participants'}
+            {t('moveEvent.dialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,9 +168,7 @@ const MoveEventDialog = ({ open, onOpenChange, event, onMove }: MoveEventDialogP
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              {i18n.language === 'ru' 
-                ? 'Причина будет использована в письме участникам'
-                : 'The reason will be used in the email to participants'}
+              {t('moveEvent.reasonHint')}
             </p>
           </div>
         </div>

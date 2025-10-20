@@ -70,7 +70,9 @@
     "reasonPlaceholder": "e.g., Schedule conflict...",
     "cancel": "Cancel",
     "createProposal": "Create Proposal",
-    "creating": "Creating..."
+    "creating": "Creating...",
+    "dialogDescription": "Create a proposal to move the event for participants",
+    "reasonHint": "The reason will be used in the email to participants"
   },
   "allEvents": {
     "title": "All Events",
