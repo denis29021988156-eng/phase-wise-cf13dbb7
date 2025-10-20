@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import EmailPreviewDialog from '@/components/dialogs/EmailPreviewDialog';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ interface EmailPreview {
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -308,8 +310,8 @@ const Chat = () => {
       setPendingSuggestions(prev => prev.filter(s => s.id !== currentSuggestionId));
 
       toast({
-        title: 'Отправлено',
-        description: data.message || 'Письмо отправлено участникам',
+        title: t('chat.sent'),
+        description: data.message || t('chat.sentDesc'),
       });
 
       setPreviewDialogOpen(false);
@@ -318,8 +320,8 @@ const Chat = () => {
     } catch (error) {
       console.error('Error sending email:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось отправить письмо',
+        title: t('chat.error'),
+        description: t('chat.errorDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -339,8 +341,8 @@ const Chat = () => {
       setPendingSuggestions(prev => prev.filter(s => s.id !== suggestionId));
 
       toast({
-        title: 'Отклонено',
-        description: 'Предложение отклонено',
+        title: t('chat.rejected'),
+        description: t('chat.rejectedDesc'),
       });
     } catch (error) {
       console.error('Error rejecting suggestion:', error);
@@ -363,7 +365,7 @@ const Chat = () => {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">G<span className="font-bold text-primary">ai</span>a</h1>
-          <p className="text-muted-foreground">Персональные советы и поддержка</p>
+          <p className="text-muted-foreground">{t('chat.subtitle')}</p>
         </div>
       </div>
 
@@ -379,7 +381,7 @@ const Chat = () => {
                 className="text-xs text-muted-foreground hover:text-foreground"
               >
                 <ChevronDown className="h-4 w-4 mr-1" />
-                Показать всю историю ({messages.length - displayedMessages.length} скрыто)
+                {t('chat.showFullHistory')} ({messages.length - displayedMessages.length} {t('chat.hidden')})
               </Button>
             </div>
           )}
@@ -389,7 +391,7 @@ const Chat = () => {
               {loadingHistory ? (
                 <div className="flex justify-center items-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  <span className="ml-2 text-muted-foreground">Загружаю историю сообщений...</span>
+                  <span className="ml-2 text-muted-foreground">{t('chat.loadingHistory')}</span>
                 </div>
               ) : (
                 <>
@@ -427,7 +429,7 @@ const Chat = () => {
                   <div className="bg-muted p-3 rounded-lg max-w-[80%]">
                     <div className="flex items-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span className="text-sm text-muted-foreground">Gaia печатает...</span>
+                      <span className="text-sm text-muted-foreground">{t('chat.gaiaTyping')}</span>
                     </div>
                   </div>
                 </div>
@@ -448,7 +450,7 @@ const Chat = () => {
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
                         <Clock className="h-3 w-3" />
                         <span>
-                          {new Date(suggestion.suggested_new_start).toLocaleDateString('ru-RU', {
+                          {new Date(suggestion.suggested_new_start).toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
                             weekday: 'short',
                             day: 'numeric',
                             month: 'short',
@@ -467,10 +469,10 @@ const Chat = () => {
                           {movingSuggestion === suggestion.id ? (
                             <>
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
-                              Отправляю...
+                              {t('chat.sending')}
                             </>
                           ) : (
-                            '✉️ Написать участникам'
+                            `✉️ ${t('chat.sendEmail')}`
                           )}
                         </Button>
                         <Button
@@ -479,7 +481,7 @@ const Chat = () => {
                           onClick={() => handleRejectSuggestion(suggestion.id)}
                           disabled={movingSuggestion === suggestion.id}
                         >
-                          Отклонить
+                          {t('chat.reject')}
                         </Button>
                       </div>
                     </div>

@@ -88,7 +88,6 @@ const Auth = () => {
                 onClick={toggleLanguage}
                 className="absolute top-4 right-4 font-medium"
               >
-                <Languages className="h-4 w-4 mr-2" />
                 {i18n.language === 'en' ? 'EN' : 'RU'}
               </Button>
             </div>

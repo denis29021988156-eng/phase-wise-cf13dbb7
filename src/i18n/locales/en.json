@@ -151,5 +151,22 @@
     "cancel": "Cancel",
     "send": "Send",
     "sending": "Sending..."
+  },
+  "chat": {
+    "title": "Gaia",
+    "subtitle": "Personal advice and support",
+    "loadingHistory": "Loading message history...",
+    "gaiaTyping": "Gaia is typing...",
+    "showFullHistory": "Show full history",
+    "hidden": "hidden",
+    "sendEmail": "Email participants",
+    "sending": "Sending...",
+    "reject": "Reject",
+    "sent": "Sent",
+    "sentDesc": "Email sent to participants",
+    "error": "Error",
+    "errorDesc": "Failed to send email",
+    "rejected": "Rejected",
+    "rejectedDesc": "Proposal rejected"
   }
 }

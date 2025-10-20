@@ -277,29 +277,29 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
       // Show appropriate toast message
       if (googleSynced && outlookSynced) {
         toast({
-          title: 'Событие добавлено',
-          description: 'Событие успешно добавлено и синхронизировано с Google Calendar и Outlook',
+          title: t('addEvent.eventAdded'),
+          description: t('addEvent.addedAndSyncedBoth'),
         });
       } else if (googleSynced) {
         toast({
-          title: 'Событие добавлено',
-          description: 'Событие успешно добавлено и синхронизировано с Google Calendar',
+          title: t('addEvent.eventAdded'),
+          description: t('addEvent.addedAndSyncedGoogle'),
         });
       } else if (outlookSynced) {
         toast({
-          title: 'Событие добавлено',
-          description: 'Событие успешно добавлено и синхронизировано с Outlook',
+          title: t('addEvent.eventAdded'),
+          description: t('addEvent.addedAndSyncedOutlook'),
         });
       } else if ((syncToGoogle && hasGoogleToken) || (syncToOutlook && hasMicrosoftToken)) {
         toast({
-          title: 'Событие добавлено',
-          description: 'Событие создано, но возникла ошибка синхронизации',
+          title: t('addEvent.eventAdded'),
+          description: t('addEvent.addedSyncError'),
           variant: "default",
         });
       } else {
         toast({
-          title: 'Событие добавлено',
-          description: 'Событие успешно добавлено в календарь',
+          title: t('addEvent.eventAdded'),
+          description: t('addEvent.addedSuccess'),
         });
       }
 
@@ -316,8 +316,8 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
     } catch (error) {
       console.error('Error adding event:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось добавить событие',
+        title: t('addEvent.addError'),
+        description: t('addEvent.addErrorDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -331,7 +331,7 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Plus className="h-5 w-5 text-primary" />
-            <span>Добавить событие</span>
+            <span>{t('addEvent.title')}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -442,12 +442,12 @@ const AddEventDialog = ({ open, onOpenChange, selectedDate, onEventAdded }: AddE
               {loading ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
-                  <span>Добавление...</span>
+                  <span>{t('cycleSetup.saving')}</span>
                 </div>
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-2" />
-                  Добавить
+                  {t('addEvent.add')}
                 </>
               )}
             </Button>

@@ -111,14 +111,14 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
       <div className="w-full max-w-md">
         <Card className="backdrop-blur-sm bg-card/90 border-0 shadow-2xl">
           <CardHeader className="text-center space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="sm"
                 onClick={toggleLanguage}
-                className="text-muted-foreground hover:text-foreground"
+                className="absolute top-4 right-4 font-medium"
               >
-                <Languages className="h-5 w-5" />
+                {i18n.language === 'en' ? 'EN' : 'RU'}
               </Button>
             </div>
             <div className="flex justify-center">

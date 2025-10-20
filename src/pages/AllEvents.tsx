@@ -39,36 +39,36 @@ const AllEvents = () => {
     if (!user) return;
 
     setLoading(true);
-    try {
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select(`
-          *,
-          event_ai_suggestions(suggestion, justification)
-        `)
-        .eq('user_id', user.id)
-        .order('start_time', { ascending: true });
+      try {
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select(`
+            *,
+            event_ai_suggestions(suggestion, justification)
+          `)
+          .eq('user_id', user.id)
+          .order('start_time', { ascending: true });
 
-      if (eventsError) throw eventsError;
+        if (eventsError) throw eventsError;
 
-      const eventsWithSuggestions = (eventsData || []).map(event => ({
-        ...event,
-        suggestion: event.event_ai_suggestions?.[0]?.suggestion,
-        justification: event.event_ai_suggestions?.[0]?.justification
-      }));
+        const eventsWithSuggestions = (eventsData || []).map(event => ({
+          ...event,
+          suggestion: event.event_ai_suggestions?.[0]?.suggestion,
+          justification: event.event_ai_suggestions?.[0]?.justification
+        }));
 
-      setEvents(eventsWithSuggestions);
-    } catch (error) {
-      console.error('Error loading events:', error);
-      toast({
-        title: 'Ошибка загрузки событий',
-        description: 'Попробуйте обновить страницу',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        setEvents(eventsWithSuggestions);
+      } catch (error) {
+        console.error('Error loading events:', error);
+        toast({
+          title: t('allEvents.deleteError'),
+          description: t('allEvents.deleteErrorDesc'),
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     loadAllEvents();
@@ -102,7 +102,11 @@ const AllEvents = () => {
   const handleDeleteEvent = async (event: Event) => {
     if (!user) return;
     
-    if (!confirm(`Удалить событие "${event.title}"?`)) return;
+    const confirmMsg = i18n.language === 'ru' 
+      ? `Удалить событие "${event.title}"?`
+      : `Delete event "${event.title}"?`;
+    
+    if (!confirm(confirmMsg)) return;
     
     try {
       const hasGoogleEventId = !!event.source && event.source === 'google';
@@ -128,16 +132,16 @@ const AllEvents = () => {
       }
 
       toast({
-        title: 'Событие удалено',
-        description: 'Событие успешно удалено из календаря',
+        title: t('allEvents.deleteSuccess'),
+        description: t('allEvents.deleteSuccessDesc'),
       });
 
       loadAllEvents();
     } catch (error) {
       console.error('Error deleting event:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось удалить событие',
+        title: t('allEvents.deleteError'),
+        description: t('allEvents.deleteErrorDesc'),
         variant: 'destructive',
       });
     }
@@ -245,9 +249,9 @@ const AllEvents = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Все события</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('allEvents.title')}</h1>
             <p className="text-muted-foreground mt-2">
-              {filteredEvents.length} {filteredEvents.length === 1 ? 'событие' : filteredEvents.length < 5 ? 'события' : 'событий'}
+              {filteredEvents.length} {filteredEvents.length === 1 ? t('allEvents.event') : t('allEvents.events')}
             </p>
           </div>
           
@@ -261,12 +265,12 @@ const AllEvents = () => {
               {showAllEvents ? (
                 <>
                   <ChevronUp className="h-4 w-4" />
-                  <span className="text-sm">Скрыть прошедшие</span>
+                  <span className="text-sm">{t('allEvents.hidePast')}</span>
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-4 w-4" />
-                  <span className="text-sm">Показать прошедшие ({pastEventsCount})</span>
+                  <span className="text-sm">{t('allEvents.showPast')} ({pastEventsCount})</span>
                 </>
               )}
             </Button>
@@ -278,9 +282,9 @@ const AllEvents = () => {
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg text-muted-foreground">Нет событий</p>
+            <p className="text-lg text-muted-foreground">{t('allEvents.noEvents')}</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Добавьте события в календаре
+              {t('allEvents.addEventsPrompt')}
             </p>
           </CardContent>
         </Card>
@@ -293,7 +297,7 @@ const AllEvents = () => {
                 <div className="mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase">
-                    {format(new Date(dateKey), 'd MMMM, EEEE', { locale: ru })}
+                    {format(new Date(dateKey), "d MMMM, EEEE", { locale: i18n.language === 'ru' ? ru : enUS })}
                   </h2>
                 </div>
                 
@@ -317,7 +321,7 @@ const AllEvents = () => {
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-purple-100 text-purple-800'
                               }`}>
-                                {event.source === 'google' ? 'Google' : event.source === 'outlook' ? 'Outlook' : 'Ручной'}
+                                {event.source === 'google' ? 'Google' : event.source === 'outlook' ? 'Outlook' : t('allEvents.manual')}
                               </div>
                             </div>
                             <div className="flex items-center text-xs text-muted-foreground gap-1 mt-1">
@@ -332,7 +336,7 @@ const AllEvents = () => {
                               size="sm"
                               onClick={() => handleMoveEvent(event)}
                               className="h-8 w-8 p-0"
-                              title="Перенести событие"
+                              title={t('allEvents.moveEvent')}
                             >
                               <ArrowRightLeft className="h-4 w-4" />
                             </Button>
