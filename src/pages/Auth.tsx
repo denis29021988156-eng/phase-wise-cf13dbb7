@@ -4,13 +4,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Calendar, Brain } from 'lucide-react';
+import { Heart, Calendar, Brain, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { signInWithGoogle, signInWithMicrosoft, signInWithApple, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'ru' : 'en';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -26,8 +34,8 @@ const Auth = () => {
       // Navigation will be handled by AuthProvider after successful login
     } catch (error: any) {
       toast({
-        title: 'Ошибка входа',
-        description: error.message || 'Произошла ошибка при входе через Google',
+        title: t('auth.errorGoogle'),
+        description: error.message || t('auth.errorGoogleDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -42,8 +50,8 @@ const Auth = () => {
       // Navigation will be handled by AuthProvider after successful login
     } catch (error: any) {
       toast({
-        title: 'Ошибка входа',
-        description: error.message || 'Произошла ошибка при входе через Microsoft',
+        title: t('auth.errorMicrosoft'),
+        description: error.message || t('auth.errorMicrosoftDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -58,8 +66,8 @@ const Auth = () => {
       // Navigation will be handled by AuthProvider after successful login
     } catch (error: any) {
       toast({
-        title: 'Ошибка входа',
-        description: error.message || 'Произошла ошибка при входе через Apple',
+        title: t('auth.errorApple'),
+        description: error.message || t('auth.errorAppleDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -73,6 +81,16 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <Card className="backdrop-blur-sm bg-card/90 border-0 shadow-2xl">
           <CardHeader className="text-center space-y-6">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleLanguage}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Languages className="h-5 w-5" />
+              </Button>
+            </div>
             <div className="flex justify-center">
               <div className="p-4 rounded-full bg-primary/10">
                 <Heart className="h-12 w-12 text-primary" />
@@ -80,10 +98,10 @@ const Auth = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-card-foreground">
-                CycleON
+                {t('auth.title')}
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
-                Ваш персональный планировщик задач на основе цикла с G<span className="font-semibold text-primary">ai</span>a
+                {t('auth.subtitle')}
               </CardDescription>
             </div>
           </CardHeader>
@@ -92,15 +110,15 @@ const Auth = () => {
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="flex flex-col items-center space-y-2">
                 <Calendar className="h-8 w-8 text-primary" />
-                <span className="text-xs text-muted-foreground">Календарь</span>
+                <span className="text-xs text-muted-foreground">{t('auth.calendar')}</span>
               </div>
               <div className="flex flex-col items-center space-y-2">
                 <Heart className="h-8 w-8 text-primary" />
-                <span className="text-xs text-muted-foreground">Цикл</span>
+                <span className="text-xs text-muted-foreground">{t('auth.cycle')}</span>
               </div>
               <div className="flex flex-col items-center space-y-2">
                 <Brain className="h-8 w-8 text-primary" />
-                <span className="text-xs text-muted-foreground">G<span className="font-semibold text-primary">ai</span>a</span>
+                <span className="text-xs text-muted-foreground">{t('auth.gaia')}</span>
               </div>
             </div>
 
@@ -114,7 +132,7 @@ const Auth = () => {
                 {loading ? (
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground"></div>
-                    <span>Вход...</span>
+                    <span>{t('auth.signingIn')}</span>
                   </div>
                 ) : (
                   <>
@@ -124,7 +142,7 @@ const Auth = () => {
                       <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Войти через Google
+                    {t('auth.signInGoogle')}
                   </>
                 )}
               </Button>
@@ -137,14 +155,14 @@ const Auth = () => {
                 {loading ? (
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-secondary-foreground"></div>
-                    <span>Вход...</span>
+                    <span>{t('auth.signingIn')}</span>
                   </div>
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
                       <path fill="currentColor" d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/>
                     </svg>
-                    Войти через Microsoft
+                    {t('auth.signInMicrosoft')}
                   </>
                 )}
               </Button>
@@ -159,12 +177,12 @@ const Auth = () => {
                   <path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09z"/>
                   <path fill="currentColor" d="M15.53 3.83c.893-1.09 1.479-2.58 1.306-4.089-1.265.056-2.847.875-3.758 1.944-.806.942-1.526 2.486-1.34 3.938 1.421.106 2.88-.717 3.792-1.793z"/>
                 </svg>
-                Войти через Apple
+                {t('auth.signInApple')}
               </Button>
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Вход позволит синхронизировать данные с Google Календарем и получить персональные советы G<span className="font-semibold text-primary">ai</span>a
+              {t('auth.description')}
             </p>
           </CardContent>
         </Card>

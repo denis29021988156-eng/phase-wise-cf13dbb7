@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart, Calendar } from 'lucide-react';
+import { Heart, Calendar, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CycleSetupProps {
   onComplete: () => void;
@@ -16,6 +17,13 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'ru' : 'en';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
   const [formData, setFormData] = useState({
     start_date: '',
     cycle_length: 28,
@@ -29,8 +37,8 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
     e.preventDefault();
     if (!user) {
       toast({
-        title: 'Ошибка авторизации',
-        description: 'Пользователь не найден. Попробуйте войти заново.',
+        title: t('cycleSetup.errorAuth'),
+        description: t('cycleSetup.errorAuthDesc'),
         variant: 'destructive',
       });
       return;
@@ -74,8 +82,8 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
       }
 
       toast({
-        title: 'Настройки сохранены',
-        description: 'Добро пожаловать в CycleON!',
+        title: t('cycleSetup.successTitle'),
+        description: t('cycleSetup.successDesc'),
       });
       
       // Invalidate prediction cache since cycle data changed
@@ -88,8 +96,8 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
     } catch (error: any) {
       console.error('Error saving cycle data:', error);
       toast({
-        title: 'Ошибка сохранения',
-        description: error.message || 'Не удалось сохранить данные о цикле',
+        title: t('cycleSetup.errorSave'),
+        description: error.message || t('cycleSetup.errorSaveDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -103,6 +111,16 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
       <div className="w-full max-w-md">
         <Card className="backdrop-blur-sm bg-card/90 border-0 shadow-2xl">
           <CardHeader className="text-center space-y-4">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleLanguage}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Languages className="h-5 w-5" />
+              </Button>
+            </div>
             <div className="flex justify-center">
               <div className="p-4 rounded-full bg-primary/10">
                 <Heart className="h-12 w-12 text-primary" />
@@ -110,10 +128,10 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-card-foreground">
-                Настройка цикла
+                {t('cycleSetup.title')}
               </CardTitle>
               <p className="text-muted-foreground mt-2">
-                Введите данные для персональных рекомендаций
+                {t('cycleSetup.subtitle')}
               </p>
             </div>
           </CardHeader>
@@ -121,7 +139,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="start_date">Дата начала последней менструации</Label>
+                <Label htmlFor="start_date">{t('cycleSetup.startDate')}</Label>
                 <Input
                   id="start_date"
                   type="date"
@@ -133,7 +151,7 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
               </div>
 
               <div>
-                <Label htmlFor="cycle_length">Продолжительность цикла (дни)</Label>
+                <Label htmlFor="cycle_length">{t('cycleSetup.cycleLength')}</Label>
                 <Input
                   id="cycle_length"
                   type="number"
@@ -145,12 +163,12 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                   required
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Обычно от 21 до 45 дней
+                  {t('cycleSetup.cycleLengthHint')}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="menstrual_length">Длительность менструации (дни)</Label>
+                <Label htmlFor="menstrual_length">{t('cycleSetup.menstrualLength')}</Label>
                 <Input
                   id="menstrual_length"
                   type="number"
@@ -162,17 +180,17 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                   required
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Обычно от 3 до 7 дней
+                  {t('cycleSetup.menstrualLengthHint')}
                 </p>
               </div>
 
               <div className="space-y-4 pt-4 border-t border-border">
                 <p className="text-sm font-medium text-card-foreground">
-                  Дополнительная информация (для персонализации)
+                  {t('cycleSetup.additionalInfo')}
                 </p>
                 
                 <div>
-                  <Label htmlFor="age">Возраст (лет)</Label>
+                  <Label htmlFor="age">{t('cycleSetup.age')}</Label>
                   <Input
                     id="age"
                     type="number"
@@ -181,15 +199,15 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                     className="mt-2"
-                    placeholder="Укажите ваш возраст"
+                    placeholder={t('cycleSetup.agePlaceholder')}
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    От 14 до 85 лет
+                    {t('cycleSetup.ageHint')}
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="height">Рост (см)</Label>
+                  <Label htmlFor="height">{t('cycleSetup.height')}</Label>
                   <Input
                     id="height"
                     type="number"
@@ -198,15 +216,15 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                     value={formData.height}
                     onChange={(e) => setFormData({ ...formData, height: e.target.value })}
                     className="mt-2"
-                    placeholder="Укажите ваш рост"
+                    placeholder={t('cycleSetup.heightPlaceholder')}
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    От 120 до 220 см
+                    {t('cycleSetup.heightHint')}
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="weight">Вес (кг)</Label>
+                  <Label htmlFor="weight">{t('cycleSetup.weight')}</Label>
                   <Input
                     id="weight"
                     type="number"
@@ -216,10 +234,10 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                     value={formData.weight}
                     onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                     className="mt-2"
-                    placeholder="Укажите ваш вес"
+                    placeholder={t('cycleSetup.weightPlaceholder')}
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    От 30 до 150 кг
+                    {t('cycleSetup.weightHint')}
                   </p>
                 </div>
               </div>
@@ -233,12 +251,12 @@ const CycleSetup = ({ onComplete }: CycleSetupProps) => {
                 {loading ? (
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground"></div>
-                    <span>Сохранение...</span>
+                    <span>{t('cycleSetup.saving')}</span>
                   </div>
                 ) : (
                   <>
                     <Calendar className="h-5 w-5 mr-2" />
-                    Войти в приложение
+                    {t('cycleSetup.submit')}
                   </>
                 )}
               </Button>
