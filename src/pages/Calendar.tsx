@@ -231,16 +231,16 @@ const Calendar = () => {
             if (error || !data?.success) {
               console.error('OAuth callback failed:', error || data);
               toast({
-                title: 'Ошибка подключения Outlook',
-                description: data?.error || 'Не удалось сохранить токены',
+                title: t('calendar.connectError'),
+                description: data?.error || t('calendar.tokenSaveError'),
                 variant: 'destructive'
               });
               return;
             }
 
             toast({
-              title: 'Outlook подключен',
-              description: 'Календарь успешно подключен. Синхронизация...'
+              title: t('calendar.syncSuccess'),
+              description: t('calendar.calendarConnected')
             });
 
             // Now sync the calendar
@@ -254,27 +254,27 @@ const Calendar = () => {
                 (syncData?.error && String(syncData.error).includes('outlook_reconnect_required')) ||
                 (syncError && String((syncError as any)?.message || '').includes('non-2xx'));
               toast({
-                title: needsReconnect ? 'Требуется переподключение Outlook' : 'Ошибка синхронизации',
-                description: needsReconnect ? 'Срок действия токена истёк. Подключите Outlook заново.' : (syncData?.error || 'Не удалось загрузить события'),
+                title: needsReconnect ? t('calendar.outlookReconnect') : t('calendar.syncError'),
+                description: needsReconnect ? t('calendar.outlookReconnectDesc') : (syncData?.error || t('calendar.syncErrorOutlook')),
                 variant: 'destructive',
                 action: needsReconnect ? (
-                  <ToastAction altText="Подключить заново" onClick={() => handleSyncOutlook()}>
-                    Подключить заново
+                  <ToastAction altText={t('calendar.reconnect')} onClick={() => handleSyncOutlook()}>
+                    {t('calendar.reconnect')}
                   </ToastAction>
                 ) : undefined,
               });
             } else {
               loadEvents();
               toast({
-                title: 'Календарь синхронизирован',
-                description: syncData.message || `Загружено ${syncData?.inserted || 0} событий из Outlook`
+                title: t('calendar.syncSuccess'),
+                description: syncData.message || t('calendar.syncSuccessOutlook', { count: syncData?.inserted || 0 })
               });
             }
           } catch (err) {
             console.error('Error processing OAuth callback:', err);
             toast({
-              title: 'Ошибка',
-              description: 'Произошла ошибка при подключении календаря',
+              title: t('calendar.syncError'),
+              description: t('calendar.connectError'),
               variant: 'destructive'
             });
           }
