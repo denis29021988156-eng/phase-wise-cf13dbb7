@@ -111,7 +111,7 @@ const Auth = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-card-foreground">
-                {t('auth.title')}
+                G<span className="text-primary">ai</span>a
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
                 {t('auth.subtitle')}
