@@ -32,7 +32,7 @@ const Profile = () => {
   const [hasMicrosoftToken, setHasMicrosoftToken] = useState(false);
   const [hasAppleToken, setHasAppleToken] = useState(false);
 
-  const timezones = [
+  const timezones = i18n.language === 'ru' ? [
     { value: 'Europe/Moscow', label: 'Москва (UTC+3)' },
     { value: 'Europe/Kiev', label: 'Киев (UTC+2)' },
     { value: 'Europe/Berlin', label: 'Берлин (UTC+1)' },
@@ -44,6 +44,19 @@ const Profile = () => {
     { value: 'America/Los_Angeles', label: 'Лос-Анджелес (UTC-8)' },
     { value: 'America/Chicago', label: 'Чикаго (UTC-6)' },
     { value: 'America/New_York', label: 'Нью-Йорк (UTC-5)' },
+    { value: 'UTC', label: 'UTC' },
+  ] : [
+    { value: 'Europe/Moscow', label: 'Moscow (UTC+3)' },
+    { value: 'Europe/Kiev', label: 'Kyiv (UTC+2)' },
+    { value: 'Europe/Berlin', label: 'Berlin (UTC+1)' },
+    { value: 'Europe/London', label: 'London (UTC+0)' },
+    { value: 'Europe/Paris', label: 'Paris (UTC+1)' },
+    { value: 'Asia/Dubai', label: 'Dubai (UTC+4)' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (UTC+9)' },
+    { value: 'Asia/Shanghai', label: 'Shanghai (UTC+8)' },
+    { value: 'America/Los_Angeles', label: 'Los Angeles (UTC-8)' },
+    { value: 'America/Chicago', label: 'Chicago (UTC-6)' },
+    { value: 'America/New_York', label: 'New York (UTC-5)' },
     { value: 'UTC', label: 'UTC' },
   ];
 
