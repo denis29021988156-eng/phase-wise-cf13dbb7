@@ -165,7 +165,9 @@
     "timezonePlaceholder": "Выберите часовой пояс",
     "timezoneUsed": "Используется для синхронизации с Outlook",
     "calendarConnection": "Подключение календаря",
-    "connected": "Подключен"
+    "connected": "Подключен",
+    "outlookCalendar": "Outlook Календарь",
+    "appleCalendar": "Apple Календарь"
   },
   "symptoms": {
     "title": "Симптомы",

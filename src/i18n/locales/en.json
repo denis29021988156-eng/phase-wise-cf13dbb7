@@ -165,7 +165,9 @@
     "timezonePlaceholder": "Select timezone",
     "timezoneUsed": "Used for synchronization with Outlook",
     "calendarConnection": "Calendar Connection",
-    "connected": "Connected"
+    "connected": "Connected",
+    "outlookCalendar": "Outlook Calendar",
+    "appleCalendar": "Apple Calendar"
   },
   "symptoms": {
     "title": "Symptoms",
