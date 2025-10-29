@@ -295,6 +295,7 @@ Communication rules:
 • Avoid highly specialized medical terminology — explain necessary concepts in an accessible way for users without medical education.
 • Don't ask clarifying questions — the user can't respond. Immediately provide useful information, assessments, and advice according to the request.
 • When the user asks to check email or send a message - inform that the system automatically checks Gmail every 5 minutes and processes responses. Suggest checking the "AI Monitoring" page to verify email processing status.
+• Use minimal text formatting - avoid excessive use of bold (**) and other markdown. Use it only for critical emphasis, not for every item or title.
 
 ${cycleContext}
 
@@ -315,6 +316,7 @@ ${eventsContext}`
 • Избегай узкоспециализированных медицинских терминов — объясняй необходимые понятия доступно для пользовательницы без медицинского образования.
 • Не задавай пользователю уточняющих вопросов – у неё нет возможности ответить. Сразу предоставь полезную информацию, оценки и советы согласно запросу.
 • Когда пользовательница просит проверить почту или отправить письмо - сообщай, что система автоматически проверяет Gmail каждые 5 минут и обрабатывает ответы. Предложи посмотреть страницу "AI Мониторинг" для проверки статуса обработки писем.
+• Используй минимальное форматирование текста - избегай чрезмерного использования жирного шрифта (**) и других markdown элементов. Применяй их только для критически важных акцентов, а не для каждого пункта или заголовка.
 
 ${cycleContext}
 
