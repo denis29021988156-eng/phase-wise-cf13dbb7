@@ -620,26 +620,26 @@ const Symptoms = () => {
       </Card>
 
       {/* График энергетического баланса */}
-      <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-[#FDFCFB] to-white animate-fade-in">
+      <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-[hsl(var(--wellness-warm)_/_0.1)] to-white animate-fade-in">
         <CardHeader className="pb-2">
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-energy-high to-accent bg-clip-text text-transparent">
             {t('symptoms.energyBalance')}
           </CardTitle>
-          <p className="text-sm text-[#374151] mt-1">{t('symptoms.energyBalanceDesc')}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('symptoms.energyBalanceDesc')}</p>
         </CardHeader>
         <CardContent className="pt-4">
           {isLoadingPredictions ? (
             <div className="h-80 flex flex-col items-center justify-center gap-4">
-              <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
-              <p className="text-[#374151] font-medium">{t('symptoms.loadingForecast')}</p>
+              <div className="w-16 h-16 border-4 border-wellness-warm/30 border-t-wellness-warm rounded-full animate-spin"></div>
+              <p className="text-muted-foreground font-medium">{t('symptoms.loadingForecast')}</p>
             </div>
           ) : history.length === 0 ? (
             <div className="h-80 flex flex-col items-center justify-center gap-3 text-center px-4">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                <Brain className="w-10 h-10 text-purple-500" />
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-wellness-warm/20 to-energy-high/10 flex items-center justify-center">
+                <Brain className="w-10 h-10 text-energy-high" />
               </div>
-              <p className="text-[#374151] font-medium">{t('symptoms.startAddingData')}</p>
-              <p className="text-sm text-gray-500">{t('symptoms.chartWillAppear')}</p>
+              <p className="text-foreground font-medium">{t('symptoms.startAddingData')}</p>
+              <p className="text-sm text-muted-foreground">{t('symptoms.chartWillAppear')}</p>
             </div>
           ) : (
             <>

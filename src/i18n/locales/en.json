@@ -126,6 +126,8 @@
     "period": "Period",
     "syncing": "Syncing...",
     "next30days": "Next 30 days",
+    "highEnergy": "High Energy",
+    "lowEnergy": "Low Energy",
     "monday": "Mon",
     "tuesday": "Tue",
     "wednesday": "Wed",

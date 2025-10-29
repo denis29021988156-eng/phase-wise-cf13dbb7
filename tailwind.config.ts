@@ -57,6 +57,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        energy: {
+          high: "hsl(var(--energy-high))",
+          low: "hsl(var(--energy-low))",
+        },
+        wellness: {
+          warm: "hsl(var(--wellness-warm))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

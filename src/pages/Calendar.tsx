@@ -829,26 +829,22 @@ const Calendar = () => {
     }
   };
 
-  // Get background color with intensity
-  const getPhaseColorWithIntensity = (date: Date) => {
+  // Get background color based on energy level (wellness-based)
+  const getEnergyColorForDate = (date: Date) => {
     const phase = getCyclePhaseForDate(date);
-    const intensity = getPhaseIntensity(date);
-
     if (!phase) return '';
 
-    const alpha = Math.max(0.1, intensity * 0.5); // 0.1 to 0.5
+    const intensity = getPhaseIntensity(date);
+    const alpha = Math.max(0.15, intensity * 0.4); // 0.15 to 0.4
     
-    switch (phase) {
-      case 'menstrual':
-        return `rgba(239, 68, 68, ${alpha})`; // red
-      case 'follicular':
-        return `rgba(59, 130, 246, ${alpha})`; // blue
-      case 'ovulation':
-        return `rgba(234, 179, 8, ${alpha})`; // yellow
-      case 'luteal':
-        return `rgba(168, 85, 247, ${alpha})`; // purple
-      default:
-        return '';
+    // Follicular and ovulation = high energy (Bio-Green)
+    // Menstrual and luteal = lower energy (warm terracotta)
+    if (phase === 'follicular' || phase === 'ovulation') {
+      // High energy - Bio-Green
+      return `rgba(46, 139, 87, ${alpha})`; // #2E8B57
+    } else {
+      // Lower energy - warm terracotta
+      return `rgba(211, 156, 128, ${alpha})`; // #D39C80
     }
   };
 
@@ -956,7 +952,7 @@ const Calendar = () => {
               const dateStr = date.toISOString().split('T')[0];
               const selected = dateStr === selectedDate;
               const today = isToday(date);
-              const bgColor = getPhaseColorWithIntensity(date);
+              const bgColor = getEnergyColorForDate(date);
               const phase = getCyclePhaseForDate(date);
               
               return (
@@ -1079,7 +1075,7 @@ const Calendar = () => {
                   const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                   const isSelectedDate = dateStr === selectedDate;
                   const isTodayDate = isToday(date);
-                  const bgColor = getPhaseColorWithIntensity(date);
+                  const bgColor = getEnergyColorForDate(date);
                   const phase = getCyclePhaseForDate(date);
                   const eventsForDate = events.filter(event => {
                     const ev = new Date(event.start_time);
@@ -1147,23 +1143,15 @@ const Calendar = () => {
               })()}
             </div>
             
-            {/* Phase Legend */}
+            {/* Energy Level Legend */}
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.4)' }}></div>
-                <span className="text-muted-foreground">{t('profile.menstruation')}</span>
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(46, 139, 87, 0.4)' }}></div>
+                <span className="text-muted-foreground">{t('calendar.highEnergy')}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(59, 130, 246, 0.4)' }}></div>
-                <span className="text-muted-foreground">{t('profile.follicular')}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(234, 179, 8, 0.4)' }}></div>
-                <span className="text-muted-foreground">{t('profile.ovulation')}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(168, 85, 247, 0.4)' }}></div>
-                <span className="text-muted-foreground">{t('profile.luteal')}</span>
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(211, 156, 128, 0.4)' }}></div>
+                <span className="text-muted-foreground">{t('calendar.lowEnergy')}</span>
               </div>
             </div>
           </CardContent>
