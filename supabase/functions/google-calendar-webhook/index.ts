@@ -43,15 +43,26 @@ serve(async (req) => {
       });
     }
 
-    // Find user by channel ID
-    const { data: watchData } = await supabaseClient
+    // Validate channel token
+    const channelToken = req.headers.get('x-goog-channel-token');
+    
+    // Find user by channel ID and validate token
+    const { data: watchData, error: watchError } = await supabaseClient
       .from('google_calendar_watch_channels')
-      .select('user_id')
+      .select('user_id, channel_token')
       .eq('channel_id', channelId)
       .maybeSingle();
 
-    if (!watchData) {
+    if (watchError || !watchData) {
       console.log('Watch channel not found:', channelId);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify channel token if stored
+    if (watchData.channel_token && watchData.channel_token !== channelToken) {
+      console.log('Invalid channel token for:', channelId);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

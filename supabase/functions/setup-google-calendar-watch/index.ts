@@ -100,8 +100,9 @@ serve(async (req) => {
       }
     }
 
-    // Generate unique channel ID
+    // Generate unique channel ID and secure token for verification
     const channelId = `calendar-${user.id}-${Date.now()}`;
+    const channelToken = crypto.randomUUID();
     
     // Webhook URL - Google будет отправлять уведомления сюда
     const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-webhook`;
@@ -121,6 +122,7 @@ serve(async (req) => {
           id: channelId,
           type: 'web_hook',
           address: webhookUrl,
+          token: channelToken, // Google will include this in webhook headers
           expiration: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days
         }),
       }
@@ -136,7 +138,7 @@ serve(async (req) => {
 
     console.log('Watch created successfully:', watchData);
 
-    // Save watch info to database
+    // Save watch info to database with channel token
     const expirationDate = new Date(parseInt(watchData.expiration));
     
     await supabaseClient
@@ -146,6 +148,7 @@ serve(async (req) => {
         channel_id: watchData.id,
         resource_id: watchData.resourceId,
         expiration: expirationDate.toISOString(),
+        channel_token: channelToken,
       }, { onConflict: 'user_id' });
 
     console.log('Watch info saved to database');

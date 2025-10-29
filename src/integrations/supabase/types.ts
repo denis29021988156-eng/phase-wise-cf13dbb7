@@ -306,6 +306,7 @@ export type Database = {
       google_calendar_watch_channels: {
         Row: {
           channel_id: string
+          channel_token: string | null
           created_at: string | null
           expiration: string
           id: string
@@ -315,6 +316,7 @@ export type Database = {
         }
         Insert: {
           channel_id: string
+          channel_token?: string | null
           created_at?: string | null
           expiration: string
           id?: string
@@ -324,6 +326,7 @@ export type Database = {
         }
         Update: {
           channel_id?: string
+          channel_token?: string | null
           created_at?: string | null
           expiration?: string
           id?: string
@@ -436,6 +439,7 @@ export type Database = {
         Row: {
           age: number | null
           created_at: string
+          email: string | null
           height: number | null
           id: string
           language: string | null
@@ -448,6 +452,7 @@ export type Database = {
         Insert: {
           age?: number | null
           created_at?: string
+          email?: string | null
           height?: number | null
           id?: string
           language?: string | null
@@ -460,6 +465,7 @@ export type Database = {
         Update: {
           age?: number | null
           created_at?: string
+          email?: string | null
           height?: number | null
           id?: string
           language?: string | null
@@ -530,18 +536,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_old_ai_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_rate_limits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_rejected_suggestions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_old_ai_logs: { Args: never; Returns: undefined }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      cleanup_old_rejected_suggestions: { Args: never; Returns: undefined }
       generate_ai_suggestion_content: {
         Args: {
           cycle_day: number
@@ -551,10 +548,7 @@ export type Database = {
         }
         Returns: string
       }
-      get_ai_stats: {
-        Args: { days_back?: number }
-        Returns: Json
-      }
+      get_ai_stats: { Args: { days_back?: number }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

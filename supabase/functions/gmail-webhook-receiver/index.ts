@@ -34,12 +34,28 @@ serve(async (req) => {
 
     console.log('Gmail notification for:', emailAddress, 'historyId:', historyId);
 
-    // Найти пользователя по email
-    const { data: userData } = await supabaseClient
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailAddress || !emailRegex.test(emailAddress)) {
+      console.log('Invalid email format:', emailAddress);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Find user by exact email match
+    const { data: userData, error: userError } = await supabaseClient
       .from('user_profiles')
       .select('user_id')
-      .ilike('name', `%${emailAddress}%`)
+      .eq('email', emailAddress)
       .maybeSingle();
+
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!userData) {
       console.log('User not found for email:', emailAddress);
