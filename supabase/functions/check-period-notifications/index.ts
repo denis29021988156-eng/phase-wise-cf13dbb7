@@ -12,6 +12,25 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate cron job using secret
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const authHeader = req.headers.get('authorization');
+    
+    if (!cronSecret) {
+      console.error('CRON_SECRET not configured');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+      console.error('Unauthorized cron job attempt');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

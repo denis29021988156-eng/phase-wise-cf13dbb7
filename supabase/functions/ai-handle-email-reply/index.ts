@@ -6,6 +6,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation schema
+interface EmailReplyInput {
+  threadId: string;
+  emailBody: string;
+  userId: string;
+}
+
+function validateInput(data: any): EmailReplyInput {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid request body');
+  }
+
+  const { threadId, emailBody, userId } = data;
+
+  // Validate threadId
+  if (!threadId || typeof threadId !== 'string' || threadId.length > 100) {
+    throw new Error('Invalid threadId: must be a string with max 100 characters');
+  }
+
+  // Validate emailBody
+  if (!emailBody || typeof emailBody !== 'string' || emailBody.length > 10000) {
+    throw new Error('Invalid emailBody: must be a string with max 10000 characters');
+  }
+
+  // Validate userId (must be valid UUID format)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!userId || typeof userId !== 'string' || !uuidRegex.test(userId)) {
+    throw new Error('Invalid userId: must be a valid UUID');
+  }
+
+  return { threadId, emailBody, userId };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -17,12 +50,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Webhook от Gmail/Outlook с данными о новом письме
-    const { threadId, emailBody, userId } = await req.json();
+    // Validate and parse input
+    const rawBody = await req.json();
+    const { threadId, emailBody, userId } = validateInput(rawBody);
 
     console.log('Processing email reply for thread:', threadId);
 
-    // Найти предложение по thread ID
+    // Найти предложение по thread ID и проверить принадлежность пользователю
     const { data: suggestion, error: suggestionError } = await supabaseClient
       .from('event_move_suggestions')
       .select(`
@@ -31,13 +65,27 @@ serve(async (req) => {
       `)
       .eq('email_thread_id', threadId)
       .eq('status', 'email_sent')
+      .eq('user_id', userId)
       .single();
 
     if (suggestionError || !suggestion) {
-      console.log('No pending suggestion found for thread:', threadId);
+      console.log('No pending suggestion found for thread:', threadId, 'and user:', userId);
       return new Response(
-        JSON.stringify({ success: false, message: 'Предложение не найдено' }),
+        JSON.stringify({ success: false, message: 'Предложение не найдено или доступ запрещен' }),
         {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Дополнительная проверка владельца
+    if (suggestion.user_id !== userId) {
+      console.error('Unauthorized access attempt: suggestion belongs to', suggestion.user_id, 'but request claims', userId);
+      return new Response(
+        JSON.stringify({ success: false, message: 'Доступ запрещен' }),
+        {
+          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
@@ -45,6 +93,9 @@ serve(async (req) => {
 
     // Анализировать ответ с помощью AI
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    // Sanitize emailBody before sending to AI (limit length, remove potential injection attempts)
+    const sanitizedEmailBody = emailBody.substring(0, 5000).replace(/[<>]/g, '');
     
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -61,7 +112,7 @@ serve(async (req) => {
           },
           { 
             role: 'user', 
-            content: `Письмо: "${emailBody}"\n\nОтветь в JSON:\n{"accepted": true/false, "alternative_suggested": true/false, "alternative_time": "если предложено, то в формате YYYY-MM-DD HH:MM"}` 
+            content: `Письмо: "${sanitizedEmailBody}"\n\nОтветь в JSON:\n{"accepted": true/false, "alternative_suggested": true/false, "alternative_time": "если предложено, то в формате YYYY-MM-DD HH:MM"}` 
           }
         ],
         temperature: 0.3,
