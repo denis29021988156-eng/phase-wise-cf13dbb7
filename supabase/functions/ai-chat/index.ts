@@ -228,6 +228,56 @@ ${isRecentlyUpdated ? '⚠️ Данные о сне и стрессе полу�
       console.log('No cycle data found for user, proceeding without cycle context');
     }
 
+    // Get upcoming events from calendar
+    let eventsContext = '';
+    try {
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      
+      const { data: upcomingEvents } = await supabaseClient
+        .from('events')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('start_time', new Date().toISOString())
+        .lte('start_time', sevenDaysFromNow.toISOString())
+        .order('start_time', { ascending: true })
+        .limit(10);
+
+      if (upcomingEvents && upcomingEvents.length > 0) {
+        const eventsList = upcomingEvents.map(event => {
+          const startDate = new Date(event.start_time);
+          const endDate = new Date(event.end_time);
+          const dateStr = startDate.toLocaleDateString('ru-RU', { 
+            weekday: 'long', 
+            day: 'numeric', 
+            month: 'long' 
+          });
+          const timeStr = `${startDate.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })} - ${endDate.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}`;
+          
+          return `  • ${event.title} (${dateStr}, ${timeStr})`;
+        }).join('\n');
+
+        eventsContext = `
+Ближайшие события в календаре:
+${eventsList}
+
+ВАЖНО: Учитывай эти события при даче советов! Принимай во внимание:
+- Совместимость событий с текущей фазой цикла
+- Уровень энергии и самочувствия пользовательницы
+- Возможность переноса событий для лучшего самочувствия
+- Подготовку к важным событиям (отдых перед ними, питание и т.д.)
+`;
+      }
+    } catch (error) {
+      console.log('No calendar events found for user, proceeding without events context');
+    }
+
     // Build system prompt with user profile data
     const isEnglish = language === 'en';
     let systemPrompt = isEnglish 
@@ -248,7 +298,9 @@ Communication rules:
 
 ${cycleContext}
 
-${symptomContext}`
+${symptomContext}
+
+${eventsContext}`
       : `Ты — Gaia, продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, подробные и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы.
 
 Твои возможности:
@@ -266,7 +318,9 @@ ${symptomContext}`
 
 ${cycleContext}
 
-${symptomContext}`;
+${symptomContext}
+
+${eventsContext}`;
 
     // Add user profile data if available
     if (profile.age || profile.height || profile.weight) {
