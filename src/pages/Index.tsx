@@ -141,12 +141,12 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto">
+      <main className="container mx-auto" style={{ paddingBottom: `${navHeight + 96}px` }}>
         {renderActiveTab()}
       </main>
 
       {/* Spacer to reserve space for the fixed bottom navigation */}
-      <div aria-hidden className="w-full" style={{ height: `${navHeight + 24}px` }} />
+      <div aria-hidden className="w-full" style={{ height: `${navHeight + 96}px` }} />
 
       {/* Fixed bottom navigation with safe-area padding */}
       <div
