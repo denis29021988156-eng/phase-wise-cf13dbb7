@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.check-outlook-timezone]
 verify_jwt = true
+
+[functions.calculate-event-coefficient]
+verify_jwt = false

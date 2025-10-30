@@ -176,6 +176,54 @@ export type Database = {
         }
         Relationships: []
       }
+      energy_reference: {
+        Row: {
+          afternoon: number
+          base: number
+          category: string
+          created_at: string
+          evening: number
+          event_name: string
+          follicular: number
+          id: string
+          luteal: number
+          menstrual: number
+          morning: number
+          ovulation: number
+          stress_coefficient: number
+        }
+        Insert: {
+          afternoon: number
+          base: number
+          category: string
+          created_at?: string
+          evening: number
+          event_name: string
+          follicular: number
+          id?: string
+          luteal: number
+          menstrual: number
+          morning: number
+          ovulation: number
+          stress_coefficient: number
+        }
+        Update: {
+          afternoon?: number
+          base?: number
+          category?: string
+          created_at?: string
+          evening?: number
+          event_name?: string
+          follicular?: number
+          id?: string
+          luteal?: number
+          menstrual?: number
+          morning?: number
+          ovulation?: number
+          stress_coefficient?: number
+        }
+        Relationships: []
+      }
       event_ai_suggestions: {
         Row: {
           created_at: string | null
