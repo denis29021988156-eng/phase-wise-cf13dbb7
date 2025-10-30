@@ -17,7 +17,6 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { EnergyGauge } from '@/components/energy/EnergyGauge';
 import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
-import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculationBreakdown';
 import { WeekForecast } from '@/components/energy/WeekForecast';
 import { SymptomsInput } from '@/components/energy/SymptomsInput';
 import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
@@ -928,21 +927,14 @@ const Energy = () => {
                 </Card>
 
                 {/* Additional Info Cards */}
-                <div className="space-y-4">
-                  <EnergyBalanceCard
-                    baseEnergy={energyBreakdown.calculation.base}
-                    eventsImpact={energyBreakdown.calculation.events}
-                    sleepModifier={energyBreakdown.calculation.sleep}
-                    stressModifier={energyBreakdown.calculation.stress}
-                    finalEnergy={energyBreakdown.finalEnergy}
-                    events={energyBreakdown.events || []}
-                  />
-                  
-                  <EnergyCalculationBreakdown
-                    calculation={energyBreakdown.calculation}
-                    confidence={energyBreakdown.confidence || 50}
-                  />
-                </div>
+                <EnergyBalanceCard
+                  baseEnergy={energyBreakdown.calculation.base}
+                  eventsImpact={energyBreakdown.calculation.events}
+                  sleepModifier={energyBreakdown.calculation.sleep}
+                  stressModifier={energyBreakdown.calculation.stress}
+                  finalEnergy={energyBreakdown.finalEnergy}
+                  events={energyBreakdown.events || []}
+                />
 
                 {energyBreakdown.events && energyBreakdown.events.length > 0 && (
                   <Card className="border-border/50">
@@ -1001,11 +993,6 @@ const Energy = () => {
                 cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
               />
             )}
-            
-            <EnergyCalculationBreakdown
-              calculation={energyBreakdown.calculation}
-              confidence={energyBreakdown.confidence || 50}
-            />
             
             {weekForecast && weekForecast.length > 0 && (
               <WeekForecast forecast={weekForecast} />
