@@ -255,7 +255,7 @@ serve(async (req) => {
       timeOfDayContext = isEnglish ? ' (evening)' : ' (вечер)';
     }
 
-    const userName = profile?.name ? profile.name : (isEnglish ? 'dear' : 'дорогая');
+    const userName = profile?.name ? profile.name : '';
 
     const prompt = isEnglish ? `
 Evaluate the planned event considering the user's current menstrual cycle phase and well-being, then provide your recommendations.
@@ -270,17 +270,22 @@ ${profileContext}
 
 IMPORTANT: Your response should be BRIEF - maximum 3-4 sentences (20-25% shorter than usual format).
 
-Task: Write a brief but informative assessment of this event for ${userName}, considering their cycle, condition AND EVENT TIME. The response should:
+Task: Write a brief but informative assessment of this event for the user, considering their cycle, condition AND EVENT TIME. The response should:
 • Briefly describe how the current cycle phase affects energy and well-being
 • MUST consider the event timing (if it's early morning or late evening - give specific recommendations!)
 • Provide 1-2 practical tips for event preparation
 • If well-being data is available, consider it in the response
 
-Start the response by addressing ${userName} with one of these phrases:
-• "${userName}, look…"
-• "Listen, ${userName}…"
-• "You know, ${userName}…"
-• "${userName}, let's discuss…"
+CRITICAL: VARY YOUR OPENING! Use different phrases each time. Examples:
+• "Let's look at this event..."
+• "Interesting event! Here's what matters..."
+• "About this event..."
+• "A few important points..."
+• "What you need to know..."
+${userName ? `• "${userName}, here's my take..."
+• "${userName}, this event..."` : ''}
+
+Don't repeat the same opening phrase! Be creative and diverse.
 
 Reference on cycle phases:
 • Days 1–5 – Menstruation: reduced energy, fatigue, need for rest
@@ -302,17 +307,24 @@ ${profileContext}
 
 ВАЖНО: Твой ответ должен быть КРАТКИМ - максимум 3-4 предложения (на 20-25% короче обычного формата). 
 
-Задание: Напиши для ${userName} краткую, но ёмкую оценку этого мероприятия, учитывая её цикл, состояние И ВРЕМЯ СОБЫТИЯ. В ответе необходимо:
+Задание: Напиши краткую, но ёмкую оценку этого мероприятия, учитывая цикл, состояние И ВРЕМЯ СОБЫТИЯ. В ответе необходимо:
 • Коротко описать влияние текущей фазы цикла на энергию и самочувствие
 • ОБЯЗАТЕЛЬНО учесть время проведения события (если это раннее утро или поздний вечер - дай конкретные рекомендации с учётом этого!)
 • Дать 1-2 практических совета по подготовке к событию
 • Если есть информация о самочувствии, учесть её при формулировке
 
-Начни ответ, обратившись к ${userName} одной из фраз:
-• "${userName}, смотри…"
-• "Слушай, ${userName}…"
-• "Знаешь, ${userName}…"
-• "${userName}, давай разберём…"
+КРИТИЧЕСКИ ВАЖНО: РАЗНООБРАЗЬ НАЧАЛО! Используй разные фразы каждый раз. Примеры:
+• "Давай посмотрим на это событие..."
+• "Интересное мероприятие! Вот что важно..."
+• "По поводу этого события..."
+• "Обрати внимание на несколько моментов..."
+• "Что нужно знать об этом..."
+• "Вот моя оценка..."
+• "Разберём детальнее..."
+${userName ? `• "${userName}, вот что важно..."
+• "${userName}, это событие..."` : ''}
+
+НЕ ПОВТОРЯЙ одну и ту же начальную фразу! Будь креативной и разнообразной.
 
 Справка по фазам цикла:
 • Дни 1–5 – Менструация: сниженная энергия, усталость, потребность в отдыхе
@@ -335,12 +347,12 @@ ${profileContext}
           { 
             role: 'system', 
             content: isEnglish 
-              ? 'You are an advanced and caring virtual assistant for women\'s health with deep understanding of the menstrual cycle and women\'s overall well-being. Your main goal is to provide competent, BRIEF and personalized recommendations based on the current cycle phase and the user\'s condition. Respond in English, using a simple and clear style. The tone should be friendly, caring and supportive. IMPORTANT: your responses should be short - maximum 3-4 sentences, but informative and useful.'
-              : 'Ты — продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, КРАТКИЕ и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы. Отвечай на русском языке, используя простой и понятный стиль изложения. Тон ответа должен быть дружелюбным, участливым и поддерживающим. ВАЖНО: твои ответы должны быть короткими - максимум 3-4 предложения, но при этом информативными и полезными.'
+              ? 'You are an advanced and caring virtual assistant for women\'s health with deep understanding of the menstrual cycle and women\'s overall well-being. Your main goal is to provide competent, BRIEF and personalized recommendations based on the current cycle phase and the user\'s condition. Respond in English, using a simple and clear style. The tone should be friendly, caring and supportive. IMPORTANT: your responses should be short - maximum 3-4 sentences, but informative and useful. CRITICAL: Vary your opening phrases! Never repeat the same beginning twice in a row.'
+              : 'Ты — продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, КРАТКИЕ и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы. Отвечай на русском языке, используя простой и понятный стиль изложения. Тон ответа должен быть дружелюбным, участливым и поддерживающим. ВАЖНО: твои ответы должны быть короткими - максимум 3-4 предложения, но при этом информативными и полезными. КРИТИЧЕСКИ ВАЖНО: Варьируй начальные фразы! Никогда не повторяй одно и то же начало два раза подряд.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.9,
         max_tokens: 500
       }),
     });
