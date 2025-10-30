@@ -41,7 +41,7 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'all-events', label: t('nav.allEvents'), icon: List },
     { id: 'profile', label: t('nav.profile'), icon: User },
     { id: 'chat', label: t('nav.chat'), icon: MessageCircle },
-    { id: 'symptoms', label: t('nav.symptoms'), icon: Heart },
+    { id: 'energy', label: t('nav.symptoms'), icon: Heart },
   ];
 
   return (

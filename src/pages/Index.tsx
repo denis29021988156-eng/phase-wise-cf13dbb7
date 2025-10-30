@@ -11,7 +11,7 @@ import Calendar from './Calendar';
 import AllEvents from './AllEvents';
 import Profile from './Profile';
 import Chat from './Chat';
-import Symptoms from './Symptoms';
+import Energy from './Energy';
 import CycleSetup from './CycleSetup';
 
 const Index = () => {
@@ -124,8 +124,8 @@ const Index = () => {
         return <Profile />;
       case 'chat':
         return <Chat />;
-      case 'symptoms':
-        return <Symptoms />;
+      case 'energy':
+        return <Energy />;
       default:
         return <Calendar />;
     }

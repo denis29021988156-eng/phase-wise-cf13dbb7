@@ -4,7 +4,7 @@
     "allEvents": "Все события",
     "profile": "Профиль",
     "chat": "Gaia",
-    "symptoms": "Симптомы",
+    "symptoms": "Энергия",
     "logout": "Выход"
   },
   "auth": {
@@ -189,7 +189,7 @@
     "appleCalendar": "Apple Календарь"
   },
   "symptoms": {
-    "title": "Симптомы",
+    "title": "Моя Энергия",
     "saveError": "Не удалось сохранить данные",
     "saving": "Сохранение...",
     "save": "Сохранить",
