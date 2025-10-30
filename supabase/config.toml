@@ -69,6 +69,9 @@ verify_jwt = false
 [functions.update-outlook-event]
 verify_jwt = true
 
+[functions.get-today-energy-breakdown]
+verify_jwt = true
+
 [functions.setup-gmail-webhook]
 verify_jwt = true
 

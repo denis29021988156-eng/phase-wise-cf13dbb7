@@ -13,6 +13,10 @@ import { useHealthKit } from '@/hooks/useHealthKit';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n/config';
+import { EnergyGauge } from '@/components/energy/EnergyGauge';
+import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
+import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculationBreakdown';
+import { WeekForecast } from '@/components/energy/WeekForecast';
 
 interface SymptomLog {
   energy: number;
@@ -28,10 +32,15 @@ interface HistoryDay {
   wellness_index: number;
 }
 
-const Symptoms = () => {
+const Energy = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  
+  // Energy breakdown state
+  const [energyBreakdown, setEnergyBreakdown] = useState<any>(null);
+  const [weekForecast, setWeekForecast] = useState<any[]>([]);
+  const [loadingBreakdown, setLoadingBreakdown] = useState(false);
   const healthKit = useHealthKit();
   
   const [currentLog, setCurrentLog] = useState<SymptomLog>({
@@ -70,11 +79,42 @@ const Symptoms = () => {
 
   // Загрузка истории за последние 7 дней
   useEffect(() => {
-    loadHistory();
-    loadTodayLog();
-    loadPredictions();
-    healthKit.checkAvailability();
+    if (user) {
+      loadHistory();
+      loadTodayLog();
+      loadPredictions();
+      healthKit.checkAvailability();
+      loadEnergyBreakdown();
+    }
   }, [user]);
+
+  const loadEnergyBreakdown = async () => {
+    if (!user) return;
+    
+    setLoadingBreakdown(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-today-energy-breakdown');
+      
+      if (error) throw error;
+      
+      setEnergyBreakdown(data);
+      
+      // Also load week forecast
+      const { data: predictionData, error: predError } = await supabase.functions.invoke('predict-wellness');
+      if (!predError && predictionData) {
+        setWeekForecast(predictionData.predictions || []);
+      }
+    } catch (error: any) {
+      console.error('Error loading energy breakdown:', error);
+      toast({
+        title: t('symptoms.syncError'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingBreakdown(false);
+    }
+  };
 
   const loadPredictions = async () => {
     if (!user) return;
@@ -466,8 +506,40 @@ const Symptoms = () => {
   const wellnessIndex = calculateWellnessIndex(currentLog);
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl space-y-6">
-      {/* Индекс самочувствия */}
+    <div className="min-h-screen p-4 pb-24">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold">{t('symptoms.title')}</h1>
+        
+        {/* Energy Breakdown Section */}
+        {loadingBreakdown ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
+          </div>
+        ) : energyBreakdown ? (
+          <>
+            <EnergyGauge 
+              score={energyBreakdown.finalEnergy}
+              phase={energyBreakdown.cyclePhase}
+              date={energyBreakdown.today}
+            />
+            
+            <EventsImpactSection
+              events={energyBreakdown.events || []}
+              cyclePhase={energyBreakdown.cyclePhase}
+            />
+            
+            <EnergyCalculationBreakdown
+              calculation={energyBreakdown.calculation}
+              confidence={energyBreakdown.confidence}
+            />
+            
+            {weekForecast.length > 0 && (
+              <WeekForecast forecast={weekForecast} />
+            )}
+          </>
+        ) : null}
+
+      {/* Original Symptoms Logging Section */}
       <Card className="border-border/50 shadow-[var(--shadow-soft)]">
         <CardHeader className="text-center">
           <CardTitle className="text-lg">{t('symptoms.wellnessIndex')}</CardTitle>
@@ -756,7 +828,8 @@ const Symptoms = () => {
         </Card>
       )}
     </div>
+    </div>
   );
 };
 
-export default Symptoms;
+export default Energy;
