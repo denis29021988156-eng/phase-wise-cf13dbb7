@@ -530,7 +530,7 @@ const Energy = () => {
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
           {/* Desktop Layout with Fixed Sidebars */}
-          <div className="hidden lg:grid lg:grid-rows-[50px_1fr_200px] lg:h-screen lg:overflow-hidden">
+          <div className="hidden lg:grid lg:grid-rows-[50px_1fr_auto] lg:h-screen lg:overflow-hidden">
             {/* Header - Fixed */}
             <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
               <div className="h-full flex items-center px-4">
@@ -587,13 +587,13 @@ const Energy = () => {
                     <p className="text-xs text-muted-foreground mt-0.5">15 дней истории и 30-дневный прогноз</p>
                   </CardHeader>
                   <CardContent className="pt-2 px-4 pb-4">
-                    {isLoadingPredictions ? (
-                      <div className="h-[300px] flex flex-col items-center justify-center gap-3">
+                     {isLoadingPredictions ? (
+                      <div className="h-[250px] flex flex-col items-center justify-center gap-3">
                         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                         <p className="text-sm text-foreground font-medium">Загрузка прогноза...</p>
                       </div>
                     ) : history.length === 0 ? (
-                      <div className="h-[300px] flex flex-col items-center justify-center gap-2 text-center px-4">
+                      <div className="h-[250px] flex flex-col items-center justify-center gap-2 text-center px-4">
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
                           <Brain className="w-8 h-8 text-primary" />
                         </div>
@@ -602,7 +602,7 @@ const Energy = () => {
                       </div>
                     ) : (
                       <>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={250}>
                           <AreaChart data={getChartData()} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
@@ -712,9 +712,9 @@ const Energy = () => {
               </aside>
             </div>
 
-            {/* BOTTOM: Week Forecast - Fixed Height, Compact */}
+            {/* BOTTOM: Week Forecast - Compact, no scroll */}
             <footer className="border-t border-border bg-card/50 overflow-hidden flex-shrink-0">
-              <div className="p-3 h-full overflow-y-auto">
+              <div className="p-3">
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
                 )}
