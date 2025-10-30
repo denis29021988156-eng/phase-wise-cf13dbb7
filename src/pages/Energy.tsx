@@ -1036,7 +1036,7 @@ const Energy = () => {
 
       {/* Report Dialog */}
       <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-gradient-to-br from-background via-background to-primary/5">
+        <DialogContent className="sm:max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/40 dark:border-white/20 shadow-[0_0_50px_rgba(147,197,253,0.5)] dark:shadow-[0_0_50px_rgba(147,197,253,0.3)] rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center">
               Ваш энергетический отчет готов!
