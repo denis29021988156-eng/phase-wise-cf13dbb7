@@ -122,11 +122,15 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
                 {getPhaseEmoji(day.cycle_phase)}
               </span>
               
-              {hasEvents && (
-                <div className="text-[7px] text-center text-muted-foreground mt-0.5 px-1 py-0.5 bg-background/50 rounded">
-                  {day.events.length} соб.
-                </div>
-              )}
+              {/* Event dots - like in calendar */}
+              <div className="flex gap-0.5 mt-0.5 h-2">
+                {day.events && day.events.slice(0, 3).map((_, dotIdx) => (
+                  <div 
+                    key={dotIdx}
+                    className="w-1.5 h-1.5 rounded-full bg-primary"
+                  />
+                ))}
+              </div>
             </div>
           );
         })}
