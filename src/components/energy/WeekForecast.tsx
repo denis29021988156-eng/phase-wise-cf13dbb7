@@ -50,7 +50,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
       <h3 className="text-base font-semibold mb-2">Прогноз на неделю</h3>
       
       {/* 7-column grid for week forecast - Compact */}
-      <div className="grid grid-cols-7 gap-2 mb-3">
+      <div className="grid grid-cols-7 gap-1.5 mb-3">
         {weekForecast.slice(0, 7).map((day, idx) => {
           if (!day.date) return null;
           
@@ -64,26 +64,24 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
           return (
             <div 
               key={idx} 
-              className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 transition-all hover:scale-105 shadow-sm ${getPhaseBackground(day.cycle_phase)}`}
+              className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl border-2 transition-all hover:scale-105 ${getPhaseBackground(day.cycle_phase)}`}
             >
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">
+              <span className="text-[9px] font-bold uppercase text-muted-foreground">
                 {dayOfWeek}
               </span>
-              <span className="text-[9px] text-muted-foreground">
+              <span className="text-[8px] text-muted-foreground">
                 {dateShort}
               </span>
-              <div className="flex flex-col items-center">
-                <span className={`text-xl font-bold ${getPhaseColor(day.cycle_phase)}`}>
-                  {day.wellness_index?.toFixed(1) || '?'}
-                </span>
-              </div>
-              <span className="text-lg">
+              <span className={`text-lg font-bold mt-0.5 ${getPhaseColor(day.cycle_phase)}`}>
+                {day.wellness_index?.toFixed(1) || '?'}
+              </span>
+              <span className="text-base mt-0.5">
                 {getPhaseEmoji(day.cycle_phase)}
               </span>
               
               {hasEvents && (
-                <div className="text-[8px] text-center text-muted-foreground mt-0.5">
-                  {day.events.length} событий
+                <div className="text-[7px] text-center text-muted-foreground mt-0.5 px-1 py-0.5 bg-background/50 rounded">
+                  {day.events.length} соб.
                 </div>
               )}
             </div>
