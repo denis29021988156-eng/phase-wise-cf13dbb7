@@ -635,10 +635,160 @@ const Energy = () => {
   };
 
   const handleDownloadPDF = () => {
-    toast({
-      title: 'PDF генерируется...',
-      description: 'Готово!',
-    });
+    try {
+      // Prepare report data
+      const reportDate = new Date().toLocaleDateString('ru-RU', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      // Get last 7 days of history
+      const last7Days = history.slice(-7);
+      const avgWellness = last7Days.length > 0 
+        ? Math.round(last7Days.reduce((sum, day) => sum + day.wellness_index, 0) / last7Days.length)
+        : 0;
+      
+      const maxWellness = last7Days.length > 0 
+        ? Math.max(...last7Days.map(d => d.wellness_index))
+        : 0;
+      
+      const maxDay = last7Days.find(d => d.wellness_index === maxWellness);
+      
+      // Create HTML content for PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Энергетический отчет - ${reportDate}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 40px; 
+              max-width: 800px; 
+              margin: 0 auto;
+              color: #333;
+            }
+            h1 { 
+              color: #2E8B57; 
+              border-bottom: 3px solid #2E8B57; 
+              padding-bottom: 10px;
+              margin-bottom: 30px;
+            }
+            h2 { 
+              color: #555; 
+              margin-top: 30px;
+              font-size: 20px;
+            }
+            .stat { 
+              background: #f5f5f5; 
+              padding: 15px; 
+              margin: 10px 0; 
+              border-radius: 8px;
+              border-left: 4px solid #2E8B57;
+            }
+            .stat strong { 
+              color: #2E8B57; 
+              font-size: 24px;
+            }
+            .event-list {
+              margin: 20px 0;
+            }
+            .event-item {
+              padding: 10px;
+              margin: 5px 0;
+              background: #fff;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+            }
+            .footer {
+              margin-top: 50px;
+              padding-top: 20px;
+              border-top: 2px solid #eee;
+              text-align: center;
+              color: #999;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>📊 Ваш энергетический отчет</h1>
+          <p><strong>Дата формирования:</strong> ${reportDate}</p>
+          
+          <h2>Статистика за последние 7 дней</h2>
+          
+          <div class="stat">
+            <p><strong>${avgWellness}/100</strong></p>
+            <p>Средний уровень энергии</p>
+          </div>
+          
+          <div class="stat">
+            <p><strong>${maxWellness}/100</strong></p>
+            <p>Пик энергии${maxDay ? ` (${new Date(maxDay.date).toLocaleDateString('ru-RU', { weekday: 'long' })})` : ''}</p>
+          </div>
+          
+          ${energyBreakdown && energyBreakdown.events && energyBreakdown.events.length > 0 ? `
+          <h2>События сегодня</h2>
+          <div class="event-list">
+            ${energyBreakdown.events.map(event => `
+              <div class="event-item">
+                <strong>${event.title}</strong><br>
+                <span style="color: ${event.energyImpact < 0 ? '#dc2626' : '#16a34a'}">
+                  Влияние на энергию: ${event.energyImpact > 0 ? '+' : ''}${event.energyImpact} баллов
+                </span>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+          
+          ${weekForecast && weekForecast.length > 0 ? `
+          <h2>Прогноз на неделю</h2>
+          <div class="event-list">
+            ${weekForecast.slice(0, 7).map(day => `
+              <div class="event-item">
+                <strong>${new Date(day.date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</strong><br>
+                Прогноз энергии: <strong style="color: #2E8B57">${day.wellness_index}/100</strong><br>
+                Фаза цикла: ${day.cycle_phase === 'menstrual' ? 'Менструация' : day.cycle_phase === 'follicular' ? 'Фолликулярная' : day.cycle_phase === 'ovulation' ? 'Овуляция' : 'Лютеиновая'}
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+          
+          <div class="footer">
+            <p>Сгенерировано приложением CycleON</p>
+            <p>Для получения персональных рекомендаций обратитесь к вашему консультанту</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      // Create a new window and print
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then print
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+        
+        toast({
+          title: 'PDF генерируется...',
+          description: 'Откроется окно печати для сохранения в PDF',
+        });
+      } else {
+        throw new Error('Не удалось открыть окно печати');
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать PDF. Проверьте разрешения браузера.',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
