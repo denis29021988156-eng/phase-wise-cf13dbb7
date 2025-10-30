@@ -483,6 +483,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_event_coefficients: {
+        Row: {
+          base_coefficient: number
+          category: string | null
+          created_at: string
+          cycle_follicular: number | null
+          cycle_luteal: number | null
+          cycle_menstrual: number | null
+          cycle_ovulation: number | null
+          event_title: string
+          id: string
+          is_ai_generated: boolean | null
+          stress_coefficient: number | null
+          time_afternoon: number | null
+          time_evening: number | null
+          time_morning: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_coefficient: number
+          category?: string | null
+          created_at?: string
+          cycle_follicular?: number | null
+          cycle_luteal?: number | null
+          cycle_menstrual?: number | null
+          cycle_ovulation?: number | null
+          event_title: string
+          id?: string
+          is_ai_generated?: boolean | null
+          stress_coefficient?: number | null
+          time_afternoon?: number | null
+          time_evening?: number | null
+          time_morning?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_coefficient?: number
+          category?: string | null
+          created_at?: string
+          cycle_follicular?: number | null
+          cycle_luteal?: number | null
+          cycle_menstrual?: number | null
+          cycle_ovulation?: number | null
+          event_title?: string
+          id?: string
+          is_ai_generated?: boolean | null
+          stress_coefficient?: number | null
+          time_afternoon?: number | null
+          time_evening?: number | null
+          time_morning?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           age: number | null

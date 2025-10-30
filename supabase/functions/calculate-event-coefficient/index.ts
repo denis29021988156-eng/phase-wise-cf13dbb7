@@ -194,16 +194,68 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user from auth header
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+    
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabaseClient.auth.getUser(token);
+      userId = user?.id || null;
+    }
 
     const { eventType, cyclePhase, timeOfDay, stressLevel = 3 }: EventCoefficientRequest = await req.json();
 
-    console.log(`Calculating coefficient for: ${eventType}, phase: ${cyclePhase}, time: ${timeOfDay}, stress: ${stressLevel}`);
+    console.log(`Calculating coefficient for: ${eventType}, phase: ${cyclePhase}, time: ${timeOfDay}, stress: ${stressLevel}, user: ${userId}`);
 
-    // 1. Get ALL reference events
+    let result: EventCoefficientResult;
+
+    // 1. Check user's personal coefficients first (if authenticated)
+    if (userId) {
+      const { data: userEvent, error: userError } = await supabaseClient
+        .from('user_event_coefficients')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('event_title', eventType)
+        .maybeSingle();
+
+      if (userError) {
+        console.error('Error fetching user coefficients:', userError);
+      }
+
+      if (userEvent) {
+        console.log(`Using saved user coefficient for "${eventType}"`);
+        
+        const baseCoefficient = Number(userEvent.base_coefficient);
+        const cycleModifier = Number(userEvent[`cycle_${cyclePhase}`] || 0);
+        const timeModifier = Number(userEvent[`time_${timeOfDay}`] || 0);
+        const stressCoefficient = Number(userEvent.stress_coefficient);
+
+        const stressModifier = 1 + ((stressLevel - 3) * (stressCoefficient / 5));
+        const finalImpact = (baseCoefficient + (baseCoefficient * cycleModifier) + (baseCoefficient * timeModifier)) * stressModifier;
+
+        result = {
+          baseCoefficient,
+          cycleModifier,
+          timeModifier,
+          stressCoefficient,
+          finalImpact: Number(finalImpact.toFixed(3)),
+          isAiEstimate: false
+        };
+
+        console.log('User coefficient result:', result);
+
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // 2. Get ALL reference events from global table
     const { data: allEvents, error: fetchError } = await supabaseClient
       .from('energy_reference')
       .select('*');
@@ -213,9 +265,7 @@ serve(async (req) => {
       throw new Error('Failed to query energy reference data');
     }
 
-    let result: EventCoefficientResult;
-
-    // 2. Use AI to find the best matching event
+    // 3. Use AI to find the best matching event
     const matchResult = await findBestMatchingEvent(eventType, allEvents || []);
 
     if (matchResult && matchResult.event) {
@@ -255,6 +305,29 @@ serve(async (req) => {
         finalImpact: aiEstimate,
         isAiEstimate: true
       };
+
+      // Save AI estimate to user's personal coefficients (if authenticated)
+      if (userId) {
+        try {
+          const { error: insertError } = await supabaseClient
+            .from('user_event_coefficients')
+            .insert({
+              user_id: userId,
+              event_title: eventType,
+              base_coefficient: aiEstimate,
+              is_ai_generated: true,
+              category: 'Другое'
+            });
+
+          if (insertError) {
+            console.error('Error saving user coefficient:', insertError);
+          } else {
+            console.log(`✅ Saved AI coefficient for "${eventType}" to user's library`);
+          }
+        } catch (saveError) {
+          console.error('Failed to save coefficient:', saveError);
+        }
+      }
     }
 
     console.log('Calculation result:', result);
