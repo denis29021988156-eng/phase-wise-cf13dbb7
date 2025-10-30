@@ -662,10 +662,10 @@ const Energy = () => {
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'predicted')}
                               stroke="hsl(var(--secondary))"
-                              strokeWidth={2.5}
+                              strokeWidth={3.5}
                               strokeDasharray="8 4"
                               fill="url(#gradientPredicted)"
-                              dot={{ r: 4, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))', opacity: 0.8 }}
+                              dot={{ r: 4, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
                               activeDot={{ r: 6, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
                             />
                           </AreaChart>
