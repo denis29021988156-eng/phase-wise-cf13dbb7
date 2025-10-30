@@ -6,11 +6,13 @@ interface MoonPhaseProps {
 }
 
 export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
-  // Определяем цвет в зависимости от значения
+  // Градация цвета: красный -> желтый -> зеленый
   const getColor = (val: number) => {
     if (val <= 30) return '#EF4444'; // red
-    if (val <= 60) return '#F59E0B'; // yellow
-    return '#8B5CF6'; // purple/violet
+    if (val <= 50) return '#F59E0B'; // orange
+    if (val <= 70) return '#EAB308'; // yellow
+    if (val <= 85) return '#84CC16'; // lime
+    return '#22C55E'; // green
   };
 
   const color = getColor(value);
@@ -24,15 +26,15 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
         viewBox="0 0 200 200"
         className="w-full h-full transform -rotate-90"
       >
-        {/* Фоновое кольцо */}
+        {/* Фоновое кольцо с четкой границей */}
         <circle
           cx="100"
           cy="100"
           r="85"
           fill="none"
-          stroke="hsl(var(--muted))"
+          stroke="#E5E7EB"
           strokeWidth="16"
-          opacity="0.2"
+          opacity="1"
         />
         
         {/* Заполненное кольцо (прогресс) */}
@@ -47,7 +49,7 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           style={{
-            transition: 'stroke-dashoffset 0.5s ease',
+            transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease',
           }}
         />
       </svg>
