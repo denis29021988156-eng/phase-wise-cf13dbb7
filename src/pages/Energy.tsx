@@ -21,6 +21,8 @@ import { WeekForecast } from '@/components/energy/WeekForecast';
 import { SymptomsInput } from '@/components/energy/SymptomsInput';
 import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
 import { EnergySidebar } from '@/components/energy/EnergySidebar';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
   Dialog,
   DialogContent,
@@ -634,161 +636,220 @@ const Energy = () => {
     });
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
-      // Prepare report data
-      const reportDate = new Date().toLocaleDateString('ru-RU', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
+      toast({
+        title: 'Генерация PDF...',
+        description: 'Подождите, создаем ваш отчет',
       });
-      
-      // Get last 7 days of history
-      const last7Days = history.slice(-7);
-      const avgWellness = last7Days.length > 0 
-        ? Math.round(last7Days.reduce((sum, day) => sum + day.wellness_index, 0) / last7Days.length)
-        : 0;
-      
-      const maxWellness = last7Days.length > 0 
-        ? Math.max(...last7Days.map(d => d.wellness_index))
-        : 0;
-      
-      const maxDay = last7Days.find(d => d.wellness_index === maxWellness);
-      
-      // Create HTML content for PDF
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Энергетический отчет - ${reportDate}</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              padding: 40px; 
-              max-width: 800px; 
-              margin: 0 auto;
-              color: #333;
-            }
-            h1 { 
-              color: #2E8B57; 
-              border-bottom: 3px solid #2E8B57; 
-              padding-bottom: 10px;
-              margin-bottom: 30px;
-            }
-            h2 { 
-              color: #555; 
-              margin-top: 30px;
-              font-size: 20px;
-            }
-            .stat { 
-              background: #f5f5f5; 
-              padding: 15px; 
-              margin: 10px 0; 
-              border-radius: 8px;
-              border-left: 4px solid #2E8B57;
-            }
-            .stat strong { 
-              color: #2E8B57; 
-              font-size: 24px;
-            }
-            .event-list {
-              margin: 20px 0;
-            }
-            .event-item {
-              padding: 10px;
-              margin: 5px 0;
-              background: #fff;
-              border: 1px solid #ddd;
-              border-radius: 5px;
-            }
-            .footer {
-              margin-top: 50px;
-              padding-top: 20px;
-              border-top: 2px solid #eee;
-              text-align: center;
-              color: #999;
-              font-size: 12px;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>📊 Ваш энергетический отчет</h1>
-          <p><strong>Дата формирования:</strong> ${reportDate}</p>
-          
-          <h2>Статистика за последние 7 дней</h2>
-          
-          <div class="stat">
-            <p><strong>${avgWellness}/100</strong></p>
-            <p>Средний уровень энергии</p>
-          </div>
-          
-          <div class="stat">
-            <p><strong>${maxWellness}/100</strong></p>
-            <p>Пик энергии${maxDay ? ` (${new Date(maxDay.date).toLocaleDateString('ru-RU', { weekday: 'long' })})` : ''}</p>
-          </div>
-          
-          ${energyBreakdown && energyBreakdown.events && energyBreakdown.events.length > 0 ? `
-          <h2>События сегодня</h2>
-          <div class="event-list">
-            ${energyBreakdown.events.map(event => `
-              <div class="event-item">
-                <strong>${event.title}</strong><br>
-                <span style="color: ${event.energyImpact < 0 ? '#dc2626' : '#16a34a'}">
-                  Влияние на энергию: ${event.energyImpact > 0 ? '+' : ''}${event.energyImpact} баллов
-                </span>
-              </div>
-            `).join('')}
-          </div>
-          ` : ''}
-          
-          ${weekForecast && weekForecast.length > 0 ? `
-          <h2>Прогноз на неделю</h2>
-          <div class="event-list">
-            ${weekForecast.slice(0, 7).map(day => `
-              <div class="event-item">
-                <strong>${new Date(day.date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</strong><br>
-                Прогноз энергии: <strong style="color: #2E8B57">${day.wellness_index}/100</strong><br>
-                Фаза цикла: ${day.cycle_phase === 'menstrual' ? 'Менструация' : day.cycle_phase === 'follicular' ? 'Фолликулярная' : day.cycle_phase === 'ovulation' ? 'Овуляция' : 'Лютеиновая'}
-              </div>
-            `).join('')}
-          </div>
-          ` : ''}
-          
-          <div class="footer">
-            <p>Сгенерировано приложением CycleON</p>
-            <p>Для получения персональных рекомендаций обратитесь к вашему консультанту</p>
-          </div>
-        </body>
-        </html>
+
+      // Create temporary container for PDF rendering
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      document.body.appendChild(container);
+
+      const reportData = {
+        history: history,
+        predictions: predictions,
+        physicalSymptoms: currentLog.physical_symptoms,
+        moodSymptoms: currentLog.mood,
+        sleepQuality: currentLog.sleep_quality,
+        stressLevel: currentLog.stress_level,
+      };
+
+      // Create the report HTML element
+      container.innerHTML = `
+        <div id="weekly-report-pdf" style="
+          width: 1200px;
+          height: 800px;
+          background: white;
+          padding: 60px 80px;
+          font-family: Arial, sans-serif;
+          color: #0d4d4d;
+        ">
+          ${generateReportHTML(reportData)}
+        </div>
       `;
-      
-      // Create a new window and print
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        
-        // Wait for content to load, then print
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-        
-        toast({
-          title: 'PDF генерируется...',
-          description: 'Откроется окно печати для сохранения в PDF',
-        });
-      } else {
-        throw new Error('Не удалось открыть окно печати');
+
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Capture the rendered component
+      const element = document.getElementById('weekly-report-pdf');
+      if (!element) {
+        throw new Error('Report element not found');
       }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2],
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      
+      // Save PDF
+      const fileName = `Energy-Report-${format(new Date(), 'dd-MM-yyyy')}.pdf`;
+      pdf.save(fileName);
+
+      // Cleanup
+      document.body.removeChild(container);
+
+      toast({
+        title: 'Готово!',
+        description: 'PDF отчет успешно создан',
+      });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось создать PDF. Проверьте разрешения браузера.',
+        description: 'Не удалось создать PDF. Попробуйте еще раз.',
         variant: 'destructive'
       });
     }
+  };
+
+  const generateReportHTML = (data: any) => {
+    // Calculate monthly averages
+    const monthlyData: { [key: string]: { sum: number; count: number } } = {};
+    data.history.forEach((day: any) => {
+      const monthKey = format(new Date(day.date), 'MMM', { locale: ru });
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { sum: 0, count: 0 };
+      }
+      monthlyData[monthKey].sum += day.wellness_index;
+      monthlyData[monthKey].count += 1;
+    });
+
+    const monthlyAverages = Object.entries(monthlyData).slice(-5).map(([month, { sum, count }]) => ({
+      month,
+      avg: (sum / count).toFixed(2),
+    }));
+
+    // Calculate health metrics
+    const total = data.physicalSymptoms.length + data.moodSymptoms.length;
+    const activeCount = data.moodSymptoms.filter((m: string) => ['happy', 'calm', 'motivated'].includes(m)).length;
+    const activities = total > 0 ? Math.round((activeCount / total) * 100) : 50;
+    const rest = 100 - activities;
+
+    // Get forecast data
+    const forecastData = data.predictions.slice(0, 7).map((pred: any) => ({
+      date: format(new Date(pred.date), 'dd.MM', { locale: ru }),
+      value: pred.wellness_index,
+    }));
+
+    return `
+      <div style="text-align: center; margin-bottom: 50px;">
+        <h1 style="font-size: 48px; font-weight: bold; color: #0d5858; margin: 0 0 10px 0; letter-spacing: -1px;">
+          Energy, Health & Balance Report
+        </h1>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 40px;">
+        <!-- Section 1: Energy Consumption Trends -->
+        <div>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 60px; height: 60px; margin: 0 auto 15px; border: 3px solid #0d5858; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+              💡
+            </div>
+            <h2 style="fontSize: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Energy Consumption</h2>
+            <h3 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Trends</h3>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #0d5858;">
+                <th style="padding: 8px 4px; text-align: left; color: #0d5858;">Monthly</th>
+                <th style="padding: 8px 4px; text-align: center; color: #0d5858;">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthlyAverages.map((row) => `
+                <tr style="border-bottom: 1px solid #e0e0e0;">
+                  <td style="padding: 12px 4px; font-weight: bold;">${row.month}</td>
+                  <td style="padding: 12px 4px; text-align: center;">${row.avg}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 2: Health Metrics Overview -->
+        <div>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 60px; height: 60px; margin: 0 auto 15px; border: 3px solid #0d5858; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+              ❤️
+            </div>
+            <h2 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Health Metrics</h2>
+            <h3 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Overview</h3>
+          </div>
+
+          <div style="position: relative; width: 200px; height: 200px; margin: 20px auto;">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#00bcd4" stroke-width="60" stroke-dasharray="${activities * 5.03} 502" transform="rotate(-90 100 100)" />
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#ff7875" stroke-width="60" stroke-dasharray="${rest * 5.03} 502" stroke-dashoffset="${-activities * 5.03}" transform="rotate(-90 100 100)" />
+            </svg>
+            <div style="position: absolute; bottom: -40px; left: 0; right: 0; display: flex; justify-content: center; gap: 20px; font-size: 12px;">
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <div style="width: 12px; height: 12px; background: #00bcd4;"></div>
+                <span>Activities ${activities}%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <div style="width: 12px; height: 12px; background: #ff7875;"></div>
+                <span>Rest ${rest}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Balance Analysis Forecast -->
+        <div>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 60px; height: 60px; margin: 0 auto 15px; border: 3px solid #0d5858; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">
+              ⚖️
+            </div>
+            <h2 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Balance Analysis</h2>
+            <h3 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Forecast</h3>
+          </div>
+
+          <div style="width: 100%; height: 180px; position: relative; margin-top: 20px;">
+            <svg width="100%" height="180" viewBox="0 0 300 180">
+              <line x1="40" y1="20" x2="40" y2="150" stroke="#e0e0e0" stroke-width="1" />
+              <line x1="40" y1="150" x2="280" y2="150" stroke="#e0e0e0" stroke-width="1" />
+              <polyline
+                points="${forecastData.map((d: any, i: number) => {
+                  const x = 40 + (i * 35);
+                  const y = 150 - (d.value * 1.2);
+                  return `${x},${y}`;
+                }).join(' ')}"
+                fill="none"
+                stroke="#00bcd4"
+                stroke-width="3"
+              />
+              ${forecastData.map((d: any, i: number) => {
+                const x = 40 + (i * 35);
+                const y = 150 - (d.value * 1.2);
+                return `<circle cx="${x}" cy="${y}" r="4" fill="#00bcd4" stroke="white" stroke-width="2" />`;
+              }).join('')}
+              ${forecastData.map((d: any, i: number) => {
+                const x = 40 + (i * 35);
+                return `<text x="${x}" y="165" text-anchor="middle" font-size="10" fill="#666">${d.date}</text>`;
+              }).join('')}
+            </svg>
+          </div>
+        </div>
+      </div>
+    `;
   };
 
   return (
