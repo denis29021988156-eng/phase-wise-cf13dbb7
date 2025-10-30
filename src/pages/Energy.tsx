@@ -799,9 +799,9 @@ const Energy = () => {
         </div>
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
-          {/* Desktop Layout with Sidebar */}
-          <div className="hidden lg:grid lg:grid-cols-[280px_1fr] lg:h-screen lg:overflow-hidden">
-            {/* LEFT SIDEBAR - Fixed scrollable */}
+          {/* Desktop Layout with 3 Columns */}
+          <div className="hidden lg:grid lg:grid-cols-[280px_1fr_360px] lg:h-screen lg:overflow-hidden">
+            {/* COLUMN 1: LEFT SIDEBAR - Fixed scrollable */}
             <aside className="border-r border-border bg-card/50">
               <EnergySidebar
                 wellnessIndex={wellnessIndex}
@@ -815,8 +815,8 @@ const Energy = () => {
               />
             </aside>
 
-            {/* MAIN CONTENT - Graph and info */}
-            <main className="overflow-y-auto">
+            {/* COLUMN 2: MAIN CONTENT - Graph and forecasts */}
+            <main className="overflow-y-auto border-r border-border">
               <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -825,13 +825,6 @@ const Energy = () => {
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">15 дней истории и 30-дневный прогноз</p>
                   </div>
-                  <Button
-                    onClick={() => setIsReportDialogOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
-                  >
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Отчет за неделю
-                  </Button>
                 </div>
 
                 <Card className="w-full overflow-hidden border shadow-lg bg-card">
@@ -926,40 +919,58 @@ const Energy = () => {
                   </CardContent>
                 </Card>
 
-                {/* Additional Info Cards */}
-                <div className="space-y-4">
-                  <EnergyBalanceCard
-                    baseEnergy={energyBreakdown.calculation.base}
-                    eventsImpact={energyBreakdown.calculation.events}
-                    sleepModifier={energyBreakdown.calculation.sleep}
-                    stressModifier={energyBreakdown.calculation.stress}
-                    finalEnergy={energyBreakdown.finalEnergy}
-                    events={energyBreakdown.events || []}
-                  />
-
-                  {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-                    <Card className="border-2">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <Zap className="w-5 h-5" />
-                          Ключевые события дня
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <EventsImpactSection
-                          events={energyBreakdown.events}
-                          cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => setIsReportDialogOpen(true)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Отчет за неделю
+                  </Button>
                 </div>
 
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
                 )}
+
+                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Zap className="w-5 h-5" />
+                        Ключевые события дня
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <EventsImpactSection
+                        events={energyBreakdown.events}
+                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </main>
+
+            {/* COLUMN 3: RIGHT SIDEBAR - Wellness info */}
+            <aside className="overflow-y-auto bg-card/30">
+              <div className="p-6 space-y-6">
+                <EnergyGauge 
+                  score={wellnessIndex}
+                  phase={energyBreakdown.cyclePhase || 'follicular'}
+                  date={energyBreakdown.today}
+                />
+
+                <EnergyBalanceCard
+                  baseEnergy={energyBreakdown.calculation.base}
+                  eventsImpact={energyBreakdown.calculation.events}
+                  sleepModifier={energyBreakdown.calculation.sleep}
+                  stressModifier={energyBreakdown.calculation.stress}
+                  finalEnergy={energyBreakdown.finalEnergy}
+                  events={energyBreakdown.events || []}
+                />
+              </div>
+            </aside>
           </div>
 
           {/* Mobile Layout - Vertical */}
