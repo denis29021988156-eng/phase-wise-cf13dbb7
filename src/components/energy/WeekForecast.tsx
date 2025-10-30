@@ -32,15 +32,23 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
     };
     return emojis[phase || ''] || '⚪';
   };
+  
+  const getWellnessColor = (wellness: number) => {
+    if (wellness <= 30) return '#EF4444'; // red
+    if (wellness <= 50) return '#F59E0B'; // orange
+    if (wellness <= 70) return '#EAB308'; // yellow
+    if (wellness <= 85) return '#84CC16'; // lime
+    return '#22C55E'; // green
+  };
 
   const weekForecast = forecast.slice(0, 7);
 
   const getPhaseBackground = (phase?: string) => {
     const backgrounds: Record<string, string> = {
-      menstrual: 'bg-red-50 dark:bg-red-950/30 border-red-400 dark:border-red-800',
-      follicular: 'bg-blue-50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-800',
-      ovulation: 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-400 dark:border-yellow-800',
-      luteal: 'bg-purple-50 dark:bg-purple-950/30 border-purple-400 dark:border-purple-800'
+      menstrual: 'bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800',
+      follicular: 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800',
+      ovulation: 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-800',
+      luteal: 'bg-purple-50 dark:bg-purple-950/30 border-purple-300 dark:border-purple-800'
     };
     return backgrounds[phase || ''] || 'bg-muted/50 border-border';
   };
@@ -60,6 +68,11 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
           const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
           const dateShort = format(dayDate, 'dd.MM');
           const hasEvents = day.events && day.events.length > 0;
+          const wellness = Math.round(day.wellness_index || 0);
+          const wellnessColor = getWellnessColor(wellness);
+          const percentage = (wellness / 100) * 100;
+          const circumference = 2 * Math.PI * 18; // radius 18
+          const strokeDashoffset = circumference - (percentage / 100) * circumference;
           
           return (
             <div 
@@ -72,9 +85,39 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
               <span className="text-[8px] text-muted-foreground">
                 {dateShort}
               </span>
-              <span className={`text-lg font-bold mt-0.5 ${getPhaseColor(day.cycle_phase)}`}>
-                {day.wellness_index?.toFixed(1) || '?'}
-              </span>
+              
+              {/* Circular diagram */}
+              <div className="relative w-12 h-12 my-1">
+                <svg viewBox="0 0 44 44" className="w-full h-full transform -rotate-90">
+                  {/* Background circle */}
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke="#E5E7EB"
+                    strokeWidth="4"
+                  />
+                  {/* Progress circle */}
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke={wellnessColor}
+                    strokeWidth="4"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-sm font-bold" style={{ color: wellnessColor }}>
+                    {wellness}
+                  </span>
+                </div>
+              </div>
+              
               <span className="text-base mt-0.5">
                 {getPhaseEmoji(day.cycle_phase)}
               </span>

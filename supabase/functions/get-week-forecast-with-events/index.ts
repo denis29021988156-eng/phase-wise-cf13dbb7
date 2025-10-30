@@ -81,19 +81,19 @@ serve(async (req) => {
       .lt('start_time', weekDays[weekDays.length - 1] + 'T23:59:59')
       .order('start_time', { ascending: true });
 
-    // Get base wellness predictions
+    // Get base wellness predictions (0-100 scale)
     const baseWellnessByPhase: Record<string, number> = {
-      'menstrual': 2.0,
-      'follicular': 4.0,
-      'ovulation': 4.5,
-      'luteal': 3.0
+      'menstrual': 40,
+      'follicular': 70,
+      'ovulation': 85,
+      'luteal': 55
     };
 
     // Build forecast for each day
     const forecast = await Promise.all(
       weekDays.map(async (date) => {
         const cyclePhase = calculateCyclePhase(cycleData, date);
-        const baseWellness = baseWellnessByPhase[cyclePhase] || 3.0;
+        const baseWellness = baseWellnessByPhase[cyclePhase] || 60;
         
         // Get events for this day
         const dayEvents = (weekEvents || []).filter(event => {
@@ -126,7 +126,8 @@ serve(async (req) => {
 
             if (!coeffError && coeffData) {
               const impact = coeffData.finalImpact || 0;
-              totalEventImpact += impact;
+              // Scale impact to 0-100 range (multiply by 20 to convert from -0.5..0.5 to -10..10)
+              totalEventImpact += impact * 20;
               
               eventsWithImpact.push({
                 name: event.title,
@@ -142,16 +143,16 @@ serve(async (req) => {
           }
         }
 
-        // Final wellness = base + events impact (clamped 1-5)
-        const finalWellness = Math.max(1, Math.min(5, baseWellness + totalEventImpact));
+        // Final wellness = base + events impact (clamped 0-100)
+        const finalWellness = Math.max(0, Math.min(100, Math.round(baseWellness + totalEventImpact)));
 
         return {
           date,
-          wellness_index: Number(finalWellness.toFixed(1)),
+          wellness_index: finalWellness,
           cycle_phase: cyclePhase,
           events: eventsWithImpact,
           base_wellness: baseWellness,
-          events_impact: Number(totalEventImpact.toFixed(2))
+          events_impact: Number(totalEventImpact.toFixed(1))
         };
       })
     );
