@@ -122,14 +122,13 @@ serve(async (req) => {
 
     for (const event of (todayEvents || [])) {
       const timeOfDay = getTimeOfDay(new Date(event.start_time));
-      const eventType = classifyEventType(event.title);
 
-      // Call calculate-event-coefficient
+      // Call calculate-event-coefficient with FULL event title
       const { data: coeffData, error: coeffError } = await supabase.functions.invoke(
         'calculate-event-coefficient',
         {
           body: {
-            eventType,
+            eventType: event.title, // Use full title, not classified
             cyclePhase,
             timeOfDay,
             stressLevel: todaySymptoms?.stress_level || 3
@@ -150,7 +149,7 @@ serve(async (req) => {
         title: event.title,
         start_time: event.start_time,
         end_time: event.end_time,
-        eventType,
+        eventType: event.title, // Store full title
         timeOfDay,
         cyclePhase,
         energyImpact: finalImpact,
