@@ -928,7 +928,7 @@ const Energy = () => {
                 </Card>
 
                 {/* Additional Info Cards */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <EnergyBalanceCard
                     baseEnergy={energyBreakdown.calculation.base}
                     eventsImpact={energyBreakdown.calculation.events}
