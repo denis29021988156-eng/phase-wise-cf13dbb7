@@ -927,28 +927,33 @@ const Energy = () => {
                 </Card>
 
                 {/* Additional Info Cards */}
-                <EnergyBalanceCard
-                  baseEnergy={energyBreakdown.calculation.base}
-                  eventsImpact={energyBreakdown.calculation.events}
-                  sleepModifier={energyBreakdown.calculation.sleep}
-                  stressModifier={energyBreakdown.calculation.stress}
-                  finalEnergy={energyBreakdown.finalEnergy}
-                  events={energyBreakdown.events || []}
-                />
+                <div className="space-y-4">
+                  <EnergyBalanceCard
+                    baseEnergy={energyBreakdown.calculation.base}
+                    eventsImpact={energyBreakdown.calculation.events}
+                    sleepModifier={energyBreakdown.calculation.sleep}
+                    stressModifier={energyBreakdown.calculation.stress}
+                    finalEnergy={energyBreakdown.finalEnergy}
+                    events={energyBreakdown.events || []}
+                  />
 
-                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-                  <Card className="border-border/50">
-                    <CardHeader className="pb-2 pt-3 px-4">
-                      <CardTitle className="text-sm">События сегодня</CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-4 pb-3">
-                      <EventsImpactSection
-                        events={energyBreakdown.events}
-                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
+                  {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+                    <Card className="border-2">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <Zap className="w-5 h-5" />
+                          Ключевые события дня
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <EventsImpactSection
+                          events={energyBreakdown.events}
+                          cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
 
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
@@ -988,10 +993,20 @@ const Energy = () => {
             />
             
             {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-              <EventsImpactSection
-                events={energyBreakdown.events}
-                cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-              />
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Zap className="w-5 h-5" />
+                    Ключевые события дня
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EventsImpactSection
+                    events={energyBreakdown.events}
+                    cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                  />
+                </CardContent>
+              </Card>
             )}
             
             {weekForecast && weekForecast.length > 0 && (
