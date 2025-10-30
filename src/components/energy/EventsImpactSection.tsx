@@ -20,9 +20,9 @@ interface EventsImpactSectionProps {
 
 export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsImpactSectionProps) {
   const getImpactArrow = (impact: number) => {
-    if (impact > 0.2) return '↑ Энергия растет';
-    if (impact < -0.2) return '↓ Энергия падает';
-    return '→ Нейтрально';
+    if (impact > 0.2) return '↑';
+    if (impact < -0.2) return '↓';
+    return '→';
   };
 
   const getImpactColor = (impact: number) => {
@@ -32,64 +32,41 @@ export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsIm
   };
 
   return (
-    <div className="p-4 bg-muted/30 rounded-xl mb-6">
-      <h3 className="text-lg font-semibold mb-4">События и их влияние</h3>
-      
+    <div className="space-y-2">
       {events.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          Нет событий на сегодня
+        <p className="text-[10px] text-muted-foreground py-2 text-center">
+          Нет событий
         </p>
       ) : (
-        <div className="space-y-3">
-          {events.map((event) => (
+        <>
+          {events.slice(0, 3).map((event) => (
             <div 
               key={event.id}
-              className="bg-card p-3 rounded-lg border-l-4 border-primary shadow-sm"
+              className="bg-card p-2 rounded-md border-l-2 border-primary text-[10px]"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-muted-foreground">
-                      🕐 {event.start_time ? format(new Date(event.start_time), 'HH:mm') : '--:--'}
-                    </span>
-                  </div>
-                  <span className="font-medium text-sm">{event.title}</span>
-                </div>
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-muted-foreground">
+                  🕐 {event.start_time ? format(new Date(event.start_time), 'HH:mm') : '--:--'}
+                </span>
               </div>
+              <div className="font-medium truncate mb-1">{event.title}</div>
               
-              <div className="text-xs text-muted-foreground mb-2">
-                Фаза: {cyclePhase} • {event.timeOfDay}
-              </div>
-              
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Коэффициент:</span>
-                  <span className={`font-bold ${getImpactColor(event.energyImpact)}`}>
-                    {event.energyImpact > 0 ? '+' : ''}{event.energyImpact.toFixed(2)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    ({event.eventType})
-                  </span>
-                </div>
-              </div>
-              
-              <div className={`mt-2 text-sm font-medium ${getImpactColor(event.energyImpact)}`}>
-                {getImpactArrow(event.energyImpact)}
+              <div className="flex items-center justify-between">
+                <span className={`font-bold ${getImpactColor(event.energyImpact)}`}>
+                  {event.energyImpact > 0 ? '+' : ''}{event.energyImpact.toFixed(2)}
+                </span>
+                <span className={getImpactColor(event.energyImpact)}>
+                  {getImpactArrow(event.energyImpact)}
+                </span>
               </div>
             </div>
           ))}
-        </div>
-      )}
-      
-      {onAddEvent && (
-        <Button 
-          onClick={onAddEvent}
-          variant="outline"
-          className="w-full mt-4"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Добавить событие
-        </Button>
+          {events.length > 3 && (
+            <p className="text-[9px] text-center text-muted-foreground py-1">
+              +{events.length - 3} еще
+            </p>
+          )}
+        </>
       )}
     </div>
   );

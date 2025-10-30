@@ -530,21 +530,21 @@ const Energy = () => {
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
           {/* Desktop Layout with Fixed Sidebars */}
-          <div className="hidden lg:grid lg:grid-rows-[60px_1fr_auto] lg:h-screen">
-            {/* Header */}
-            <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-              <div className="h-full flex items-center px-6">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          <div className="hidden lg:grid lg:grid-rows-[50px_1fr_200px] lg:h-screen lg:overflow-hidden">
+            {/* Header - Fixed */}
+            <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
+              <div className="h-full flex items-center px-4">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                   Gaia Dashboard
                 </h1>
               </div>
             </header>
 
-            {/* Main Content Area with Sidebars */}
-            <div className="grid grid-cols-[280px_1fr_320px] overflow-hidden">
-              {/* LEFT SIDEBAR - Fixed */}
+            {/* Main Content Area with Sidebars - No overflow */}
+            <div className="grid grid-cols-[260px_1fr_300px] overflow-hidden">
+              {/* LEFT SIDEBAR - Compact */}
               <aside className="border-r border-border bg-card/30 overflow-y-auto">
-                <div className="p-4 space-y-4">
+                <div className="p-3 space-y-3">
                   <EnergyGauge 
                     score={energyBreakdown.finalEnergy || 3}
                     phase={energyBreakdown.cyclePhase || 'follicular'}
@@ -553,19 +553,19 @@ const Energy = () => {
                   
                   {/* Physical State */}
                   <Card className="border-border/50">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Heart className="h-4 w-4" />
+                    <CardHeader className="pb-2 pt-3 px-3">
+                      <CardTitle className="text-xs flex items-center gap-1.5">
+                        <Heart className="h-3.5 w-3.5" />
                         Физическое состояние
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="px-3 pb-3">
                       <div className="flex flex-wrap gap-1">
-                        {physicalOptions.map(option => (
+                        {physicalOptions.slice(0, 4).map(option => (
                           <Badge
                             key={option.id}
                             variant={currentLog.physical_symptoms.includes(option.id) ? 'default' : 'outline'}
-                            className="cursor-pointer text-xs"
+                            className="cursor-pointer text-[10px] py-0.5 px-2"
                             onClick={() => toggleSelection('physical_symptoms', option.id)}
                           >
                             {option.label}
@@ -578,32 +578,32 @@ const Energy = () => {
               </aside>
 
               {/* CENTER - Large Energy Graph */}
-              <main className="overflow-y-auto p-6">
-                <Card className="h-full overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card via-card to-accent/5">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <main className="overflow-y-auto">
+                <Card className="h-full overflow-hidden border-0 m-3 shadow-lg bg-gradient-to-br from-card via-card to-accent/5">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                       Энергетический баланс
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">15 дней истории и 30-дневный прогноз</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">15 дней истории и 30-дневный прогноз</p>
                   </CardHeader>
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-2 px-4 pb-4">
                     {isLoadingPredictions ? (
-                      <div className="h-[calc(100vh-300px)] flex flex-col items-center justify-center gap-4">
-                        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                        <p className="text-foreground font-medium">Загрузка прогноза...</p>
+                      <div className="h-[calc(100vh-250px)] flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                        <p className="text-sm text-foreground font-medium">Загрузка прогноза...</p>
                       </div>
                     ) : history.length === 0 ? (
-                      <div className="h-[calc(100vh-300px)] flex flex-col items-center justify-center gap-3 text-center px-4">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                          <Brain className="w-10 h-10 text-primary" />
+                      <div className="h-[calc(100vh-250px)] flex flex-col items-center justify-center gap-2 text-center px-4">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                          <Brain className="w-8 h-8 text-primary" />
                         </div>
-                        <p className="text-foreground font-medium">Начните добавлять данные</p>
-                        <p className="text-sm text-muted-foreground">График появится после первой записи</p>
+                        <p className="text-sm text-foreground font-medium">Начните добавлять данные</p>
+                        <p className="text-xs text-muted-foreground">График появится после первой записи</p>
                       </div>
                     ) : (
                       <>
-                        <ResponsiveContainer width="100%" height={Math.max(500, window.innerHeight - 350)}>
-                          <AreaChart data={getChartData()} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <ResponsiveContainer width="100%" height={Math.min(window.innerHeight - 280, 550)}>
+                          <AreaChart data={getChartData()} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -671,18 +671,14 @@ const Energy = () => {
                           </AreaChart>
                         </ResponsiveContainer>
                         
-                        <div className="flex items-center justify-center gap-8 mt-4 px-4">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-10 h-1 rounded-full bg-primary shadow-sm" />
-                            <span className="text-sm text-foreground font-medium">Факт</span>
+                        <div className="flex items-center justify-center gap-6 mt-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-1 rounded-full bg-primary shadow-sm" />
+                            <span className="text-xs text-foreground font-medium">Факт</span>
                           </div>
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-10 h-1 rounded-full border-2 border-dashed border-secondary" />
-                            <span className="text-sm text-foreground font-medium">Прогноз</span>
-                          </div>
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-10 h-3 rounded bg-muted/50" />
-                            <span className="text-xs text-muted-foreground">Диапазон</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-1 rounded-full border-2 border-dashed border-secondary" />
+                            <span className="text-xs text-foreground font-medium">Прогноз</span>
                           </div>
                         </div>
                       </>
@@ -691,15 +687,15 @@ const Energy = () => {
                 </Card>
               </main>
 
-              {/* RIGHT SIDEBAR - Fixed */}
+              {/* RIGHT SIDEBAR - Compact */}
               <aside className="border-l border-border bg-card/30 overflow-y-auto">
-                <div className="p-4 space-y-4">
+                <div className="p-3 space-y-3">
                   {energyBreakdown.events && energyBreakdown.events.length > 0 && (
                     <Card className="border-border/50">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm">События сегодня</CardTitle>
+                      <CardHeader className="pb-2 pt-3 px-3">
+                        <CardTitle className="text-xs">События сегодня</CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="px-3 pb-3">
                         <EventsImpactSection
                           events={energyBreakdown.events}
                           cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
@@ -716,9 +712,9 @@ const Energy = () => {
               </aside>
             </div>
 
-            {/* BOTTOM: Week Forecast - Full Width */}
-            <footer className="border-t border-border bg-card/50 overflow-y-auto">
-              <div className="p-6">
+            {/* BOTTOM: Week Forecast - Fixed Height, Compact */}
+            <footer className="border-t border-border bg-card/50 overflow-y-auto flex-shrink-0">
+              <div className="p-3">
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
                 )}

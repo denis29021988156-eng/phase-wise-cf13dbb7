@@ -47,10 +47,10 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
 
   return (
     <div className="w-full">
-      <h3 className="text-xl font-semibold mb-4 px-2">Прогноз на неделю</h3>
+      <h3 className="text-base font-semibold mb-2">Прогноз на неделю</h3>
       
-      {/* 7-column grid for week forecast */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+      {/* 7-column grid for week forecast - Compact */}
+      <div className="grid grid-cols-7 gap-2 mb-3">
         {weekForecast.slice(0, 7).map((day, idx) => {
           if (!day.date) return null;
           
@@ -64,40 +64,26 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
           return (
             <div 
               key={idx} 
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-105 ${getPhaseBackground(day.cycle_phase)}`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all hover:scale-105 ${getPhaseBackground(day.cycle_phase)}`}
             >
-              <span className="text-xs font-bold uppercase text-muted-foreground">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">
                 {dayOfWeek}
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-[9px] text-muted-foreground">
                 {dateShort}
               </span>
-              <div className="flex flex-col items-center gap-1">
-                <span className={`text-3xl font-bold ${getPhaseColor(day.cycle_phase)}`}>
+              <div className="flex flex-col items-center">
+                <span className={`text-xl font-bold ${getPhaseColor(day.cycle_phase)}`}>
                   {day.wellness_index?.toFixed(1) || '?'}
                 </span>
-                <span className="text-xs text-muted-foreground">/5</span>
               </div>
-              <span className="text-2xl">
+              <span className="text-lg">
                 {getPhaseEmoji(day.cycle_phase)}
               </span>
               
               {hasEvents && (
-                <div className="flex flex-col gap-1 mt-2 w-full">
-                  {day.events.slice(0, 2).map((event: any, eidx: number) => (
-                    <div 
-                      key={eidx}
-                      className="text-[10px] px-2 py-1 rounded-md bg-background/50 text-center truncate"
-                      title={event.name}
-                    >
-                      {event.impact < -0.3 ? '⚠️' : '✅'} {event.name}
-                    </div>
-                  ))}
-                  {day.events.length > 2 && (
-                    <div className="text-[9px] text-muted-foreground text-center">
-                      +{day.events.length - 2} еще
-                    </div>
-                  )}
+                <div className="text-[8px] text-center text-muted-foreground mt-0.5">
+                  {day.events.length} событий
                 </div>
               )}
             </div>
@@ -105,48 +91,43 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
         })}
       </div>
       
-      {/* Hot Events list */}
-      <div className="space-y-2 px-2">
-        <h4 className="text-sm font-semibold flex items-center gap-2">
+      {/* Hot Events list - Compact */}
+      <div className="space-y-1.5">
+        <h4 className="text-xs font-semibold flex items-center gap-1.5">
           🔥 Ключевые события недели
         </h4>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {weekForecast
             .slice(0, 7)
             .filter(day => day.events && day.events.length > 0 && day.date)
-            .map((day, idx) => {
+            .flatMap((day, idx) => {
               const dayDate = new Date(day.date);
-              if (isNaN(dayDate.getTime())) return null;
+              if (isNaN(dayDate.getTime())) return [];
               
-              const dayOfWeek = format(dayDate, 'EEEE', { locale: ru });
+              const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
               
-              return day.events?.map((event: any, eidx: number) => (
+              return day.events?.slice(0, 2).map((event: any, eidx: number) => (
                 <div
                   key={`${idx}-${eidx}`}
-                  className={`p-3 rounded-lg text-sm border ${
+                  className={`p-1.5 rounded text-[10px] border ${
                     event.impact < -0.3
                       ? 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
                       : 'bg-green-500/10 border-green-500/30 text-green-900 dark:text-green-300'
                   }`}
                 >
-                  <span className="mr-2">
+                  <span className="mr-1">
                     {event.impact < -0.3 ? '⚠️' : '✅'}
                   </span>
                   <span className="font-semibold">{dayOfWeek}:</span>{' '}
-                  {event.name}
-                  {event.impact && (
-                    <span className="ml-2 font-bold">
-                      ({event.impact > 0 ? '+' : ''}{event.impact.toFixed(2)})
-                    </span>
-                  )}
+                  <span className="truncate inline-block max-w-[80%]">{event.name}</span>
                 </div>
-              ));
+              )) || [];
             })}
         </div>
         
         {!weekForecast.some(day => day.events && day.events.length > 0) && (
-          <p className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-lg">
+          <p className="text-[10px] text-muted-foreground text-center py-2 bg-muted/30 rounded">
             Ключевых событий на этой неделе нет
           </p>
         )}
