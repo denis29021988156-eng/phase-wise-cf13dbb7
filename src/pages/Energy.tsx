@@ -65,7 +65,16 @@ const Energy = () => {
     { id: 'energy', label: `💪 ${t('symptoms.energy')}`, value: 15 },
     { id: 'cramps', label: `🩹 ${t('symptoms.cramps')}`, value: -12 },
     { id: 'headache', label: `🤯 ${t('symptoms.headache')}`, value: -10 },
-    { id: 'bloating', label: `🎈 ${t('symptoms.bloating')}`, value: -8 }
+    { id: 'bloating', label: `🎈 ${t('symptoms.bloating')}`, value: -8 },
+    { id: 'nausea', label: `🤢 ${t('symptoms.nausea')}`, value: -12 },
+    { id: 'insomnia', label: `😵 ${t('symptoms.insomnia')}`, value: -14 },
+    { id: 'dizziness', label: `😵‍💫 ${t('symptoms.dizziness')}`, value: -10 },
+    { id: 'breast_tenderness', label: `💗 ${t('symptoms.breastTenderness')}`, value: -8 },
+    { id: 'swelling', label: `🫧 ${t('symptoms.swelling')}`, value: -7 },
+    { id: 'acne', label: `🔴 ${t('symptoms.acne')}`, value: -6 },
+    { id: 'increased_appetite', label: `🍽️ ${t('symptoms.increasedAppetite')}`, value: -5 },
+    { id: 'back_pain', label: `🦴 ${t('symptoms.backPain')}`, value: -11 },
+    { id: 'muscle_aches', label: `💢 ${t('symptoms.muscleAches')}`, value: -9 }
   ];
 
   const moodOptions = [
