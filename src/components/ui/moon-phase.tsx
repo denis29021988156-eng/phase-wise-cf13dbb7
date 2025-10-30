@@ -26,6 +26,26 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
         viewBox="0 0 200 200"
         className="w-full h-full transform -rotate-90"
       >
+        {/* Внешняя темная обводка */}
+        <circle
+          cx="100"
+          cy="100"
+          r="93"
+          fill="none"
+          stroke="#D1D5DB"
+          strokeWidth="2"
+        />
+        
+        {/* Внутренняя темная обводка */}
+        <circle
+          cx="100"
+          cy="100"
+          r="77"
+          fill="none"
+          stroke="#D1D5DB"
+          strokeWidth="2"
+        />
+        
         {/* Фоновое кольцо с четкой границей */}
         <circle
           cx="100"
@@ -34,7 +54,6 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
           fill="none"
           stroke="#E5E7EB"
           strokeWidth="16"
-          opacity="1"
         />
         
         {/* Заполненное кольцо (прогресс) */}
