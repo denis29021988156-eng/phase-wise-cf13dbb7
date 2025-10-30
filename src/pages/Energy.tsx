@@ -57,6 +57,7 @@ const Energy = () => {
   const [syncing, setSyncing] = useState(false);
   const [predictions, setPredictions] = useState<any[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
   // Данные для выбора
   const physicalOptions = [
@@ -86,15 +87,103 @@ const Energy = () => {
     { id: 'motivated', label: `✨ ${t('symptoms.moodMotivated')}`, value: 18 }
   ];
 
-  // Загрузка истории за последние 7 дней
+  // Загрузка данных только при первом монтировании
   useEffect(() => {
-    if (user) {
+    if (user && !hasLoadedInitialData) {
       loadHistory();
       loadTodayLog();
       loadPredictions();
       healthKit.checkAvailability();
       loadEnergyBreakdown();
+      setHasLoadedInitialData(true);
     }
+  }, [user]);
+
+  // Real-time подписка на изменения данных
+  useEffect(() => {
+    if (!user) return;
+
+    // Подписка на изменения симптомов
+    const symptomsChannel = supabase
+      .channel('symptom-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'symptom_logs',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('Symptom log changed:', payload);
+          await loadHistory();
+          await loadTodayLog();
+          await loadPredictions();
+          await loadEnergyBreakdown();
+        }
+      )
+      .subscribe();
+
+    // Подписка на изменения событий
+    const eventsChannel = supabase
+      .channel('event-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('Event changed:', payload);
+          await loadEnergyBreakdown();
+        }
+      )
+      .subscribe();
+
+    // Подписка на изменения профиля и цикла
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('Profile changed:', payload);
+          await loadPredictions();
+        }
+      )
+      .subscribe();
+
+    const cycleChannel = supabase
+      .channel('cycle-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_cycles',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('Cycle changed:', payload);
+          await loadPredictions();
+          await loadEnergyBreakdown();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(symptomsChannel);
+      supabase.removeChannel(eventsChannel);
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(cycleChannel);
+    };
   }, [user]);
 
   const loadEnergyBreakdown = async () => {
@@ -343,11 +432,7 @@ const Energy = () => {
       if (error) throw error;
 
       setCurrentLog({ ...currentLog, wellness_index: wellnessIndex });
-      await loadHistory();
-      
-      // Invalidate prediction cache and reload predictions
-      await invalidatePredictionCache();
-      await loadPredictions();
+      // Real-time подписка автоматически обновит данные
       
       // Синхронизация с Apple Health если доступно
       if (healthKit.isAvailable && healthKit.hasPermissions) {
