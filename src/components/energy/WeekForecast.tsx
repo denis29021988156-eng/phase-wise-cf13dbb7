@@ -40,8 +40,8 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
       <h3 className="text-lg font-semibold mb-4">Энергия на неделю</h3>
       
       {/* Week Chart */}
-      <div className="bg-card rounded-lg p-4 shadow-sm mb-4">
-        <div className="flex justify-between gap-1">
+      <div className="bg-card rounded-lg p-4 shadow-sm mb-4 overflow-x-auto">
+        <div className="flex gap-3 min-w-max">
           {weekForecast.map((day, idx) => {
             if (!day.date) return null;
             
@@ -52,7 +52,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
             const dateShort = format(dayDate, 'dd.MM');
             
             return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+              <div key={idx} className="flex flex-col items-center gap-1 min-w-[70px]">
                 <span className="text-xs font-medium text-muted-foreground">
                   {dayOfWeek}
                 </span>
