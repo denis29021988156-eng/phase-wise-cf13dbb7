@@ -136,7 +136,7 @@ const Index = () => {
       {/* Header with notifications */}
       <header className="sticky top-0 z-40 w-full bg-card/80 backdrop-blur-lg border-b border-border shadow-sm">
         <div className="container flex h-14 items-center justify-between px-4">
-          <h1 className="text-lg font-semibold">PhaseWise</h1>
+          <h1 className="text-lg font-semibold">Gaia</h1>
           <Notifications />
         </div>
       </header>
