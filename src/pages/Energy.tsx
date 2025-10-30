@@ -632,7 +632,7 @@ const Energy = () => {
               <aside className="border-r border-border bg-card/30 overflow-y-auto">
                 <div className="p-3 space-y-3">
                   <EnergyGauge 
-                    score={energyBreakdown.finalEnergy || 3}
+                    score={wellnessIndex}
                     phase={energyBreakdown.cyclePhase || 'follicular'}
                     date={energyBreakdown.today}
                   />
@@ -788,7 +788,7 @@ const Energy = () => {
             </h1>
             
             <EnergyGauge 
-              score={energyBreakdown.finalEnergy || 3}
+              score={wellnessIndex}
               phase={energyBreakdown.cyclePhase || 'follicular'}
               date={energyBreakdown.today}
             />

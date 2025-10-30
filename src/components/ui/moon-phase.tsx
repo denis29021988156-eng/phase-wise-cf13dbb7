@@ -8,72 +8,47 @@ interface MoonPhaseProps {
 export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
   // Определяем цвет в зависимости от значения
   const getColor = (val: number) => {
-    if (val <= 30) return 'hsl(var(--destructive))';
-    if (val <= 60) return 'hsl(45 93% 47%)'; // yellow
-    return 'hsl(142 76% 36%)'; // green
+    if (val <= 30) return '#EF4444'; // red
+    if (val <= 60) return '#F59E0B'; // yellow
+    return '#8B5CF6'; // purple/violet
   };
 
   const color = getColor(value);
   const percentage = value / 100;
+  const circumference = 2 * Math.PI * 85; // radius 85
+  const strokeDashoffset = circumference - (percentage * circumference);
 
   return (
     <div className={cn("relative", className)}>
       <svg
         viewBox="0 0 200 200"
-        className="w-full h-full"
+        className="w-full h-full transform -rotate-90"
       >
-        {/* Фон круга (тень луны) */}
+        {/* Фоновое кольцо */}
         <circle
           cx="100"
           cy="100"
-          r="90"
-          fill="hsl(var(--secondary))"
-          opacity="0.3"
+          r="85"
+          fill="none"
+          stroke="hsl(var(--muted))"
+          strokeWidth="16"
+          opacity="0.2"
         />
         
-        {/* Основной круг луны */}
+        {/* Заполненное кольцо (прогресс) */}
         <circle
           cx="100"
           cy="100"
-          r="90"
-          fill="hsl(var(--secondary))"
-          opacity="0.5"
-        />
-
-        {/* Фаза луны - освещенная часть */}
-        <defs>
-          <clipPath id={`moonClip-${value}`}>
-            {/* Растущая луна от 0 до 100% */}
-            <ellipse
-              cx={100 - (90 * (1 - percentage))}
-              cy="100"
-              rx={90 * percentage}
-              ry="90"
-            />
-          </clipPath>
-        </defs>
-
-        {/* Освещенная часть с градиентом */}
-        <circle
-          cx="100"
-          cy="100"
-          r="90"
-          fill={color}
-          clipPath={`url(#moonClip-${value})`}
-          style={{
-            filter: 'drop-shadow(0 0 10px currentColor)',
-          }}
-        />
-
-        {/* Внешний контур */}
-        <circle
-          cx="100"
-          cy="100"
-          r="90"
+          r="85"
           fill="none"
-          stroke="hsl(var(--border))"
-          strokeWidth="2"
-          opacity="0.3"
+          stroke={color}
+          strokeWidth="16"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          style={{
+            transition: 'stroke-dashoffset 0.5s ease',
+          }}
         />
       </svg>
     </div>
