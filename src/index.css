@@ -20,8 +20,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 280 15% 25%;
 
-    /* Bio-Green primary for CTA and high energy days */
-    --primary: 146 50% 36%;
+    /* Soft blue-purple primary (inspired by Flo) */
+    --primary: 245 45% 58%;
     --primary-foreground: 0 0% 100%;
 
     /* Light secondary */
@@ -31,9 +31,9 @@ All colors MUST be HSL.
     --muted: 280 10% 96%;
     --muted-foreground: 280 8% 50%;
 
-    /* AI-Cyan accent for intelligent interactions */
-    --accent: 186 70% 60%;
-    --accent-foreground: 0 0% 100%;
+    /* Soft pink accent */
+    --accent: 340 70% 88%;
+    --accent-foreground: 340 60% 40%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -41,12 +41,7 @@ All colors MUST be HSL.
     /* Minimal borders */
     --border: 280 10% 92%;
     --input: 280 10% 92%;
-    --ring: 146 50% 36%;
-    
-    /* Energy palette */
-    --energy-high: 146 50% 36%;
-    --energy-low: 20 50% 66%;
-    --wellness-warm: 27 88% 80%;
+    --ring: 245 45% 58%;
 
     /* Rounded design like Flo */
     --radius: 1.5rem;
@@ -60,18 +55,18 @@ All colors MUST be HSL.
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* Gradient backgrounds */
-    --gradient-primary: linear-gradient(135deg, hsl(146 50% 36%) 0%, hsl(160 50% 40%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(186 70% 60%) 0%, hsl(200 65% 65%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(245 45% 58%) 0%, hsl(270 50% 65%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(340 70% 88%) 0%, hsl(320 65% 90%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(320 35% 98%) 0%, hsl(260 30% 97%) 100%);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 280 15% 25%;
-    --sidebar-primary: 146 50% 36%;
+    --sidebar-primary: 245 45% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 280 10% 96%;
-    --sidebar-accent-foreground: 146 50% 36%;
+    --sidebar-accent-foreground: 245 45% 58%;
     --sidebar-border: 280 10% 94%;
-    --sidebar-ring: 146 50% 36%;
+    --sidebar-ring: 245 45% 58%;
   }
 
   .dark {
@@ -84,7 +79,7 @@ All colors MUST be HSL.
     --popover: 280 18% 14%;
     --popover-foreground: 280 10% 90%;
 
-    --primary: 146 55% 45%;
+    --primary: 245 50% 65%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 280 15% 20%;
@@ -93,7 +88,7 @@ All colors MUST be HSL.
     --muted: 280 15% 20%;
     --muted-foreground: 280 10% 60%;
 
-    --accent: 186 65% 55%;
+    --accent: 340 60% 65%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 51%;
@@ -101,30 +96,25 @@ All colors MUST be HSL.
 
     --border: 280 15% 22%;
     --input: 280 15% 22%;
-    --ring: 146 55% 45%;
-    
-    /* Energy palette - dark mode */
-    --energy-high: 146 55% 45%;
-    --energy-low: 20 45% 60%;
-    --wellness-warm: 27 80% 70%;
+    --ring: 245 50% 65%;
     
     /* Dark mode shadows */
     --shadow-soft: 0 2px 12px -4px hsl(280 20% 0% / 0.4);
     --shadow-medium: 0 4px 20px -6px hsl(280 20% 0% / 0.5);
     --shadow-card: 0 1px 3px hsl(280 20% 0% / 0.3);
     
-    --gradient-primary: linear-gradient(135deg, hsl(146 55% 45%) 0%, hsl(160 50% 50%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(186 65% 55%) 0%, hsl(200 60% 60%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(245 50% 65%) 0%, hsl(270 55% 70%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(340 60% 65%) 0%, hsl(320 60% 70%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(280 20% 10%) 0%, hsl(260 18% 12%) 100%);
     
     --sidebar-background: 280 20% 12%;
     --sidebar-foreground: 280 10% 90%;
-    --sidebar-primary: 146 55% 45%;
+    --sidebar-primary: 245 50% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 280 15% 18%;
     --sidebar-accent-foreground: 280 10% 90%;
     --sidebar-border: 280 15% 18%;
-    --sidebar-ring: 146 55% 45%;
+    --sidebar-ring: 245 50% 65%;
   }
 }
 
