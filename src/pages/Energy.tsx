@@ -1036,33 +1036,52 @@ const Energy = () => {
 
       {/* Report Dialog */}
       <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-gradient-to-br from-background via-background to-primary/5">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
+            <DialogTitle className="text-2xl font-bold text-center">
               Ваш энергетический отчет готов!
             </DialogTitle>
-            <DialogDescription className="pt-4 text-base leading-relaxed">
-              За последние 7 дней вы:
-              <ul className="mt-3 space-y-2 list-none">
-                <li>• Пик энергии: 8/10 (вторник)</li>
-                <li>• Самый продуктивный день: среда</li>
-                <li>• Лучший восстановитель: прогулка</li>
-              </ul>
-              <p className="mt-4 font-semibold">Поделитесь своим прогрессом!</p>
+            <DialogDescription className="pt-6 text-base">
+              <p className="text-foreground/80 mb-4">За последние 7 дней вы:</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm">⚡</span>
+                  </div>
+                  <span className="text-foreground font-medium">Пик энергии: 8/10 (вторник)</span>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm">📊</span>
+                  </div>
+                  <span className="text-foreground font-medium">Самый продуктивный день: среда</span>
+                </div>
+                
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm">🌟</span>
+                  </div>
+                  <span className="text-foreground font-medium">Лучший восстановитель: прогулка</span>
+                </div>
+              </div>
+              <p className="mt-6 text-center font-semibold text-foreground">
+                Поделитесь своим прогрессом!
+              </p>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-3 mt-2">
             <Button
               variant="outline"
               onClick={handleShareReport}
-              className="w-full sm:w-auto border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
+              className="w-full sm:w-auto border-2 border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Поделиться в соцсетях
             </Button>
             <Button
               onClick={handleDownloadPDF}
-              className="w-full sm:w-auto bg-[#2E8B57] hover:bg-[#267347] text-white"
+              className="w-full sm:w-auto bg-[#2E8B57] hover:bg-[#267347] text-white shadow-lg"
             >
               <Download className="w-4 h-4 mr-2" />
               Скачать PDF
