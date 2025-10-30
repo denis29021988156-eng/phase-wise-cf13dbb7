@@ -239,32 +239,6 @@ export function EnergySidebar({
           </CardContent>
         </Card>
 
-        {/* Energy Spent */}
-        <Card className="border-border/50 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20">
-          <CardHeader className="py-3 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <span className="text-lg">⚡</span>
-              Затрачено энергии
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-red-600 dark:text-red-400">{energySpent}</span>
-              <span className="text-sm text-muted-foreground">баллов</span>
-            </div>
-            <div className="mt-2 space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Низкий</span>
-                <span className="text-muted-foreground">3-5</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Высокий</span>
-                <span className="text-muted-foreground">3-5</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Save Button */}
         <Button
           onClick={onSave}
