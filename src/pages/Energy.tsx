@@ -800,7 +800,7 @@ const Energy = () => {
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
           {/* Desktop Layout with 3 Columns */}
-          <div className="hidden lg:grid lg:grid-cols-[280px_1fr_360px] lg:h-screen lg:overflow-hidden">
+          <div className="hidden lg:grid lg:grid-cols-[288px_1fr_371px] lg:h-screen lg:overflow-hidden">
             {/* COLUMN 1: LEFT SIDEBAR - Fixed scrollable */}
             <aside className="border-r border-border bg-card/50">
               <EnergySidebar
