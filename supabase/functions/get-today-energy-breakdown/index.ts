@@ -115,7 +115,7 @@ serve(async (req) => {
       console.error('Symptoms error:', symptomsError);
     }
 
-    // 4. Calculate impact for each event
+    // 4. Calculate impact for each event (in points: 0-100 scale)
     let totalEnergyImpact = 0;
     let totalStressImpact = 0;
     const eventsWithImpact = [];
@@ -142,7 +142,9 @@ serve(async (req) => {
       }
 
       const { finalImpact } = coeffData;
-      totalEnergyImpact += finalImpact;
+      // Convert coefficient (-0.5..0.5) to points (-25..25)
+      const impactPoints = Math.round(finalImpact * 50);
+      totalEnergyImpact += impactPoints;
 
       eventsWithImpact.push({
         id: event.id,
@@ -152,32 +154,32 @@ serve(async (req) => {
         eventType: event.title, // Store full title
         timeOfDay,
         cyclePhase,
-        energyImpact: finalImpact,
+        energyImpact: impactPoints, // Now in points
         stressImpact: 0
       });
     }
 
-    // 5. Get base energy for phase
+    // 5. Get base energy for phase (0-100 scale)
     const baseEnergyByPhase: Record<string, number> = {
-      'menstrual': 2.0,
-      'follicular': 4.0,
-      'ovulation': 4.5,
-      'luteal': 3.0
+      'menstrual': 40,
+      'follicular': 70,
+      'ovulation': 85,
+      'luteal': 55
     };
-    const baseEnergy = baseEnergyByPhase[cyclePhase] || 3.0;
+    const baseEnergy = baseEnergyByPhase[cyclePhase] || 60;
 
-    // 6. Calculate modifiers from symptoms
+    // 6. Calculate modifiers from symptoms (in points)
     let sleepModifier = 0;
     let stressModifier = 0;
 
     if (todaySymptoms) {
-      sleepModifier = ((todaySymptoms.sleep_quality || 3) - 3) * 0.15;
-      stressModifier = ((todaySymptoms.stress_level || 3) - 3) * -0.1;
+      sleepModifier = Math.round(((todaySymptoms.sleep_quality || 3) - 3) * 5);
+      stressModifier = Math.round(((todaySymptoms.stress_level || 3) - 3) * -3);
     }
 
-    // 7. Calculate final energy
+    // 7. Calculate final energy (0-100 scale)
     const rawFinalEnergy = baseEnergy + totalEnergyImpact + sleepModifier + stressModifier;
-    const finalEnergy = Math.max(1, Math.min(5, rawFinalEnergy));
+    const finalEnergy = Math.max(0, Math.min(100, Math.round(rawFinalEnergy)));
 
     // 8. Calculate confidence
     const { data: recentLogs } = await supabase
@@ -193,21 +195,21 @@ serve(async (req) => {
     const result = {
       today,
       cyclePhase,
-      baseEnergy: Math.round(baseEnergy * 100) / 100,
+      baseEnergy: baseEnergy,
       events: eventsWithImpact,
-      totalEnergyImpact: Math.round(totalEnergyImpact * 100) / 100,
-      totalStressImpact: Math.round(totalStressImpact * 100) / 100,
-      sleepModifier: Math.round(sleepModifier * 100) / 100,
-      stressModifier: Math.round(stressModifier * 100) / 100,
-      finalEnergy: Math.round(finalEnergy * 10) / 10,
+      totalEnergyImpact: totalEnergyImpact,
+      totalStressImpact: totalStressImpact,
+      sleepModifier: sleepModifier,
+      stressModifier: stressModifier,
+      finalEnergy: finalEnergy,
       confidence: Math.round(confidence),
       symptoms: todaySymptoms?.physical_symptoms || [],
       calculation: {
-        base: Math.round(baseEnergy * 100) / 100,
-        events: Math.round(totalEnergyImpact * 100) / 100,
-        sleep: Math.round(sleepModifier * 100) / 100,
-        stress: Math.round(stressModifier * 100) / 100,
-        formula: `${baseEnergy.toFixed(2)} + ${totalEnergyImpact.toFixed(2)} + ${sleepModifier.toFixed(2)} + ${stressModifier.toFixed(2)} = ${finalEnergy.toFixed(1)}`
+        base: baseEnergy,
+        events: totalEnergyImpact,
+        sleep: sleepModifier,
+        stress: stressModifier,
+        formula: `${baseEnergy} ${totalEnergyImpact >= 0 ? '+' : ''} ${totalEnergyImpact} ${sleepModifier >= 0 ? '+' : ''} ${sleepModifier} ${stressModifier >= 0 ? '+' : ''} ${stressModifier} = ${finalEnergy}`
       }
     };
 

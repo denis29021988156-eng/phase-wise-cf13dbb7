@@ -101,7 +101,7 @@ serve(async (req) => {
           return eventDate === date;
         });
 
-        // Calculate impact for each event
+        // Calculate impact for each event (in points)
         let totalEventImpact = 0;
         const eventsWithImpact = [];
 
@@ -126,12 +126,13 @@ serve(async (req) => {
 
             if (!coeffError && coeffData) {
               const impact = coeffData.finalImpact || 0;
-              // Scale impact to 0-100 range (multiply by 20 to convert from -0.5..0.5 to -10..10)
-              totalEventImpact += impact * 20;
+              // Convert coefficient (-0.5..0.5) to points (-25..25)
+              const impactPoints = Math.round(impact * 50);
+              totalEventImpact += impactPoints;
               
               eventsWithImpact.push({
                 name: event.title,
-                impact: Number(impact.toFixed(2)),
+                impact: impactPoints, // Now in points
                 time: new Date(event.start_time).toLocaleTimeString('ru-RU', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
@@ -152,7 +153,7 @@ serve(async (req) => {
           cycle_phase: cyclePhase,
           events: eventsWithImpact,
           base_wellness: baseWellness,
-          events_impact: Number(totalEventImpact.toFixed(1))
+          events_impact: totalEventImpact
         };
       })
     );

@@ -20,6 +20,7 @@ import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
 import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculationBreakdown';
 import { WeekForecast } from '@/components/energy/WeekForecast';
 import { SymptomsInput } from '@/components/energy/SymptomsInput';
+import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
 import {
   Dialog,
   DialogContent,
@@ -787,8 +788,17 @@ const Energy = () => {
               </main>
 
               {/* RIGHT SIDEBAR - Compact, no scroll */}
-              <aside className="border-l border-border bg-card/30 overflow-hidden">
-                <div className="p-3 space-y-3 h-full flex flex-col">
+              <aside className="border-l border-border bg-card/30 overflow-y-auto">
+                <div className="p-3 space-y-3">
+                  <EnergyBalanceCard
+                    baseEnergy={energyBreakdown.calculation.base}
+                    eventsImpact={energyBreakdown.calculation.events}
+                    sleepModifier={energyBreakdown.calculation.sleep}
+                    stressModifier={energyBreakdown.calculation.stress}
+                    finalEnergy={energyBreakdown.finalEnergy}
+                    events={energyBreakdown.events || []}
+                  />
+                  
                   {energyBreakdown.events && energyBreakdown.events.length > 0 && (
                     <Card className="border-border/50">
                       <CardHeader className="pb-2 pt-3 px-3">
@@ -840,6 +850,15 @@ const Energy = () => {
               score={wellnessIndex}
               phase={energyBreakdown.cyclePhase || 'follicular'}
               date={energyBreakdown.today}
+            />
+            
+            <EnergyBalanceCard
+              baseEnergy={energyBreakdown.calculation.base}
+              eventsImpact={energyBreakdown.calculation.events}
+              sleepModifier={energyBreakdown.calculation.sleep}
+              stressModifier={energyBreakdown.calculation.stress}
+              finalEnergy={energyBreakdown.finalEnergy}
+              events={energyBreakdown.events || []}
             />
             
             {energyBreakdown.events && energyBreakdown.events.length > 0 && (

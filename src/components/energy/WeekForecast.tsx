@@ -189,7 +189,10 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
                   {event.impact < 0 ? '⚠️' : '✅'}
                 </span>
                 <span className="font-semibold">{event.dayOfWeek}:</span>{' '}
-                <span className="truncate inline-block max-w-[80%]">{event.name}</span>
+                <span className="truncate inline-block max-w-[60%]">{event.name}</span>
+                <span className={`ml-1 font-bold ${event.impact < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {event.impact > 0 ? '+' : ''}{event.impact}
+                </span>
               </div>
             ));
           })()}
