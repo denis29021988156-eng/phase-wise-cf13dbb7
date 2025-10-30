@@ -21,6 +21,7 @@ import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculatio
 import { WeekForecast } from '@/components/energy/WeekForecast';
 import { SymptomsInput } from '@/components/energy/SymptomsInput';
 import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
+import { EnergySidebar } from '@/components/energy/EnergySidebar';
 import {
   Dialog,
   DialogContent,
@@ -603,19 +604,19 @@ const Energy = () => {
       const isPredicted = data.type === 'predicted';
       
       return (
-        <div className="bg-white/95 backdrop-blur-sm border-2 p-4 rounded-2xl shadow-2xl animate-scale-in" style={{ borderColor: isPredicted ? '#EC4899' : '#8B5CF6' }}>
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-2 p-4 rounded-2xl shadow-2xl animate-scale-in" style={{ borderColor: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: isPredicted ? '#EC4899' : '#8B5CF6' }} />
-            <p className="font-semibold text-[#374151]">{data.date}</p>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: isPredicted ? '#8B5CF6' : '#3B82F6' }} />
+            <p className="font-semibold text-foreground">{data.date}</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold" style={{ color: isPredicted ? '#EC4899' : '#8B5CF6' }}>
+            <span className="text-2xl font-bold" style={{ color: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
               {data.wellness}
             </span>
-            <span className="text-sm text-gray-500">/ 100</span>
+            <span className="text-sm text-muted-foreground">/ 100</span>
           </div>
           {isPredicted && data.note && (
-            <p className="text-xs text-gray-600 mt-2 pt-2 border-t" style={{ borderColor: '#EC4899' }}>
+            <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
               💡 {data.note}
             </p>
           )}
@@ -792,61 +793,51 @@ const Energy = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="min-h-screen bg-background">
       {loadingBreakdown ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
         </div>
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
-          {/* Desktop Layout with Fixed Sidebars */}
-          <div className="hidden lg:grid lg:grid-rows-[50px_1fr_auto] lg:h-screen lg:overflow-hidden">
-            {/* Header - Fixed */}
-            <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-              <div className="h-full flex items-center justify-between px-4">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  {t('symptoms.dashboard')}
-                </h1>
-                <Button
-                  onClick={() => setIsReportDialogOpen(true)}
-                  className="bg-[#2E8B57] hover:bg-[#267347] text-white"
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  📊 Получить отчет за неделю
-                </Button>
-              </div>
-            </header>
+          {/* Desktop Layout with Sidebar */}
+          <div className="hidden lg:grid lg:grid-cols-[280px_1fr] lg:h-screen lg:overflow-hidden">
+            {/* LEFT SIDEBAR - Fixed scrollable */}
+            <aside className="border-r border-border bg-card/50">
+              <EnergySidebar
+                wellnessIndex={wellnessIndex}
+                currentLog={currentLog}
+                onUpdate={setCurrentLog}
+                onSave={handleSave}
+                loading={loading}
+                physicalOptions={physicalOptions}
+                moodOptions={moodOptions}
+                phase={energyBreakdown.cyclePhase || 'follicular'}
+              />
+            </aside>
 
-            {/* Main Content Area with Sidebars - No overflow */}
-            <div className="grid grid-cols-[260px_1fr_300px] h-full overflow-hidden">
-              {/* LEFT SIDEBAR - Scrollable symptoms */}
-              <aside className="border-r border-border bg-card/30 overflow-y-auto">
-                <div className="p-3 space-y-3">
-                  <EnergyGauge 
-                    score={wellnessIndex}
-                    phase={energyBreakdown.cyclePhase || 'follicular'}
-                    date={energyBreakdown.today}
-                  />
-                  
-                  <SymptomsInput
-                    currentLog={currentLog}
-                    onUpdate={setCurrentLog}
-                    onSave={handleSave}
-                    loading={loading}
-                    physicalOptions={physicalOptions}
-                    moodOptions={moodOptions}
-                  />
-                </div>
-              </aside>
-
-              {/* CENTER - Large Energy Graph */}
-              <main className="flex items-center justify-center p-3">
-                <Card className="w-full h-full overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card via-card to-accent/5">
-                  <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {/* MAIN CONTENT - Graph and info */}
+            <main className="overflow-y-auto">
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold text-foreground">
                       Энергетический баланс
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">15 дней истории и 30-дневный прогноз</p>
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">15 дней истории и 30-дневный прогноз</p>
+                  </div>
+                  <Button
+                    onClick={() => setIsReportDialogOpen(true)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Отчет за неделю
+                  </Button>
+                </div>
+
+                <Card className="w-full overflow-hidden border shadow-lg bg-card">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <p className="text-xs text-muted-foreground">График энергии</p>
                   </CardHeader>
                   <CardContent className="p-0">
                      {isLoadingPredictions ? (
@@ -862,20 +853,20 @@ const Energy = () => {
                         <p className="text-sm text-foreground font-medium">Начните добавлять данные</p>
                         <p className="text-xs text-muted-foreground">График появится после первой записи</p>
                       </div>
-                    ) : (
+                     ) : (
                       <>
-                        <ResponsiveContainer width="100%" height={250}>
-                          <AreaChart data={getChartData()} margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                        <ResponsiveContainer width="100%" height={400}>
+                          <AreaChart data={getChartData()} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4}/>
-                                <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.2}/>
-                                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05}/>
+                                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4}/>
+                                <stop offset="50%" stopColor="#3B82F6" stopOpacity={0.2}/>
+                                <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.05}/>
                               </linearGradient>
                               <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#EC4899" stopOpacity={0.25}/>
-                                <stop offset="50%" stopColor="#EC4899" stopOpacity={0.12}/>
-                                <stop offset="100%" stopColor="#EC4899" stopOpacity={0.03}/>
+                                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                                <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.15}/>
+                                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05}/>
                               </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.2} />
@@ -894,52 +885,50 @@ const Energy = () => {
                             />
                             <Tooltip content={<CustomTooltip />} />
                             
-                            {/* Actual - Solid Purple line */}
+                            {/* Actual - Solid Blue line */}
                             <Area
                               type="monotone"
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'actual')}
-                              stroke="#8B5CF6"
-                              strokeWidth={3.5}
+                              stroke="#3B82F6"
+                              strokeWidth={2.5}
                               fill="url(#gradientActual)"
-                              dot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
-                              activeDot={{ r: 7, fill: '#8B5CF6', strokeWidth: 3, stroke: '#fff' }}
+                              dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
+                              activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
                             />
                             
-                            {/* Predicted - Dashed Pink line */}
+                            {/* Predicted - Dashed Purple line */}
                             <Area
                               type="monotone"
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'predicted')}
-                              stroke="#EC4899"
-                              strokeWidth={3}
-                              strokeDasharray="10 6"
+                              stroke="#8B5CF6"
+                              strokeWidth={2.5}
+                              strokeDasharray="8 4"
                               fill="url(#gradientPredicted)"
-                              dot={{ r: 4, fill: '#EC4899', strokeWidth: 2, stroke: '#fff' }}
-                              activeDot={{ r: 6, fill: '#EC4899', strokeWidth: 2, stroke: '#fff' }}
+                              dot={{ r: 3, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
+                              activeDot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
                             />
                           </AreaChart>
                         </ResponsiveContainer>
                         
-                        <div className="flex items-center justify-center gap-6 mt-2">
+                        <div className="flex items-center justify-center gap-8 mt-3 pb-2">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-1 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
-                            <span className="text-xs text-foreground font-medium">Факт</span>
+                            <div className="w-10 h-1.5 rounded-full bg-blue-500" />
+                            <span className="text-sm text-foreground font-medium">Было</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-0.5 rounded-full border-t-2 border-dashed" style={{ borderColor: '#EC4899' }} />
-                            <span className="text-xs text-foreground font-medium">Прогноз</span>
+                            <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-purple-500" />
+                            <span className="text-sm text-foreground font-medium">Прогноз</span>
                           </div>
                         </div>
                       </>
                     )}
                   </CardContent>
                 </Card>
-              </main>
 
-              {/* RIGHT SIDEBAR - Compact, no scroll */}
-              <aside className="border-l border-border bg-card/30 overflow-y-auto">
-                <div className="p-3 space-y-3">
+                {/* Additional Info Cards */}
+                <div className="grid grid-cols-2 gap-4">
                   <EnergyBalanceCard
                     baseEnergy={energyBreakdown.calculation.base}
                     eventsImpact={energyBreakdown.calculation.events}
@@ -949,36 +938,31 @@ const Energy = () => {
                     events={energyBreakdown.events || []}
                   />
                   
-                  {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-                    <Card className="border-border/50">
-                      <CardHeader className="pb-2 pt-3 px-3">
-                        <CardTitle className="text-xs">События сегодня</CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-3 pb-3">
-                        <EventsImpactSection
-                          events={energyBreakdown.events}
-                          cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                  
                   <EnergyCalculationBreakdown
                     calculation={energyBreakdown.calculation}
                     confidence={energyBreakdown.confidence || 50}
                   />
                 </div>
-              </aside>
-            </div>
 
-            {/* BOTTOM: Week Forecast - Compact, no scroll */}
-            <footer className="border-t border-border bg-card/50 overflow-hidden flex-shrink-0">
-              <div className="p-3">
+                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+                  <Card className="border-border/50">
+                    <CardHeader className="pb-2 pt-3 px-4">
+                      <CardTitle className="text-sm">События сегодня</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-3">
+                      <EventsImpactSection
+                        events={energyBreakdown.events}
+                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
                 )}
               </div>
-            </footer>
+            </main>
           </div>
 
           {/* Mobile Layout - Vertical */}
