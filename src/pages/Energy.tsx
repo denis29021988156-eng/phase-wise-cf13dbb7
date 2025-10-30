@@ -459,11 +459,20 @@ const Energy = () => {
   };
 
   const getChartData = () => {
-    const historicalData = history.slice().reverse().map(h => ({
-      date: new Date(h.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
-      wellness: h.wellness_index,
-      type: 'actual'
-    }));
+    const historicalData = history
+      .slice()
+      .reverse()
+      .map((h) => {
+        if (!h.date) return null as any;
+        const d = new Date(h.date);
+        if (isNaN(d.getTime())) return null as any;
+        return {
+          date: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
+          wellness: h.wellness_index,
+          type: 'actual',
+        };
+      })
+      .filter(Boolean) as any[];
 
     const today = new Date();
     const predictedData = predictions.map((p, idx) => {
@@ -811,9 +820,14 @@ const Energy = () => {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between gap-2">
-              {history.reverse().map((day) => {
-                const date = new Date(day.date);
-                const dayName = date.toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { weekday: 'short' });
+              {history
+                .slice()
+                .reverse()
+                .map((day) => {
+                  if (!day.date) return null;
+                  const d = new Date(day.date);
+                  if (isNaN(d.getTime())) return null;
+                  const dayName = d.toLocaleDateString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { weekday: 'short' });
                 
                 return (
                   <div key={day.date} className="flex flex-col items-center gap-2">
