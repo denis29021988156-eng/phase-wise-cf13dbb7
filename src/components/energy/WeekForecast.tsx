@@ -64,7 +64,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
           return (
             <div 
               key={idx} 
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all hover:scale-105 ${getPhaseBackground(day.cycle_phase)}`}
+              className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 transition-all hover:scale-105 shadow-sm ${getPhaseBackground(day.cycle_phase)}`}
             >
               <span className="text-[10px] font-bold uppercase text-muted-foreground">
                 {dayOfWeek}
@@ -110,7 +110,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
               return day.events?.slice(0, 2).map((event: any, eidx: number) => (
                 <div
                   key={`${idx}-${eidx}`}
-                  className={`p-1.5 rounded text-[10px] border ${
+                  className={`p-2 rounded-xl text-[10px] border-2 shadow-sm ${
                     event.impact < -0.3
                       ? 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
                       : 'bg-green-500/10 border-green-500/30 text-green-900 dark:text-green-300'
@@ -127,7 +127,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
         </div>
         
         {!weekForecast.some(day => day.events && day.events.length > 0) && (
-          <p className="text-[10px] text-muted-foreground text-center py-2 bg-muted/30 rounded">
+          <p className="text-[10px] text-muted-foreground text-center py-2 bg-muted/30 rounded-xl border border-border/50">
             Ключевых событий на этой неделе нет
           </p>
         )}
