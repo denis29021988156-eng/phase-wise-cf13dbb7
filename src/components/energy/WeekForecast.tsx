@@ -139,39 +139,61 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
         </h4>
         
         <div className="grid grid-cols-2 gap-1.5">
-          {weekForecast
-            .slice(0, 7)
-            .filter(day => day.events && day.events.length > 0 && day.date)
-            .flatMap((day, idx) => {
-              const dayDate = new Date(day.date);
-              if (isNaN(dayDate.getTime())) return [];
-              
-              const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
-              
-              return day.events?.slice(0, 2).map((event: any, eidx: number) => (
-                <div
-                  key={`${idx}-${eidx}`}
-                  className={`p-2 rounded-xl text-[10px] border-2 shadow-sm ${
-                    event.impact < -0.3
-                      ? 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
-                      : 'bg-green-500/10 border-green-500/30 text-green-900 dark:text-green-300'
-                  }`}
-                >
-                  <span className="mr-1">
-                    {event.impact < -0.3 ? '⚠️' : '✅'}
-                  </span>
-                  <span className="font-semibold">{dayOfWeek}:</span>{' '}
-                  <span className="truncate inline-block max-w-[80%]">{event.name}</span>
-                </div>
-              )) || [];
-            })}
+          {(() => {
+            // Collect all events with their dates
+            const allEventsWithDates = weekForecast
+              .slice(0, 7)
+              .filter(day => day.events && day.events.length > 0 && day.date)
+              .flatMap(day => {
+                const dayDate = new Date(day.date);
+                if (isNaN(dayDate.getTime())) return [];
+                const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
+                
+                return (day.events || []).map(event => ({
+                  ...event,
+                  dayOfWeek,
+                  date: day.date
+                }));
+              });
+
+            if (allEventsWithDates.length === 0) {
+              return (
+                <p className="text-[10px] text-muted-foreground text-center py-2 bg-muted/30 rounded-xl border border-border/50 col-span-2">
+                  Ключевых событий на этой неделе нет
+                </p>
+              );
+            }
+
+            // Sort by impact
+            const sortedEvents = [...allEventsWithDates].sort((a, b) => a.impact - b.impact);
+            
+            // Get 2 most energy-draining (lowest/most negative impact)
+            const mostDraining = sortedEvents.slice(0, 2);
+            
+            // Get 2 most beneficial (highest/most positive impact)
+            const mostBeneficial = sortedEvents.slice(-2).reverse();
+            
+            // Combine
+            const keyEvents = [...mostDraining, ...mostBeneficial];
+
+            return keyEvents.map((event, idx) => (
+              <div
+                key={`${event.date}-${event.name}-${idx}`}
+                className={`p-2 rounded-xl text-[10px] border-2 shadow-sm ${
+                  event.impact < 0
+                    ? 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
+                    : 'bg-green-500/10 border-green-500/30 text-green-900 dark:text-green-300'
+                }`}
+              >
+                <span className="mr-1">
+                  {event.impact < 0 ? '⚠️' : '✅'}
+                </span>
+                <span className="font-semibold">{event.dayOfWeek}:</span>{' '}
+                <span className="truncate inline-block max-w-[80%]">{event.name}</span>
+              </div>
+            ));
+          })()}
         </div>
-        
-        {!weekForecast.some(day => day.events && day.events.length > 0) && (
-          <p className="text-[10px] text-muted-foreground text-center py-2 bg-muted/30 rounded-xl border border-border/50">
-            Ключевых событий на этой неделе нет
-          </p>
-        )}
       </div>
     </div>
   );
