@@ -583,19 +583,19 @@ const Energy = () => {
       const isPredicted = data.type === 'predicted';
       
       return (
-        <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-200 p-4 rounded-2xl shadow-2xl animate-scale-in">
+        <div className="bg-white/95 backdrop-blur-sm border-2 p-4 rounded-2xl shadow-2xl animate-scale-in" style={{ borderColor: isPredicted ? '#EC4899' : '#8B5CF6' }}>
           <div className="flex items-center gap-2 mb-2">
-            <div className={`w-3 h-3 rounded-full ${isPredicted ? 'bg-pink-400' : 'bg-purple-500'}`} />
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: isPredicted ? '#EC4899' : '#8B5CF6' }} />
             <p className="font-semibold text-[#374151]">{data.date}</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold" style={{ color: isPredicted ? '#EC4899' : '#8B5CF6' }}>
               {data.wellness}
             </span>
             <span className="text-sm text-gray-500">/ 100</span>
           </div>
           {isPredicted && data.note && (
-            <p className="text-xs text-gray-600 mt-2 pt-2 border-t border-purple-100">
+            <p className="text-xs text-gray-600 mt-2 pt-2 border-t" style={{ borderColor: '#EC4899' }}>
               💡 {data.note}
             </p>
           )}
@@ -677,19 +677,17 @@ const Energy = () => {
                           <AreaChart data={getChartData()} margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
+                                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4}/>
+                                <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.2}/>
+                                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05}/>
                               </linearGradient>
                               <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.2}/>
-                                <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0.02}/>
-                              </linearGradient>
-                              <linearGradient id="confidenceBand" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(var(--muted))" stopOpacity={0.15}/>
-                                <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity={0.05}/>
+                                <stop offset="0%" stopColor="#EC4899" stopOpacity={0.25}/>
+                                <stop offset="50%" stopColor="#EC4899" stopOpacity={0.12}/>
+                                <stop offset="100%" stopColor="#EC4899" stopOpacity={0.03}/>
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.2} />
                             <XAxis 
                               dataKey="date" 
                               stroke="hsl(var(--muted-foreground))"
@@ -705,50 +703,40 @@ const Energy = () => {
                             />
                             <Tooltip content={<CustomTooltip />} />
                             
-                            {/* Confidence band */}
-                            <Area
-                              type="monotone"
-                              dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'predicted')}
-                              stroke="none"
-                              fill="url(#confidenceBand)"
-                              strokeWidth={0}
-                            />
-                            
-                            {/* Actual - Purple solid */}
+                            {/* Actual - Solid Purple line */}
                             <Area
                               type="monotone"
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'actual')}
-                              stroke="hsl(var(--primary))"
-                              strokeWidth={3}
+                              stroke="#8B5CF6"
+                              strokeWidth={3.5}
                               fill="url(#gradientActual)"
-                              dot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
-                              activeDot={{ r: 7, fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: 'hsl(var(--background))' }}
+                              dot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
+                              activeDot={{ r: 7, fill: '#8B5CF6', strokeWidth: 3, stroke: '#fff' }}
                             />
                             
-                            {/* Predicted - Pink dashed */}
+                            {/* Predicted - Dashed Pink line */}
                             <Area
                               type="monotone"
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'predicted')}
-                              stroke="hsl(var(--secondary))"
-                              strokeWidth={3.5}
-                              strokeDasharray="8 4"
+                              stroke="#EC4899"
+                              strokeWidth={3}
+                              strokeDasharray="10 6"
                               fill="url(#gradientPredicted)"
-                              dot={{ r: 4, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
-                              activeDot={{ r: 6, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                              dot={{ r: 4, fill: '#EC4899', strokeWidth: 2, stroke: '#fff' }}
+                              activeDot={{ r: 6, fill: '#EC4899', strokeWidth: 2, stroke: '#fff' }}
                             />
                           </AreaChart>
                         </ResponsiveContainer>
                         
                         <div className="flex items-center justify-center gap-6 mt-2">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-1 rounded-full bg-primary shadow-sm" />
+                            <div className="w-8 h-1 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
                             <span className="text-xs text-foreground font-medium">Факт</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-1 rounded-full border-2 border-dashed border-secondary" />
+                            <div className="w-8 h-0.5 rounded-full border-t-2 border-dashed" style={{ borderColor: '#EC4899' }} />
                             <span className="text-xs text-foreground font-medium">Прогноз</span>
                           </div>
                         </div>
