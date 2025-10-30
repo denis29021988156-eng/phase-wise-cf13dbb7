@@ -43,7 +43,11 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
       <div className="bg-card rounded-lg p-4 shadow-sm mb-4">
         <div className="flex justify-between gap-1">
           {weekForecast.map((day, idx) => {
+            if (!day.date) return null;
+            
             const dayDate = new Date(day.date);
+            if (isNaN(dayDate.getTime())) return null;
+            
             const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
             const dateShort = format(dayDate, 'dd.MM');
             
@@ -74,9 +78,11 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
         </h4>
         
         {weekForecast
-          .filter(day => day.events && day.events.length > 0)
+          .filter(day => day.events && day.events.length > 0 && day.date)
           .map((day, idx) => {
             const dayDate = new Date(day.date);
+            if (isNaN(dayDate.getTime())) return null;
+            
             const dayOfWeek = format(dayDate, 'EEEE', { locale: ru });
             
             return day.events?.map((event, eidx) => (

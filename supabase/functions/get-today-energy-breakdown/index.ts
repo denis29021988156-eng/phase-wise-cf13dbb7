@@ -212,6 +212,8 @@ serve(async (req) => {
       }
     };
 
+    console.log('Energy breakdown result:', JSON.stringify(result, null, 2));
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -95,13 +95,18 @@ const Energy = () => {
     try {
       const { data, error } = await supabase.functions.invoke('get-today-energy-breakdown');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Energy breakdown error:', error);
+        throw error;
+      }
       
+      console.log('Energy breakdown data received:', data);
       setEnergyBreakdown(data);
       
       // Also load week forecast
       const { data: predictionData, error: predError } = await supabase.functions.invoke('predict-wellness');
       if (!predError && predictionData) {
+        console.log('Predictions data received:', predictionData);
         setWeekForecast(predictionData.predictions || []);
       }
     } catch (error: any) {
@@ -515,25 +520,27 @@ const Energy = () => {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
           </div>
-        ) : energyBreakdown ? (
+        ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
           <>
             <EnergyGauge 
-              score={energyBreakdown.finalEnergy}
-              phase={energyBreakdown.cyclePhase}
+              score={energyBreakdown.finalEnergy || 3}
+              phase={energyBreakdown.cyclePhase || 'follicular'}
               date={energyBreakdown.today}
             />
             
-            <EventsImpactSection
-              events={energyBreakdown.events || []}
-              cyclePhase={energyBreakdown.cyclePhase}
-            />
+            {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+              <EventsImpactSection
+                events={energyBreakdown.events}
+                cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+              />
+            )}
             
             <EnergyCalculationBreakdown
               calculation={energyBreakdown.calculation}
-              confidence={energyBreakdown.confidence}
+              confidence={energyBreakdown.confidence || 50}
             />
             
-            {weekForecast.length > 0 && (
+            {weekForecast && weekForecast.length > 0 && (
               <WeekForecast forecast={weekForecast} />
             )}
           </>

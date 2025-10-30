@@ -50,7 +50,7 @@ export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsIm
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-muted-foreground">
-                      🕐 {format(new Date(event.start_time), 'HH:mm')}
+                      🕐 {event.start_time ? format(new Date(event.start_time), 'HH:mm') : '--:--'}
                     </span>
                   </div>
                   <span className="font-medium text-sm">{event.title}</span>

@@ -16,7 +16,7 @@ export function EnergyGauge({ score, phase, date }: EnergyGaugeProps) {
     luteal: '🟣 Лютеиновая'
   };
 
-  const formattedDate = format(new Date(date), 'd MMMM yyyy', { locale: ru });
+  const formattedDate = date ? format(new Date(date), 'd MMMM yyyy', { locale: ru }) : 'Сегодня';
 
   return (
     <div className="flex flex-col items-center p-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-2xl mb-6">
