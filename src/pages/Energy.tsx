@@ -103,11 +103,13 @@ const Energy = () => {
       console.log('Energy breakdown data received:', data);
       setEnergyBreakdown(data);
       
-      // Also load week forecast
-      const { data: predictionData, error: predError } = await supabase.functions.invoke('predict-wellness');
-      if (!predError && predictionData) {
-        console.log('Predictions data received:', predictionData);
-        setWeekForecast(predictionData.predictions || []);
+      // Also load week forecast with events
+      const { data: forecastData, error: forecastError } = await supabase.functions.invoke('get-week-forecast-with-events');
+      if (!forecastError && forecastData) {
+        console.log('Week forecast data received:', forecastData);
+        setWeekForecast(forecastData.forecast || []);
+      } else {
+        console.error('Error loading week forecast:', forecastError);
       }
     } catch (error: any) {
       console.error('Error loading energy breakdown:', error);

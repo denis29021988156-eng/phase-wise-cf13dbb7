@@ -89,3 +89,6 @@ verify_jwt = true
 
 [functions.calculate-event-coefficient]
 verify_jwt = false
+
+[functions.get-week-forecast-with-events]
+verify_jwt = true
