@@ -520,42 +520,205 @@ const Energy = () => {
   const wellnessIndex = calculateWellnessIndex(currentLog);
 
   return (
-    <div className="min-h-screen p-4 pb-24">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">{t('symptoms.title')}</h1>
-        
-        {/* Energy Breakdown Section */}
-        {loadingBreakdown ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
-          </div>
-        ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
-          <>
-            <EnergyGauge 
-              score={energyBreakdown.finalEnergy || 3}
-              phase={energyBreakdown.cyclePhase || 'follicular'}
-              date={energyBreakdown.today}
-            />
-            
-            {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-              <EventsImpactSection
-                events={energyBreakdown.events}
-                cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-              />
-            )}
-            
-            <EnergyCalculationBreakdown
-              calculation={energyBreakdown.calculation}
-              confidence={energyBreakdown.confidence || 50}
-            />
-            
+    <div className="min-h-screen p-4 pb-24 bg-gradient-to-br from-background via-background to-accent/5">
+      {/* Header */}
+      <div className="h-[60px] flex items-center justify-between max-w-[1400px] mx-auto mb-6">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          {t('symptoms.title')}
+        </h1>
+      </div>
+
+      {loadingBreakdown ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
+        </div>
+      ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
+        <>
+          {/* Desktop 3-column layout */}
+          <div className="max-w-[1400px] mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-6 mb-6">
+              {/* LEFT: EnergyGauge + Physical State */}
+              <div className="space-y-4">
+                <EnergyGauge 
+                  score={energyBreakdown.finalEnergy || 3}
+                  phase={energyBreakdown.cyclePhase || 'follicular'}
+                  date={energyBreakdown.today}
+                />
+                
+                {/* Compact Physical State */}
+                <Card className="border-border/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
+                      {t('symptoms.physicalState')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      {physicalOptions.slice(0, 3).map(option => (
+                        <Badge
+                          key={option.id}
+                          variant={currentLog.physical_symptoms.includes(option.id) ? 'default' : 'outline'}
+                          className="cursor-pointer text-xs"
+                          onClick={() => toggleSelection('physical_symptoms', option.id)}
+                        >
+                          {option.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* CENTER: Large Energy Balance Graph */}
+              <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card via-card to-accent/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-2xl font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    Энергетический баланс
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">15 дней истории и 30-дневный прогноз</p>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  {isLoadingPredictions ? (
+                    <div className="h-[400px] flex flex-col items-center justify-center gap-4">
+                      <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                      <p className="text-foreground font-medium">{t('symptoms.loadingForecast')}</p>
+                    </div>
+                  ) : history.length === 0 ? (
+                    <div className="h-[400px] flex flex-col items-center justify-center gap-3 text-center px-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                        <Brain className="w-10 h-10 text-primary" />
+                      </div>
+                      <p className="text-foreground font-medium">{t('symptoms.startAddingData')}</p>
+                      <p className="text-sm text-muted-foreground">{t('symptoms.chartWillAppear')}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <AreaChart data={getChartData()} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
+                            </linearGradient>
+                            <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.2}/>
+                              <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0.02}/>
+                            </linearGradient>
+                            <linearGradient id="confidenceBand" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(var(--muted))" stopOpacity={0.15}/>
+                              <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity={0.05}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                          <XAxis 
+                            dataKey="date" 
+                            stroke="hsl(var(--muted-foreground))"
+                            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                            tickLine={{ stroke: 'hsl(var(--border))' }}
+                          />
+                          <YAxis 
+                            domain={[0, 100]} 
+                            ticks={[0, 25, 50, 75, 100]}
+                            stroke="hsl(var(--muted-foreground))"
+                            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                            tickLine={{ stroke: 'hsl(var(--border))' }}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          
+                          {/* Confidence band for predicted data */}
+                          <Area
+                            type="monotone"
+                            dataKey="wellness"
+                            data={getChartData().filter(d => d.type === 'predicted')}
+                            stroke="none"
+                            fill="url(#confidenceBand)"
+                            strokeWidth={0}
+                          />
+                          
+                          {/* Actual data - Purple solid line */}
+                          <Area
+                            type="monotone"
+                            dataKey="wellness"
+                            data={getChartData().filter(d => d.type === 'actual')}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={3}
+                            fill="url(#gradientActual)"
+                            dot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                            activeDot={{ r: 7, fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: 'hsl(var(--background))' }}
+                          />
+                          
+                          {/* Predicted data - Pink dashed line */}
+                          <Area
+                            type="monotone"
+                            dataKey="wellness"
+                            data={getChartData().filter(d => d.type === 'predicted')}
+                            stroke="hsl(var(--secondary))"
+                            strokeWidth={2.5}
+                            strokeDasharray="8 4"
+                            fill="url(#gradientPredicted)"
+                            dot={{ r: 4, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))', opacity: 0.8 }}
+                            activeDot={{ r: 6, fill: 'hsl(var(--secondary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                      
+                      <div className="flex items-center justify-center gap-8 mt-4 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-10 h-1 rounded-full bg-primary shadow-sm" />
+                          <span className="text-sm text-foreground font-medium">{t('symptoms.actualData')}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-10 h-1 rounded-full border-2 border-dashed border-secondary" />
+                          <span className="text-sm text-foreground font-medium">{t('symptoms.aiForecast')}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-10 h-3 rounded bg-muted/50" />
+                          <span className="text-xs text-muted-foreground">Диапазон прогноза</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* RIGHT: Events + Calculations */}
+              <div className="space-y-4">
+                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+                  <Card className="border-border/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">События сегодня</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <EventsImpactSection
+                        events={energyBreakdown.events}
+                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                
+                <EnergyCalculationBreakdown
+                  calculation={energyBreakdown.calculation}
+                  confidence={energyBreakdown.confidence || 50}
+                />
+              </div>
+            </div>
+
+            {/* BOTTOM: Week Forecast as 7-column grid */}
             {weekForecast && weekForecast.length > 0 && (
               <WeekForecast forecast={weekForecast} />
             )}
-          </>
-        ) : null}
+          </div>
+        </>
+      ) : (
+        <div className="max-w-2xl mx-auto">
+          <p className="text-center text-muted-foreground">Загрузка данных...</p>
+        </div>
+      )}
 
-      {/* Original Symptoms Logging Section */}
+      {/* Original Symptoms Logging Section (collapsed on desktop, accessible on mobile) */}
+      <div className="max-w-2xl mx-auto mt-8 space-y-6">
       <Card className="border-border/50 shadow-[var(--shadow-soft)]">
         <CardHeader className="text-center">
           <CardTitle className="text-lg">{t('symptoms.wellnessIndex')}</CardTitle>

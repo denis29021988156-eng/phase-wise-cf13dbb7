@@ -35,82 +35,119 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
 
   const weekForecast = forecast.slice(0, 7);
 
+  const getPhaseBackground = (phase?: string) => {
+    const backgrounds: Record<string, string> = {
+      menstrual: 'bg-red-500/10 dark:bg-red-500/20 border-red-500/30',
+      follicular: 'bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30',
+      ovulation: 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30',
+      luteal: 'bg-purple-500/10 dark:bg-purple-500/20 border-purple-500/30'
+    };
+    return backgrounds[phase || ''] || 'bg-muted/50 border-border';
+  };
+
   return (
-    <div className="p-4 bg-yellow-50/50 dark:bg-yellow-950/20 rounded-xl mb-6">
-      <h3 className="text-lg font-semibold mb-4">Энергия на неделю</h3>
+    <div className="w-full">
+      <h3 className="text-xl font-semibold mb-4 px-2">Прогноз на неделю</h3>
       
-      {/* Week Chart */}
-      <div className="bg-card rounded-lg p-4 shadow-sm mb-4 overflow-x-auto">
-        <div className="flex gap-3 min-w-max">
-          {weekForecast.map((day, idx) => {
-            if (!day.date) return null;
-            
-            const dayDate = new Date(day.date);
-            if (isNaN(dayDate.getTime())) return null;
-            
-            const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
-            const dateShort = format(dayDate, 'dd.MM');
-            
-            return (
-              <div key={idx} className="flex flex-col items-center gap-1 min-w-[70px]">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {dayOfWeek}
-                </span>
-                <span className={`text-lg font-bold ${getPhaseColor(day.cycle_phase)}`}>
+      {/* 7-column grid for week forecast */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+        {weekForecast.slice(0, 7).map((day, idx) => {
+          if (!day.date) return null;
+          
+          const dayDate = new Date(day.date);
+          if (isNaN(dayDate.getTime())) return null;
+          
+          const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
+          const dateShort = format(dayDate, 'dd.MM');
+          const hasEvents = day.events && day.events.length > 0;
+          
+          return (
+            <div 
+              key={idx} 
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-105 ${getPhaseBackground(day.cycle_phase)}`}
+            >
+              <span className="text-xs font-bold uppercase text-muted-foreground">
+                {dayOfWeek}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {dateShort}
+              </span>
+              <div className="flex flex-col items-center gap-1">
+                <span className={`text-3xl font-bold ${getPhaseColor(day.cycle_phase)}`}>
                   {day.wellness_index?.toFixed(1) || '?'}
                 </span>
-                <span className="text-base">
-                  {getPhaseEmoji(day.cycle_phase)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {dateShort}
-                </span>
+                <span className="text-xs text-muted-foreground">/5</span>
               </div>
-            );
-          })}
-        </div>
+              <span className="text-2xl">
+                {getPhaseEmoji(day.cycle_phase)}
+              </span>
+              
+              {hasEvents && (
+                <div className="flex flex-col gap-1 mt-2 w-full">
+                  {day.events.slice(0, 2).map((event: any, eidx: number) => (
+                    <div 
+                      key={eidx}
+                      className="text-[10px] px-2 py-1 rounded-md bg-background/50 text-center truncate"
+                      title={event.name}
+                    >
+                      {event.impact < -0.3 ? '⚠️' : '✅'} {event.name}
+                    </div>
+                  ))}
+                  {day.events.length > 2 && (
+                    <div className="text-[9px] text-muted-foreground text-center">
+                      +{day.events.length - 2} еще
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       
-      {/* Hot Events */}
-      <div className="space-y-2">
+      {/* Hot Events list */}
+      <div className="space-y-2 px-2">
         <h4 className="text-sm font-semibold flex items-center gap-2">
-          🔥 Ключевые события
+          🔥 Ключевые события недели
         </h4>
         
-        {weekForecast
-          .filter(day => day.events && day.events.length > 0 && day.date)
-          .map((day, idx) => {
-            const dayDate = new Date(day.date);
-            if (isNaN(dayDate.getTime())) return null;
-            
-            const dayOfWeek = format(dayDate, 'EEEE', { locale: ru });
-            
-            return day.events?.map((event, eidx) => (
-              <div
-                key={`${idx}-${eidx}`}
-                className={`p-2 rounded-lg text-sm ${
-                  event.impact < -0.3
-                    ? 'bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-300'
-                    : 'bg-green-100 dark:bg-green-950/30 text-green-900 dark:text-green-300'
-                }`}
-              >
-                <span className="mr-1">
-                  {event.impact < -0.3 ? '⚠️' : '✅'}
-                </span>
-                <span className="font-medium">{dayOfWeek}:</span>{' '}
-                {event.name}
-                {event.impact && (
-                  <span className="ml-1 font-semibold">
-                    ({event.impact > 0 ? '+' : ''}{event.impact.toFixed(2)})
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {weekForecast
+            .slice(0, 7)
+            .filter(day => day.events && day.events.length > 0 && day.date)
+            .map((day, idx) => {
+              const dayDate = new Date(day.date);
+              if (isNaN(dayDate.getTime())) return null;
+              
+              const dayOfWeek = format(dayDate, 'EEEE', { locale: ru });
+              
+              return day.events?.map((event: any, eidx: number) => (
+                <div
+                  key={`${idx}-${eidx}`}
+                  className={`p-3 rounded-lg text-sm border ${
+                    event.impact < -0.3
+                      ? 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
+                      : 'bg-green-500/10 border-green-500/30 text-green-900 dark:text-green-300'
+                  }`}
+                >
+                  <span className="mr-2">
+                    {event.impact < -0.3 ? '⚠️' : '✅'}
                   </span>
-                )}
-              </div>
-            ));
-          })}
+                  <span className="font-semibold">{dayOfWeek}:</span>{' '}
+                  {event.name}
+                  {event.impact && (
+                    <span className="ml-2 font-bold">
+                      ({event.impact > 0 ? '+' : ''}{event.impact.toFixed(2)})
+                    </span>
+                  )}
+                </div>
+              ));
+            })}
+        </div>
         
         {!weekForecast.some(day => day.events && day.events.length > 0) && (
-          <p className="text-sm text-muted-foreground text-center py-2">
-            Ключевых событий пока нет
+          <p className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-lg">
+            Ключевых событий на этой неделе нет
           </p>
         )}
       </div>
