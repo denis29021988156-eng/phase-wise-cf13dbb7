@@ -65,31 +65,6 @@ export function EnergyCalculationBreakdown({ calculation, confidence }: EnergyCa
           </span>
         </div>
       </div>
-      
-      {/* Confidence Badge */}
-      <div className="flex items-center justify-between mt-2 p-2 bg-card rounded-md">
-        <span className="text-[10px] text-muted-foreground">Точность:</span>
-        <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
-          {confidence}%
-        </Badge>
-      </div>
-      
-      {/* Formula Debug */}
-      <div className="mt-2">
-        <button
-          onClick={() => setShowFormula(!showFormula)}
-          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronDown className={`h-3 w-3 transition-transform ${showFormula ? 'rotate-180' : ''}`} />
-          📐 Формула
-        </button>
-        
-        {showFormula && (
-          <div className="mt-1 p-2 bg-muted rounded text-[9px]">
-            <code className="break-all">{calculation.formula}</code>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
