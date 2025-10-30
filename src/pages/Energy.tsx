@@ -8,7 +8,7 @@ import { MoonPhase } from '@/components/ui/moon-phase';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart, Brain, Zap, Moon, RefreshCw, Upload } from 'lucide-react';
+import { Heart, Brain, Zap, Moon, RefreshCw, Upload, BarChart3, Share2, Download } from 'lucide-react';
 import { useHealthKit } from '@/hooks/useHealthKit';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,14 @@ import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
 import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculationBreakdown';
 import { WeekForecast } from '@/components/energy/WeekForecast';
 import { SymptomsInput } from '@/components/energy/SymptomsInput';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface SymptomLog {
   energy: number;
@@ -61,6 +69,7 @@ const Energy = () => {
   const [predictions, setPredictions] = useState<any[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
   const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
   // Данные для выбора
   const physicalOptions = [
@@ -617,6 +626,20 @@ const Energy = () => {
 
   const wellnessIndex = calculateWellnessIndex(currentLog);
 
+  const handleShareReport = () => {
+    toast({
+      title: 'Ссылка скопирована!',
+      description: 'Скопируйте ссылку: gaia.ru?report=123',
+    });
+  };
+
+  const handleDownloadPDF = () => {
+    toast({
+      title: 'PDF генерируется...',
+      description: 'Готово!',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {loadingBreakdown ? (
@@ -629,10 +652,17 @@ const Energy = () => {
           <div className="hidden lg:grid lg:grid-rows-[50px_1fr_auto] lg:h-screen lg:overflow-hidden">
             {/* Header - Fixed */}
             <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-              <div className="h-full flex items-center px-4">
+              <div className="h-full flex items-center justify-between px-4">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                   Gaia Dashboard
                 </h1>
+                <Button
+                  onClick={() => setIsReportDialogOpen(true)}
+                  className="bg-[#2E8B57] hover:bg-[#267347] text-white"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  📊 Получить отчет за неделю
+                </Button>
               </div>
             </header>
 
@@ -793,9 +823,18 @@ const Energy = () => {
 
           {/* Mobile Layout - Vertical */}
           <div className="lg:hidden p-4 pb-24 space-y-6">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              {t('symptoms.title')}
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                {t('symptoms.title')}
+              </h1>
+              <Button
+                onClick={() => setIsReportDialogOpen(true)}
+                size="sm"
+                className="bg-[#2E8B57] hover:bg-[#267347] text-white"
+              >
+                <BarChart3 className="w-4 h-4" />
+              </Button>
+            </div>
             
             <EnergyGauge 
               score={wellnessIndex}
@@ -826,6 +865,42 @@ const Energy = () => {
         </div>
       )}
 
+      {/* Report Dialog */}
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              Ваш энергетический отчет готов!
+            </DialogTitle>
+            <DialogDescription className="pt-4 text-base leading-relaxed">
+              За последние 7 дней вы:
+              <ul className="mt-3 space-y-2 list-none">
+                <li>• Пик энергии: 8/10 (вторник)</li>
+                <li>• Самый продуктивный день: среда</li>
+                <li>• Лучший восстановитель: прогулка</li>
+              </ul>
+              <p className="mt-4 font-semibold">Поделитесь своим прогрессом!</p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={handleShareReport}
+              className="w-full sm:w-auto border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Поделиться в соцсетях
+            </Button>
+            <Button
+              onClick={handleDownloadPDF}
+              className="w-full sm:w-auto bg-[#2E8B57] hover:bg-[#267347] text-white"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Скачать PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
