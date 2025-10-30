@@ -586,7 +586,7 @@ const Energy = () => {
                     </CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">15 дней истории и 30-дневный прогноз</p>
                   </CardHeader>
-                  <CardContent className="pt-2 px-4 pb-4">
+                  <CardContent className="p-0">
                      {isLoadingPredictions ? (
                       <div className="h-[250px] flex flex-col items-center justify-center gap-3">
                         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
@@ -603,7 +603,7 @@ const Energy = () => {
                     ) : (
                       <>
                         <ResponsiveContainer width="100%" height={250}>
-                          <AreaChart data={getChartData()} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
+                          <AreaChart data={getChartData()} margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
