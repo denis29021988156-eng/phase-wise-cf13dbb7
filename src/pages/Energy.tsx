@@ -17,6 +17,7 @@ import { EnergyGauge } from '@/components/energy/EnergyGauge';
 import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
 import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculationBreakdown';
 import { WeekForecast } from '@/components/energy/WeekForecast';
+import { SymptomsInput } from '@/components/energy/SymptomsInput';
 
 interface SymptomLog {
   energy: number;
@@ -545,15 +546,6 @@ const Energy = () => {
     return 'text-green-500';
   };
 
-  const toggleSelection = (category: 'mood' | 'physical_symptoms', id: string) => {
-    const current = currentLog[category];
-    const updated = current.includes(id)
-      ? current.filter(item => item !== id)
-      : [...current, id];
-    
-    setCurrentLog({ ...currentLog, [category]: updated });
-  };
-
   const getChartData = () => {
     const historicalData = history
       .slice()
@@ -636,38 +628,23 @@ const Energy = () => {
 
             {/* Main Content Area with Sidebars - No overflow */}
             <div className="grid grid-cols-[260px_1fr_300px] h-full overflow-hidden">
-              {/* LEFT SIDEBAR - Compact, no scroll */}
-              <aside className="border-r border-border bg-card/30 overflow-hidden">
-                <div className="p-3 space-y-3 h-full flex flex-col">
+              {/* LEFT SIDEBAR - Scrollable symptoms */}
+              <aside className="border-r border-border bg-card/30 overflow-y-auto">
+                <div className="p-3 space-y-3">
                   <EnergyGauge 
                     score={energyBreakdown.finalEnergy || 3}
                     phase={energyBreakdown.cyclePhase || 'follicular'}
                     date={energyBreakdown.today}
                   />
                   
-                  {/* Physical State */}
-                  <Card className="border-border/50">
-                    <CardHeader className="pb-2 pt-3 px-3">
-                      <CardTitle className="text-xs flex items-center gap-1.5">
-                        <Heart className="h-3.5 w-3.5" />
-                        Физическое состояние
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3">
-                      <div className="flex flex-wrap gap-1">
-                        {physicalOptions.slice(0, 4).map(option => (
-                          <Badge
-                            key={option.id}
-                            variant={currentLog.physical_symptoms.includes(option.id) ? 'default' : 'outline'}
-                            className="cursor-pointer text-[10px] py-0.5 px-2"
-                            onClick={() => toggleSelection('physical_symptoms', option.id)}
-                          >
-                            {option.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <SymptomsInput
+                    currentLog={currentLog}
+                    onUpdate={setCurrentLog}
+                    onSave={handleSave}
+                    loading={loading}
+                    physicalOptions={physicalOptions}
+                    moodOptions={moodOptions}
+                  />
                 </div>
               </aside>
 
