@@ -654,7 +654,7 @@ const Energy = () => {
             <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
               <div className="h-full flex items-center justify-between px-4">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  Gaia Dashboard
+                  {t('symptoms.dashboard')}
                 </h1>
                 <Button
                   onClick={() => setIsReportDialogOpen(true)}

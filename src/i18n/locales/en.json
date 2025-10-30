@@ -190,6 +190,7 @@
   },
   "symptoms": {
     "title": "My Energy",
+    "dashboard": "Dashboard",
     "saveError": "Failed to save data",
     "saving": "Saving...",
     "save": "Save",
