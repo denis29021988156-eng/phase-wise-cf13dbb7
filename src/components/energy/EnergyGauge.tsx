@@ -11,8 +11,8 @@ interface EnergyGaugeProps {
 export function EnergyGauge({ score, phase, date }: EnergyGaugeProps) {
   const phaseLabels: Record<string, string> = {
     menstrual: '🔴 Менструация',
-    follicular: '🟡 Фолликулярная',
-    ovulation: '🟢 Овуляция',
+    follicular: '🔵 Фолликулярная',
+    ovulation: '🟡 Овуляция',
     luteal: '🟣 Лютеиновая'
   };
 

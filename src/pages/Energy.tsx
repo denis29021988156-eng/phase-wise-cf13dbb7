@@ -541,10 +541,10 @@ const Energy = () => {
             </header>
 
             {/* Main Content Area with Sidebars - No overflow */}
-            <div className="grid grid-cols-[260px_1fr_300px] overflow-hidden">
-              {/* LEFT SIDEBAR - Compact */}
-              <aside className="border-r border-border bg-card/30 overflow-y-auto">
-                <div className="p-3 space-y-3">
+            <div className="grid grid-cols-[260px_1fr_300px] h-full overflow-hidden">
+              {/* LEFT SIDEBAR - Compact, no scroll */}
+              <aside className="border-r border-border bg-card/30 overflow-hidden">
+                <div className="p-3 space-y-3 h-full flex flex-col">
                   <EnergyGauge 
                     score={energyBreakdown.finalEnergy || 3}
                     phase={energyBreakdown.cyclePhase || 'follicular'}
@@ -578,8 +578,8 @@ const Energy = () => {
               </aside>
 
               {/* CENTER - Large Energy Graph */}
-              <main className="overflow-y-auto">
-                <Card className="h-full overflow-hidden border-0 m-3 shadow-lg bg-gradient-to-br from-card via-card to-accent/5">
+              <main className="flex items-center justify-center p-3">
+                <Card className="w-full h-full overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card via-card to-accent/5">
                   <CardHeader className="pb-2 pt-4 px-4">
                     <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                       Энергетический баланс
@@ -588,12 +588,12 @@ const Energy = () => {
                   </CardHeader>
                   <CardContent className="pt-2 px-4 pb-4">
                     {isLoadingPredictions ? (
-                      <div className="h-[calc(100vh-250px)] flex flex-col items-center justify-center gap-3">
+                      <div className="h-[300px] flex flex-col items-center justify-center gap-3">
                         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                         <p className="text-sm text-foreground font-medium">Загрузка прогноза...</p>
                       </div>
                     ) : history.length === 0 ? (
-                      <div className="h-[calc(100vh-250px)] flex flex-col items-center justify-center gap-2 text-center px-4">
+                      <div className="h-[300px] flex flex-col items-center justify-center gap-2 text-center px-4">
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
                           <Brain className="w-8 h-8 text-primary" />
                         </div>
@@ -602,7 +602,7 @@ const Energy = () => {
                       </div>
                     ) : (
                       <>
-                        <ResponsiveContainer width="100%" height={Math.min(window.innerHeight - 280, 300)}>
+                        <ResponsiveContainer width="100%" height={300}>
                           <AreaChart data={getChartData()} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
@@ -687,9 +687,9 @@ const Energy = () => {
                 </Card>
               </main>
 
-              {/* RIGHT SIDEBAR - Compact */}
-              <aside className="border-l border-border bg-card/30 overflow-y-auto">
-                <div className="p-3 space-y-3">
+              {/* RIGHT SIDEBAR - Compact, no scroll */}
+              <aside className="border-l border-border bg-card/30 overflow-hidden">
+                <div className="p-3 space-y-3 h-full flex flex-col">
                   {energyBreakdown.events && energyBreakdown.events.length > 0 && (
                     <Card className="border-border/50">
                       <CardHeader className="pb-2 pt-3 px-3">
@@ -713,8 +713,8 @@ const Energy = () => {
             </div>
 
             {/* BOTTOM: Week Forecast - Fixed Height, Compact */}
-            <footer className="border-t border-border bg-card/50 overflow-y-auto flex-shrink-0">
-              <div className="p-3">
+            <footer className="border-t border-border bg-card/50 overflow-hidden flex-shrink-0">
+              <div className="p-3 h-full overflow-y-auto">
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
                 )}

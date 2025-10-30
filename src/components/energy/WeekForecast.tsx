@@ -16,8 +16,8 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
   const getPhaseColor = (phase?: string) => {
     const colors: Record<string, string> = {
       menstrual: 'text-red-500',
-      follicular: 'text-orange-500',
-      ovulation: 'text-green-500',
+      follicular: 'text-blue-500',
+      ovulation: 'text-yellow-500',
       luteal: 'text-purple-500'
     };
     return colors[phase || ''] || 'text-gray-500';
@@ -26,8 +26,8 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
   const getPhaseEmoji = (phase?: string) => {
     const emojis: Record<string, string> = {
       menstrual: '🔴',
-      follicular: '🟡',
-      ovulation: '🟢',
+      follicular: '🔵',
+      ovulation: '🟡',
       luteal: '🟣'
     };
     return emojis[phase || ''] || '⚪';
@@ -37,10 +37,10 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
 
   const getPhaseBackground = (phase?: string) => {
     const backgrounds: Record<string, string> = {
-      menstrual: 'bg-red-500/10 dark:bg-red-500/20 border-red-500/30',
-      follicular: 'bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30',
-      ovulation: 'bg-green-500/10 dark:bg-green-500/20 border-green-500/30',
-      luteal: 'bg-purple-500/10 dark:bg-purple-500/20 border-purple-500/30'
+      menstrual: 'bg-red-50 dark:bg-red-950/30 border-red-400 dark:border-red-800',
+      follicular: 'bg-blue-50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-800',
+      ovulation: 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-400 dark:border-yellow-800',
+      luteal: 'bg-purple-50 dark:bg-purple-950/30 border-purple-400 dark:border-purple-800'
     };
     return backgrounds[phase || ''] || 'bg-muted/50 border-border';
   };
