@@ -13,6 +13,8 @@ import { useHealthKit } from '@/hooks/useHealthKit';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n/config';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { EnergyGauge } from '@/components/energy/EnergyGauge';
 import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
 import { EnergyCalculationBreakdown } from '@/components/energy/EnergyCalculationBreakdown';
@@ -552,10 +554,16 @@ const Energy = () => {
       .reverse()
       .map((h) => {
         if (!h.date) return null as any;
-        const d = new Date(h.date);
+        // Parse date as UTC to avoid timezone issues
+        const dateParts = h.date.split('-');
+        const d = new Date(Date.UTC(
+          parseInt(dateParts[0]), 
+          parseInt(dateParts[1]) - 1, 
+          parseInt(dateParts[2])
+        ));
         if (isNaN(d.getTime())) return null as any;
         return {
-          date: d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
+          date: format(d, 'dd.MM', { locale: ru }),
           wellness: h.wellness_index,
           type: 'actual',
         };
@@ -563,11 +571,13 @@ const Energy = () => {
       .filter(Boolean) as any[];
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    
     const predictedData = predictions.map((p, idx) => {
       const futureDate = new Date(today);
       futureDate.setDate(today.getDate() + idx + 1);
       return {
-        date: futureDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }),
+        date: format(futureDate, 'dd.MM', { locale: ru }),
         wellness: p.wellness,
         type: 'predicted',
         note: p.note
