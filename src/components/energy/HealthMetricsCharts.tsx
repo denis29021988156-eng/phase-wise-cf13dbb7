@@ -26,9 +26,42 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
     try {
       setLoading(true);
       
-      // Calculate date range for 2 weeks based on offset
-      const endDate = addDays(new Date(), weekOffset * 14);
-      const startDate = subDays(endDate, 13); // 14 days total (including end date)
+      // Get first record date for the user
+      const { data: firstRecord } = await supabase
+        .from('symptom_logs')
+        .select('date')
+        .eq('user_id', userId)
+        .order('date', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      const today = new Date();
+      let endDate: Date;
+      let startDate: Date;
+      let daysToShow: number;
+
+      if (weekOffset === 0 && firstRecord) {
+        // For current period, check if user has less than 14 days of data
+        const firstRecordDate = new Date(firstRecord.date);
+        const daysSinceFirst = Math.floor((today.getTime() - firstRecordDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysSinceFirst < 13) {
+          // Show from first record to today
+          startDate = firstRecordDate;
+          endDate = today;
+          daysToShow = daysSinceFirst + 1;
+        } else {
+          // Show last 14 days
+          endDate = today;
+          startDate = subDays(endDate, 13);
+          daysToShow = 14;
+        }
+      } else {
+        // For historical periods, always show 14 days
+        endDate = addDays(today, weekOffset * 14);
+        startDate = subDays(endDate, 13);
+        daysToShow = 14;
+      }
       
       const { data, error } = await supabase
         .from('symptom_logs')
@@ -41,9 +74,9 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
       if (error) throw error;
 
       if (data) {
-        // Create array of all 14 days (even if no data)
+        // Create array of all days in the range
         const allDays: ChartDataPoint[] = [];
-        for (let i = 0; i < 14; i++) {
+        for (let i = 0; i < daysToShow; i++) {
           const currentDate = addDays(startDate, i);
           const dateStr = format(currentDate, 'yyyy-MM-dd');
           const dayData = data.find(d => d.date === dateStr);
