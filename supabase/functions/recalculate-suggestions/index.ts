@@ -83,12 +83,37 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(5);
 
+    // Get today's symptom log for additional context
+    const todayDate = new Date().toISOString().split('T')[0];
+    const { data: todaySymptoms } = await supabase
+      .from('symptom_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('date', todayDate)
+      .maybeSingle();
+
     let healthContext = '';
     if (recentMessages && recentMessages.length > 0) {
       const userMessages = recentMessages.filter(m => m.role === 'user').slice(0, 3);
       if (userMessages.length > 0) {
         healthContext = '\n\nПоследние сообщения о самочувствии:\n' + 
           userMessages.map(m => `- ${m.content}`).join('\n');
+      }
+    }
+
+    // Add symptom data if available
+    if (todaySymptoms) {
+      healthContext += '\n\nДанные о самочувствии сегодня:';
+      if (todaySymptoms.wellness_index) healthContext += `\n- Индекс самочувствия: ${todaySymptoms.wellness_index}/100`;
+      if (todaySymptoms.energy) healthContext += `\n- Энергия: ${todaySymptoms.energy}/5`;
+      if (todaySymptoms.sleep_quality) healthContext += `\n- Качество сна: ${todaySymptoms.sleep_quality}/5`;
+      if (todaySymptoms.stress_level) healthContext += `\n- Уровень стресса: ${todaySymptoms.stress_level}/5`;
+      if (todaySymptoms.weight) healthContext += `\n- Вес: ${todaySymptoms.weight} кг`;
+      if (todaySymptoms.blood_pressure_systolic && todaySymptoms.blood_pressure_diastolic) {
+        healthContext += `\n- Давление: ${todaySymptoms.blood_pressure_systolic}/${todaySymptoms.blood_pressure_diastolic} мм рт. ст.`;
+      }
+      if (todaySymptoms.had_sex !== null && todaySymptoms.had_sex !== undefined) {
+        healthContext += `\n- Половая активность: ${todaySymptoms.had_sex ? 'Да' : 'Нет'}`;
       }
     }
 

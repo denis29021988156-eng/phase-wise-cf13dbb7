@@ -203,6 +203,24 @@ serve(async (req) => {
           : `- Физические симптомы: ${todaySymptoms.physical_symptoms.map((s: string) => physicalLabels[lang][s] || s).join(', ')}\n`;
       }
       
+      if (todaySymptoms.weight) {
+        healthContext += isEnglish
+          ? `- Weight: ${todaySymptoms.weight} kg\n`
+          : `- Вес: ${todaySymptoms.weight} кг\n`;
+      }
+      
+      if (todaySymptoms.blood_pressure_systolic && todaySymptoms.blood_pressure_diastolic) {
+        healthContext += isEnglish
+          ? `- Blood pressure: ${todaySymptoms.blood_pressure_systolic}/${todaySymptoms.blood_pressure_diastolic} mmHg\n`
+          : `- Давление: ${todaySymptoms.blood_pressure_systolic}/${todaySymptoms.blood_pressure_diastolic} мм рт. ст.\n`;
+      }
+      
+      if (todaySymptoms.had_sex !== null && todaySymptoms.had_sex !== undefined) {
+        healthContext += isEnglish
+          ? `- Sexual activity: ${todaySymptoms.had_sex ? 'Yes' : 'No'}\n`
+          : `- Половая активность: ${todaySymptoms.had_sex ? 'Да' : 'Нет'}\n`;
+      }
+      
       if (healthDataSynced) {
         healthContext += isEnglish
           ? '\n⚠️ IMPORTANT: Sleep and stress data obtained from Apple Health - these are objective health indicators that MUST be considered in recommendations!\n'

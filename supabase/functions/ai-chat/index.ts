@@ -185,6 +185,9 @@ ${todaySymptoms.sleep_quality ? `- Качество сна: ${todaySymptoms.slee
 ${todaySymptoms.stress_level ? `- Уровень стресса: ${todaySymptoms.stress_level}/5${isRecentlyUpdated ? ' (рассчитан из HRV Apple Health)' : ''}` : ''}
 ${moods.length > 0 ? `- Настроение: ${moods.join(', ')}` : ''}
 ${symptoms.length > 0 ? `- Физические ощущения: ${symptoms.join(', ')}` : ''}
+${todaySymptoms.weight ? `- Вес: ${todaySymptoms.weight} кг` : ''}
+${todaySymptoms.blood_pressure_systolic && todaySymptoms.blood_pressure_diastolic ? `- Давление: ${todaySymptoms.blood_pressure_systolic}/${todaySymptoms.blood_pressure_diastolic} мм рт. ст.` : ''}
+${todaySymptoms.had_sex !== null && todaySymptoms.had_sex !== undefined ? `- Половая активность: ${todaySymptoms.had_sex ? 'Да' : 'Нет'}` : ''}
 
 ВАЖНО: Учитывай текущее самочувствие в своих советах! Если индекс низкий или высокий стресс - рекомендуй более щадящий режим.
 ${isRecentlyUpdated ? '⚠️ Данные о сне и стрессе получены из Apple Health - это объективные показатели, которые нужно учесть!' : ''}
