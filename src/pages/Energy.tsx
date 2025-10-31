@@ -1220,6 +1220,7 @@ const Energy = () => {
                     <EnergyBoostCard 
                       userId={user.id}
                       weekForecast={weekForecast}
+                      energyBreakdown={energyBreakdown}
                       onEventMoved={loadEnergyBreakdown}
                     />
                   );

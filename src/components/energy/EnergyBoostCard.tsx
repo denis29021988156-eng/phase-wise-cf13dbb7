@@ -23,16 +23,18 @@ interface BoostRecommendation {
 interface EnergyBoostCardProps {
   userId: string;
   weekForecast: any[];
+  energyBreakdown: any;
   onEventMoved?: () => void;
 }
 
-export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBoostCardProps) {
+export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEventMoved }: EnergyBoostCardProps) {
   const { toast } = useToast();
   const { i18n } = useTranslation();
   const [recommendation, setRecommendation] = useState<BoostRecommendation | null>(null);
   const [loading, setLoading] = useState(true);
   const [moving, setMoving] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
 
   useEffect(() => {
     console.log('🔥 Boost Card: userId=', userId, 'weekForecast=', weekForecast);
@@ -163,16 +165,20 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
           energy: day.wellness_index
         }));
 
+      // Используем фактическую энергию из energyBreakdown вместо прогноза
+      const actualEnergy = energyBreakdown?.finalEnergy || energyBreakdown?.totalEnergy || mostCostlyEvent.currentDayEnergy;
+
       const recommendation = {
         eventId: mostCostlyEvent.id,
         eventTitle: mostCostlyEvent.title,
-        currentDayEnergy: mostCostlyEvent.currentDayEnergy,
+        currentDayEnergy: actualEnergy,
         energyCost: mostCostlyEvent.energyCost,
         currentDate: mostCostlyEvent.eventDate,
         suggestedSlots: topSlots
       };
       console.log('🔥 Final recommendation (source=', slotsSource, '):', recommendation);
       setRecommendation(recommendation);
+      setSelectedSlotIndex(0); // Сброс выбранного слота
 
     } catch (error) {
       console.error('🔥 Error finding boost candidate:', error);
@@ -182,12 +188,12 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
     }
   };
 
-  const handleMoveEvent = async () => {
+  const handleMoveEvent = async (slotIndex?: number) => {
     if (!recommendation || recommendation.suggestedSlots.length === 0) return;
 
     try {
       setMoving(true);
-      const targetSlot = recommendation.suggestedSlots[0];
+      const targetSlot = recommendation.suggestedSlots[slotIndex ?? selectedSlotIndex];
 
       // Получить детали события
       const { data: event, error: fetchError } = await supabase
@@ -380,47 +386,41 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
               </p>
             ) : (
               recommendation.suggestedSlots.map((slot, index) => (
-                <div 
+                <button
                   key={slot.date}
-                  className="flex items-center justify-between bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 border"
+                  onClick={() => {
+                    setSelectedSlotIndex(index);
+                    handleMoveEvent(index);
+                  }}
+                  disabled={moving}
+                  className={`w-full flex items-center justify-between rounded-lg p-3 border-2 transition-all ${
+                    selectedSlotIndex === index
+                      ? 'bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/40 dark:to-amber-900/40 border-orange-500 dark:border-orange-400'
+                      : 'bg-white/60 dark:bg-gray-800/60 border-transparent hover:border-orange-300 dark:hover:border-orange-600'
+                  } ${moving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-[1.02]'}`}
                 >
-                  <span className="text-sm">
+                  <span className="text-sm font-medium">
                     {format(parseISO(slot.date), i18n.language === 'ru' ? 'EEE, d MMMM' : 'EEE, MMMM d', { 
                       locale: i18n.language === 'ru' ? ru : undefined 
                     })}
                   </span>
                   <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                    {i18n.language === 'ru' ? 'прогноз энергии' : 'energy forecast'} {slot.energy}
+                    {i18n.language === 'ru' ? 'энергия' : 'energy'} {slot.energy}
                   </span>
-                </div>
+                </button>
               ))
             )}
           </div>
         </div>
 
-        {/* Кнопки */}
-        <div className="flex gap-2 pt-2">
-          <Button
-            onClick={handleMoveEvent}
-            disabled={moving || recommendation.suggestedSlots.length === 0}
-            className="flex-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
-          >
-            {moving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {i18n.language === 'ru' ? 'Переношу...' : 'Moving...'}
-              </>
-            ) : (
-              <>
-                🔁 {i18n.language === 'ru' ? 'Перенести' : 'Move'}
-              </>
-            )}
-          </Button>
+        {/* Кнопка Пропустить */}
+        <div className="pt-2">
           <Button
             onClick={handleSkip}
             variant="outline"
             disabled={moving}
-            className="flex-1"
+            className="w-full"
+            size="sm"
           >
             {i18n.language === 'ru' ? 'Пропустить' : 'Skip'}
           </Button>
