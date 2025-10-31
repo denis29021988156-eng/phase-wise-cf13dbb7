@@ -365,8 +365,8 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
           </p>
           <p className="text-sm leading-relaxed">
             {i18n.language === 'ru' 
-              ? `Сегодня ваш энергопрогноз — ${recommendation.currentDayEnergy}/100. Событие «${recommendation.eventTitle}» может перегрузить день.`
-              : `Today your energy forecast is ${recommendation.currentDayEnergy}/100. Event "${recommendation.eventTitle}" may overload your day.`
+              ? `${format(parseISO(recommendation.currentDate), 'd MMMM', { locale: ru })} ваш энергопрогноз — ${recommendation.currentDayEnergy}/100. Событие «${recommendation.eventTitle}» может перегрузить день.`
+              : `On ${format(parseISO(recommendation.currentDate), 'MMMM d')} your energy forecast is ${recommendation.currentDayEnergy}/100. Event "${recommendation.eventTitle}" may overload your day.`
             }
           </p>
         </div>
