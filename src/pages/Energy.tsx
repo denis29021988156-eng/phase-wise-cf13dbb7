@@ -1112,12 +1112,6 @@ const Energy = () => {
                 {/* COLUMN 3: RIGHT SIDEBAR - Wellness info */}
                 <aside className="bg-card/30 border border-border rounded-lg p-4">
                   <div className="space-y-4">
-                <EnergyGauge 
-                  score={wellnessIndex}
-                  phase={energyBreakdown.cyclePhase || 'follicular'}
-                  date={energyBreakdown.today}
-                />
-
                 <EnergyBalanceCard
                   baseEnergy={energyBreakdown.calculation.base}
                   eventsImpact={energyBreakdown.calculation.events}
