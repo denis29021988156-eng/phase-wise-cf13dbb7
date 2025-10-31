@@ -281,6 +281,71 @@ ${eventsList}
       console.log('No calendar events found for user, proceeding without events context');
     }
 
+    // Get Event AI suggestions for upcoming events
+    let eventAISuggestionsContext = '';
+    try {
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      
+      const { data: upcomingEventsWithSuggestions } = await supabaseClient
+        .from('events')
+        .select(`
+          *,
+          event_ai_suggestions (
+            suggestion,
+            justification
+          )
+        `)
+        .eq('user_id', userId)
+        .gte('start_time', new Date().toISOString())
+        .lte('start_time', sevenDaysFromNow.toISOString())
+        .order('start_time', { ascending: true })
+        .limit(10);
+
+      if (upcomingEventsWithSuggestions && upcomingEventsWithSuggestions.length > 0) {
+        const eventsWithAI = upcomingEventsWithSuggestions.filter(
+          event => (event.event_ai_suggestions as any)?.length > 0
+        );
+        
+        if (eventsWithAI.length > 0) {
+          const suggestionsList = eventsWithAI.map(event => {
+            const startDate = new Date(event.start_time);
+            const dateStr = startDate.toLocaleDateString('ru-RU', { 
+              weekday: 'short', 
+              day: 'numeric', 
+              month: 'long' 
+            });
+            const timeStr = startDate.toLocaleTimeString('ru-RU', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+            const aiSuggestion = (event.event_ai_suggestions as any)?.[0];
+            
+            return `  • "${event.title}" (${dateStr}, ${timeStr})\n    AI совет: ${aiSuggestion.suggestion}${aiSuggestion.justification ? `\n    Обоснование: ${aiSuggestion.justification}` : ''}`;
+          }).join('\n\n');
+
+          eventAISuggestionsContext = `
+💡 AI-советы для предстоящих событий:
+${suggestionsList}
+
+ВАЖНО: Это персонализированные советы Event AI на основе:
+- Текущей фазы менструального цикла
+- Времени дня события
+- Профиля пользователя
+- Предыдущего опыта
+
+Ты можешь:
+- Объяснять эти советы подробнее по запросу
+- Дополнять их своими наблюдениями
+- Помогать применить советы на практике
+- НЕ противоречь этим советам, они уже учли важный контекст
+`;
+        }
+      }
+    } catch (error) {
+      console.log('No Event AI suggestions found, proceeding without Event AI context');
+    }
+
     // Get recent Boost optimizations
     let boostContext = '';
     try {
@@ -357,6 +422,8 @@ ${symptomContext}
 
 ${eventsContext}
 
+${eventAISuggestionsContext}
+
 ${boostContext}`
       : `Ты — Gaia, продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, подробные и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы.
 
@@ -378,6 +445,8 @@ ${cycleContext}
 ${symptomContext}
 
 ${eventsContext}
+
+${eventAISuggestionsContext}
 
 ${boostContext}`;
 
