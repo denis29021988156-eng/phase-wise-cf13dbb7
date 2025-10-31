@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -9,6 +9,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { HealthMetricsCharts } from './HealthMetricsCharts';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SymptomLog {
   energy: number;
@@ -47,6 +49,17 @@ export function EnergySidebar({
   const [physicalOpen, setPhysicalOpen] = useState(false);
   const [moodOpen, setMoodOpen] = useState(false);
   const [parametersOpen, setParametersOpen] = useState(false);
+  const [chartsOpen, setChartsOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id);
+      }
+    });
+  }, []);
 
   const getPhaseLabel = (phase: string) => {
     switch (phase) {
@@ -344,6 +357,34 @@ export function EnergySidebar({
                     </button>
                   </div>
                 </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
+        {/* Charts */}
+        <Collapsible open={chartsOpen} onOpenChange={setChartsOpen}>
+          <Card className="border-border/50">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-accent/5 transition-colors py-3 px-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <span className="text-lg">📈</span>
+                    Графики
+                  </CardTitle>
+                  {chartsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="px-4 pb-4">
+                {userId ? (
+                  <HealthMetricsCharts userId={userId} />
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    Загрузка...
+                  </div>
+                )}
               </CardContent>
             </CollapsibleContent>
           </Card>
