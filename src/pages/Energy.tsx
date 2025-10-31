@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, Brain, Zap, Moon, RefreshCw, Upload, BarChart3, Share2, Download } from 'lucide-react';
 import { useHealthKit } from '@/hooks/useHealthKit';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart, ReferenceLine } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n/config';
 import { format } from 'date-fns';
@@ -615,6 +615,13 @@ const Energy = () => {
     return allData;
   };
 
+  // Calculate average predicted wellness
+  const getAveragePrediction = () => {
+    if (predictions.length === 0) return null;
+    const sum = predictions.reduce((acc, p) => acc + p.wellness, 0);
+    return Math.round(sum / predictions.length);
+  };
+
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -1003,6 +1010,23 @@ const Energy = () => {
                               fillOpacity={1}
                             />
                             
+                            {/* Average prediction line */}
+                            {getAveragePrediction() !== null && (
+                              <ReferenceLine
+                                y={getAveragePrediction()}
+                                stroke="#FCD34D"
+                                strokeWidth={3}
+                                strokeDasharray="0"
+                                label={{
+                                  value: `Средний прогноз: ${getAveragePrediction()}`,
+                                  position: 'insideTopRight',
+                                  fill: '#F59E0B',
+                                  fontSize: 12,
+                                  fontWeight: 'bold',
+                                }}
+                              />
+                            )}
+                            
                             {/* Main line with dynamic styling */}
                             <Line
                               type="monotone"
@@ -1064,6 +1088,12 @@ const Energy = () => {
                             <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-purple-500" />
                             <span className="text-sm text-foreground font-medium">Прогноз</span>
                           </div>
+                          {getAveragePrediction() !== null && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-1.5 rounded-full bg-yellow-400" />
+                              <span className="text-sm text-foreground font-medium">Среднее</span>
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
