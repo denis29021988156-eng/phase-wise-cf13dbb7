@@ -20,6 +20,7 @@ import { EnergyGauge } from '@/components/energy/EnergyGauge';
 import { WeekForecast } from '@/components/energy/WeekForecast';
 import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
 import { EnergySidebar } from '@/components/energy/EnergySidebar';
+import { EnergyBoostCard } from '@/components/energy/EnergyBoostCard';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import {
@@ -1207,36 +1208,14 @@ const Energy = () => {
                 />
 
 
-                {/* Energy Spent Card */}
-                <Card className="border-2 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Zap className="w-5 h-5 text-red-600 dark:text-red-400" />
-                      Затрачено энергии
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-baseline gap-2 mb-3">
-                      <span className="text-4xl font-bold text-red-600 dark:text-red-400">
-                        {currentLog.physical_symptoms.reduce((total, symptomId) => {
-                          const symptom = physicalOptions.find(s => s.id === symptomId);
-                          return total + Math.abs(symptom?.value || 0);
-                        }, 0)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">баллов</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Низкий</span>
-                        <span className="text-muted-foreground">0-2</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Высокий</span>
-                        <span className="text-muted-foreground">3-5</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Boost Card */}
+                {user && energyBreakdown && (
+                  <EnergyBoostCard 
+                    userId={user.id}
+                    weekForecast={weekForecast}
+                    onEventMoved={loadEnergyBreakdown}
+                  />
+                )}
                   </div>
                 </aside>
               </div>
