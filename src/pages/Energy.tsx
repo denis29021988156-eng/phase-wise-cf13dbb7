@@ -863,7 +863,7 @@ const Energy = () => {
           {/* Desktop Layout with 3 Columns */}
           <div className="hidden lg:grid lg:grid-cols-[288px_1fr_371px] lg:h-screen lg:overflow-hidden">
             {/* COLUMN 1: LEFT SIDEBAR - Fixed scrollable */}
-            <aside className="border-r border-border bg-card/50">
+            <aside className="border-r border-border bg-card/50 overflow-y-auto">
               <EnergySidebar
                 wellnessIndex={wellnessIndex}
                 currentLog={currentLog}
