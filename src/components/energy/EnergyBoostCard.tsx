@@ -277,7 +277,7 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-            Boost 🔥
+            Boost
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -305,7 +305,7 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-            Boost 🔥
+            Boost
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -328,7 +328,7 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-            Boost 🔥
+            Boost
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -354,7 +354,7 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          Boost 🔥
+          Boost
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
