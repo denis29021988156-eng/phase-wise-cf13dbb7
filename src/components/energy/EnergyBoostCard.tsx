@@ -280,9 +280,59 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
     );
   }
 
-  if (!recommendation || hidden) {
-    console.log('🔥 Not showing boost: recommendation=', recommendation, 'hidden=', hidden);
-    return null;
+  // Показываем блок всегда
+  if (hidden) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = recommendation ? `boost-hidden-${userId}-${recommendation.eventId}-${today}` : '';
+    const handleUnhide = () => {
+      if (key) localStorage.removeItem(key);
+      setHidden(false);
+    };
+    return (
+      <Card className="border-2 bg-gradient-to-br from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            Boost 🔥
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {i18n.language === 'ru' ? 'Скрыто до завтра' : 'Hidden until tomorrow'}
+            </p>
+            <Button size="sm" variant="outline" onClick={handleUnhide}>
+              {i18n.language === 'ru' ? 'Показать' : 'Show'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!recommendation) {
+    return (
+      <Card className="border-2 bg-gradient-to-br from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            Boost 🔥
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <p className="text-sm">
+              {i18n.language === 'ru'
+                ? 'Перегруженных дней пока нет. Мы подскажем, когда появятся варианты переноса.'
+                : 'No overloaded days yet. We will suggest moves when options appear.'}
+            </p>
+            <Button size="sm" onClick={findBoostCandidate}>
+              {i18n.language === 'ru' ? 'Обновить' : 'Refresh'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   console.log('🔥 Rendering boost card with recommendation:', recommendation);
