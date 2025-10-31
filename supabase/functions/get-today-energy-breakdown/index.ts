@@ -115,6 +115,15 @@ serve(async (req) => {
       console.error('Symptoms error:', symptomsError);
     }
 
+    // 3a. Get yesterday's symptoms for sex bonus
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const { data: yesterdaySymptoms } = await supabase
+      .from('symptom_logs')
+      .select('had_sex')
+      .eq('user_id', userId)
+      .eq('date', yesterday)
+      .maybeSingle();
+
     // 4. Calculate impact for each event (in points: 0-100 scale)
     let totalEnergyImpact = 0;
     let totalStressImpact = 0;
@@ -172,16 +181,26 @@ serve(async (req) => {
     let sleepModifier = 0;
     let stressModifier = 0;
     let wellnessModifier = 0;
+    let sexModifier = 0;
 
     if (todaySymptoms) {
       sleepModifier = Math.round(((todaySymptoms.sleep_quality || 3) - 3) * 5);
       stressModifier = Math.round(((todaySymptoms.stress_level || 3) - 3) * -3);
       // Wellness index as modifier: (wellness_index - 60) × 0.3
       wellnessModifier = Math.round(((todaySymptoms.wellness_index || 60) - 60) * 0.3);
+      
+      // Sex bonus: +6 for today, +2 for yesterday
+      if (todaySymptoms.had_sex) {
+        sexModifier += 6;
+      }
+    }
+    
+    if (yesterdaySymptoms?.had_sex) {
+      sexModifier += 2;
     }
 
     // 7. Calculate final energy (0-100 scale)
-    const rawFinalEnergy = baseEnergy + totalEnergyImpact + sleepModifier + stressModifier + wellnessModifier;
+    const rawFinalEnergy = baseEnergy + totalEnergyImpact + sleepModifier + stressModifier + wellnessModifier + sexModifier;
     const finalEnergy = Math.max(0, Math.min(100, Math.round(rawFinalEnergy)));
 
     // 8. Calculate confidence
@@ -205,6 +224,7 @@ serve(async (req) => {
       sleepModifier: sleepModifier,
       stressModifier: stressModifier,
       wellnessModifier: wellnessModifier,
+      sexModifier: sexModifier,
       finalEnergy: finalEnergy,
       confidence: Math.round(confidence),
       symptoms: todaySymptoms?.physical_symptoms || [],
@@ -215,7 +235,8 @@ serve(async (req) => {
         sleep: sleepModifier,
         stress: stressModifier,
         wellness: wellnessModifier,
-        formula: `${baseEnergy} ${totalEnergyImpact >= 0 ? '+' : ''} ${totalEnergyImpact} ${sleepModifier >= 0 ? '+' : ''} ${sleepModifier} ${stressModifier >= 0 ? '+' : ''} ${stressModifier} ${wellnessModifier >= 0 ? '+' : ''} ${wellnessModifier} = ${finalEnergy}`
+        sex: sexModifier,
+        formula: `${baseEnergy} ${totalEnergyImpact >= 0 ? '+' : ''} ${totalEnergyImpact} ${sleepModifier >= 0 ? '+' : ''} ${sleepModifier} ${stressModifier >= 0 ? '+' : ''} ${stressModifier} ${wellnessModifier >= 0 ? '+' : ''} ${wellnessModifier} ${sexModifier >= 0 ? '+' : ''} ${sexModifier} = ${finalEnergy}`
       }
     };
 
