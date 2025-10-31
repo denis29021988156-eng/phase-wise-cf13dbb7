@@ -419,9 +419,12 @@ export type Database = {
       }
       symptom_logs: {
         Row: {
+          blood_pressure_diastolic: number | null
+          blood_pressure_systolic: number | null
           created_at: string
           date: string
           energy: number | null
+          had_sex: boolean | null
           id: string
           mood: string[] | null
           physical_symptoms: string[] | null
@@ -429,12 +432,16 @@ export type Database = {
           stress_level: number | null
           updated_at: string
           user_id: string
+          weight: number | null
           wellness_index: number | null
         }
         Insert: {
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
           created_at?: string
           date?: string
           energy?: number | null
+          had_sex?: boolean | null
           id?: string
           mood?: string[] | null
           physical_symptoms?: string[] | null
@@ -442,12 +449,16 @@ export type Database = {
           stress_level?: number | null
           updated_at?: string
           user_id: string
+          weight?: number | null
           wellness_index?: number | null
         }
         Update: {
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
           created_at?: string
           date?: string
           energy?: number | null
+          had_sex?: boolean | null
           id?: string
           mood?: string[] | null
           physical_symptoms?: string[] | null
@@ -455,6 +466,7 @@ export type Database = {
           stress_level?: number | null
           updated_at?: string
           user_id?: string
+          weight?: number | null
           wellness_index?: number | null
         }
         Relationships: []

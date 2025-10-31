@@ -17,6 +17,10 @@ interface SymptomLog {
   sleep_quality: number;
   stress_level: number;
   wellness_index: number;
+  weight?: number;
+  blood_pressure_systolic?: number;
+  blood_pressure_diastolic?: number;
+  had_sex?: boolean;
 }
 
 interface EnergySidebarProps {
@@ -42,6 +46,7 @@ export function EnergySidebar({
 }: EnergySidebarProps) {
   const [physicalOpen, setPhysicalOpen] = useState(false);
   const [moodOpen, setMoodOpen] = useState(false);
+  const [parametersOpen, setParametersOpen] = useState(false);
 
   const getPhaseLabel = (phase: string) => {
     switch (phase) {
@@ -208,54 +213,124 @@ export function EnergySidebar({
           </Card>
         </Collapsible>
 
-        {/* Sleep & Stress (compact) */}
-        <Card className="border-border/50">
-          <CardHeader className="py-3 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <span className="text-lg">😴</span>
-              Сон
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-3">
-            <Slider
-              value={[currentLog.sleep_quality]}
-              onValueChange={([value]) => onUpdate({ ...currentLog, sleep_quality: value })}
-              min={1}
-              max={5}
-              step={1}
-              className="mb-2"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Плохой</span>
-              <span>{currentLog.sleep_quality}/5</span>
-              <span>Отличный</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Parameters */}
+        <Collapsible open={parametersOpen} onOpenChange={setParametersOpen}>
+          <Card className="border-border/50">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-accent/5 transition-colors py-3 px-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <span className="text-lg">📊</span>
+                    Параметры
+                  </CardTitle>
+                  {parametersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="px-4 pb-4 space-y-4">
+                {/* Sleep */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">😴 Сон</span>
+                  </div>
+                  <Slider
+                    value={[currentLog.sleep_quality]}
+                    onValueChange={([value]) => onUpdate({ ...currentLog, sleep_quality: value })}
+                    min={1}
+                    max={5}
+                    step={1}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Плохой</span>
+                    <span>{currentLog.sleep_quality}/5</span>
+                    <span>Отличный</span>
+                  </div>
+                </div>
 
-        <Card className="border-border/50">
-          <CardHeader className="py-3 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <span className="text-lg">😰</span>
-              Стресс
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-3">
-            <Slider
-              value={[currentLog.stress_level]}
-              onValueChange={([value]) => onUpdate({ ...currentLog, stress_level: value })}
-              min={1}
-              max={5}
-              step={1}
-              className="mb-2"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Низкий</span>
-              <span>{currentLog.stress_level}/5</span>
-              <span>Высокий</span>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Stress */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">😰 Стресс</span>
+                  </div>
+                  <Slider
+                    value={[currentLog.stress_level]}
+                    onValueChange={([value]) => onUpdate({ ...currentLog, stress_level: value })}
+                    min={1}
+                    max={5}
+                    step={1}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Низкий</span>
+                    <span>{currentLog.stress_level}/5</span>
+                    <span>Высокий</span>
+                  </div>
+                </div>
+
+                {/* Weight */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">⚖️ Вес (кг)</span>
+                  </div>
+                  <input
+                    type="number"
+                    value={currentLog.weight || ''}
+                    onChange={(e) => onUpdate({ ...currentLog, weight: e.target.value ? parseFloat(e.target.value) : undefined })}
+                    placeholder="Введите вес"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    step="0.1"
+                    min="0"
+                  />
+                </div>
+
+                {/* Blood Pressure */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">🩺 Давление (мм рт.ст.)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={currentLog.blood_pressure_systolic || ''}
+                      onChange={(e) => onUpdate({ ...currentLog, blood_pressure_systolic: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Верхнее"
+                      className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      min="0"
+                    />
+                    <span className="self-center text-muted-foreground">/</span>
+                    <input
+                      type="number"
+                      value={currentLog.blood_pressure_diastolic || ''}
+                      onChange={(e) => onUpdate({ ...currentLog, blood_pressure_diastolic: e.target.value ? parseInt(e.target.value) : undefined })}
+                      placeholder="Нижнее"
+                      className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Sex */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">❤️ Секс</span>
+                  </div>
+                  <button
+                    onClick={() => onUpdate({ ...currentLog, had_sex: !currentLog.had_sex })}
+                    className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${
+                      currentLog.had_sex
+                        ? 'bg-primary/10 border border-primary/30 text-primary font-medium'
+                        : 'bg-muted/30 hover:bg-muted/50 text-muted-foreground'
+                    }`}
+                  >
+                    {currentLog.had_sex ? '✓ Да' : 'Нет'}
+                  </button>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Save Button */}
         <Button

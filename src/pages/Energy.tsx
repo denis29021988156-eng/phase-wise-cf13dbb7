@@ -18,7 +18,6 @@ import { ru } from 'date-fns/locale';
 import { EnergyGauge } from '@/components/energy/EnergyGauge';
 
 import { WeekForecast } from '@/components/energy/WeekForecast';
-import { SymptomsInput } from '@/components/energy/SymptomsInput';
 import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
 import { EnergySidebar } from '@/components/energy/EnergySidebar';
 import html2canvas from 'html2canvas';
@@ -39,6 +38,10 @@ interface SymptomLog {
   sleep_quality: number;
   stress_level: number;
   wellness_index: number;
+  weight?: number;
+  blood_pressure_systolic?: number;
+  blood_pressure_diastolic?: number;
+  had_sex?: boolean;
 }
 
 interface HistoryDay {
@@ -63,7 +66,11 @@ const Energy = () => {
     physical_symptoms: [],
     sleep_quality: 3,
     stress_level: 3,
-    wellness_index: 50
+    wellness_index: 50,
+    weight: undefined,
+    blood_pressure_systolic: undefined,
+    blood_pressure_diastolic: undefined,
+    had_sex: false
   });
   
   const [history, setHistory] = useState<HistoryDay[]>([]);
@@ -386,7 +393,11 @@ const Energy = () => {
         physical_symptoms: data.physical_symptoms || [],
         sleep_quality: data.sleep_quality || 3,
         stress_level: data.stress_level || 3,
-        wellness_index: data.wellness_index || 50
+        wellness_index: data.wellness_index || 50,
+        weight: data.weight || undefined,
+        blood_pressure_systolic: data.blood_pressure_systolic || undefined,
+        blood_pressure_diastolic: data.blood_pressure_diastolic || undefined,
+        had_sex: data.had_sex || false
       });
     }
   };
@@ -439,7 +450,11 @@ const Energy = () => {
           physical_symptoms: currentLog.physical_symptoms,
           sleep_quality: currentLog.sleep_quality,
           stress_level: currentLog.stress_level,
-          wellness_index: wellnessIndex
+          wellness_index: wellnessIndex,
+          weight: currentLog.weight,
+          blood_pressure_systolic: currentLog.blood_pressure_systolic,
+          blood_pressure_diastolic: currentLog.blood_pressure_diastolic,
+          had_sex: currentLog.had_sex
         }, {
           onConflict: 'user_id,date'
         });
