@@ -1,5 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Battery, TrendingDown, TrendingUp } from 'lucide-react';
+import { Battery, TrendingDown, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
+import { format } from 'date-fns';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 interface EnergyBalanceCardProps {
   baseEnergy: number;
@@ -18,6 +25,8 @@ export function EnergyBalanceCard({
   finalEnergy,
   events
 }: EnergyBalanceCardProps) {
+  const [eventsOpen, setEventsOpen] = useState(false);
+  
   const getEnergyColor = (value: number) => {
     if (value >= 70) return 'text-green-600';
     if (value >= 40) return 'text-yellow-600';
@@ -28,6 +37,12 @@ export function EnergyBalanceCard({
     if (value >= 70) return 'bg-green-500';
     if (value >= 40) return 'bg-yellow-500';
     return 'bg-red-500';
+  };
+
+  const getImpactColor = (impact: number) => {
+    if (impact > 0) return 'text-green-600';
+    if (impact < 0) return 'text-red-600';
+    return 'text-orange-600';
   };
 
   return (
@@ -47,26 +62,48 @@ export function EnergyBalanceCard({
           </div>
 
           {events.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <span className="text-sm font-medium">События дня:</span>
-                <span className={`text-lg font-bold ${eventsImpact < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  {eventsImpact > 0 ? '+' : ''}{eventsImpact}
-                </span>
-              </div>
-              
-              {/* Events breakdown */}
-              <div className="ml-4 space-y-1">
-                {events.map((event, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs p-2 bg-background/50 rounded">
-                    <span className="truncate flex-1">{event.title}</span>
-                    <span className={`ml-2 font-semibold ${event.energyImpact < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {event.energyImpact > 0 ? '+' : ''}{event.energyImpact}
-                    </span>
+            <Collapsible open={eventsOpen} onOpenChange={setEventsOpen}>
+              <div className="space-y-2">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors">
+                    <span className="text-sm font-medium">События дня:</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg font-bold ${eventsImpact < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {eventsImpact > 0 ? '+' : ''}{eventsImpact}
+                      </span>
+                      {eventsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
                   </div>
-                ))}
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <div className="space-y-2 mt-2">
+                    {events.map((event, idx) => (
+                      <div 
+                        key={idx}
+                        className="bg-card p-3 rounded-lg border-l-4 border-primary shadow-sm ml-2"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs text-muted-foreground font-medium">
+                            🕐 {event.start_time ? format(new Date(event.start_time), 'HH:mm') : '--:--'}
+                          </span>
+                        </div>
+                        <div className="text-sm font-semibold truncate mb-2 text-foreground">{event.title}</div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className={`text-sm font-bold ${getImpactColor(event.energyImpact)}`}>
+                            {event.energyImpact > 0 ? '+' : ''}{event.energyImpact}
+                          </span>
+                          <span className={`text-lg ${getImpactColor(event.energyImpact)}`}>
+                            {event.energyImpact > 0 ? '↑' : event.energyImpact < 0 ? '↓' : '→'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
               </div>
-            </div>
+            </Collapsible>
           )}
 
           {(sleepModifier !== 0 || stressModifier !== 0) && (
