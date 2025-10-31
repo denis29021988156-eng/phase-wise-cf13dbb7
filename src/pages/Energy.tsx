@@ -1106,23 +1106,6 @@ const Energy = () => {
                 {weekForecast && weekForecast.length > 0 && (
                   <WeekForecast forecast={weekForecast} />
                 )}
-
-                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-                  <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Zap className="w-5 h-5" />
-                        Ключевые события дня
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <EventsImpactSection
-                        events={energyBreakdown.events}
-                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
                   </div>
                 </main>
 
@@ -1143,6 +1126,24 @@ const Energy = () => {
                   finalEnergy={energyBreakdown.finalEnergy}
                   events={energyBreakdown.events || []}
                 />
+
+                {/* Key Events of the Day */}
+                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Zap className="w-5 h-5" />
+                        Ключевые события дня
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <EventsImpactSection
+                        events={energyBreakdown.events}
+                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Energy Spent Card */}
                 <Card className="border-2 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20">
