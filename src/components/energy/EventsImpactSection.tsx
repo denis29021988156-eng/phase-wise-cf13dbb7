@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
-import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EventWithImpact {
@@ -19,6 +20,8 @@ interface EventsImpactSectionProps {
 }
 
 export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsImpactSectionProps) {
+  const navigate = useNavigate();
+  
   const getImpactArrow = (impact: number) => {
     if (impact > 0.2) return '↑';
     if (impact < -0.2) return '↓';
@@ -52,12 +55,22 @@ export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsIm
               <div className="text-sm font-semibold truncate mb-2 text-foreground">{event.title}</div>
               
               <div className="flex items-center justify-between">
-                <span className={`text-sm font-bold ${getImpactColor(event.energyImpact)}`}>
-                  {event.energyImpact > 0 ? '+' : ''}{event.energyImpact.toFixed(2)}
-                </span>
-                <span className={`text-lg ${getImpactColor(event.energyImpact)}`}>
-                  {getImpactArrow(event.energyImpact)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-bold ${getImpactColor(event.energyImpact)}`}>
+                    {event.energyImpact > 0 ? '+' : ''}{event.energyImpact.toFixed(2)}
+                  </span>
+                  <span className={`text-lg ${getImpactColor(event.energyImpact)}`}>
+                    {getImpactArrow(event.energyImpact)}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/calendar?date=${event.start_time.split('T')[0]}`)}
+                  className="h-7 text-xs px-2"
+                >
+                  <Calendar className="w-3 h-3" />
+                </Button>
               </div>
             </div>
           ))}

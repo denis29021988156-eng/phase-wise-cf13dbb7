@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit, Droplet, CloudCog, ArrowRightLeft } from 'lucide-react';
@@ -38,6 +39,7 @@ const Calendar = () => {
   const { user, session, linkGoogleIdentity, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date());
@@ -55,6 +57,21 @@ const Calendar = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const eventsRef = useState<HTMLDivElement | null>(null)[0];
   const [periodTrackingOpen, setPeriodTrackingOpen] = useState(false);
+
+  // Handle URL date parameter
+  useEffect(() => {
+    const dateParam = searchParams.get('date');
+    if (dateParam) {
+      setSelectedDate(dateParam);
+      // Update week to show the selected date
+      const paramDate = new Date(dateParam);
+      if (!isNaN(paramDate.getTime())) {
+        setCurrentWeekStart(new Date(paramDate.setDate(paramDate.getDate() - paramDate.getDay())));
+      }
+      // Clear the parameter after use
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   // Generate 7 days starting from currentWeekStart
   const generateWeekDates = () => {

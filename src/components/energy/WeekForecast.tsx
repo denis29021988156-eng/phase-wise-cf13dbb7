@@ -1,12 +1,14 @@
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 
 interface DayForecast {
   date: string;
@@ -21,6 +23,7 @@ interface WeekForecastProps {
 
 export function WeekForecast({ forecast }: WeekForecastProps) {
   const [eventsOpen, setEventsOpen] = useState(false);
+  const navigate = useNavigate();
   
   const getPhaseColor = (phase?: string) => {
     const colors: Record<string, string> = {
@@ -205,16 +208,27 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
                       <div className="text-sm font-semibold truncate mb-2 text-foreground">{event.name}</div>
                       
                       <div className="flex items-center justify-between">
-                        <span className={`text-sm font-bold ${
-                          event.impact > 0 ? 'text-green-600' : event.impact < 0 ? 'text-red-600' : 'text-orange-600'
-                        }`}>
-                          {event.impact > 0 ? '+' : ''}{event.impact}
-                        </span>
-                        <span className={`text-lg ${
-                          event.impact > 0 ? 'text-green-600' : event.impact < 0 ? 'text-red-600' : 'text-orange-600'
-                        }`}>
-                          {event.impact > 0 ? '↑' : event.impact < 0 ? '↓' : '→'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-bold ${
+                            event.impact > 0 ? 'text-green-600' : event.impact < 0 ? 'text-red-600' : 'text-orange-600'
+                          }`}>
+                            {event.impact > 0 ? '+' : ''}{event.impact}
+                          </span>
+                          <span className={`text-lg ${
+                            event.impact > 0 ? 'text-green-600' : event.impact < 0 ? 'text-red-600' : 'text-orange-600'
+                          }`}>
+                            {event.impact > 0 ? '↑' : event.impact < 0 ? '↓' : '→'}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/calendar?date=${event.date}`)}
+                          className="h-8 text-xs"
+                        >
+                          <Calendar className="w-3 h-3 mr-1" />
+                          В календарь
+                        </Button>
                       </div>
                     </div>
                   ))}
