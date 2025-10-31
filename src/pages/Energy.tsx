@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, Brain, Zap, Moon, RefreshCw, Upload, BarChart3, Share2, Download } from 'lucide-react';
 import { useHealthKit } from '@/hooks/useHealthKit';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n/config';
 import { format } from 'date-fns';
@@ -356,12 +356,12 @@ const Energy = () => {
   const loadHistory = async () => {
     if (!user) return;
     
+    // Load all historical data without limit for dynamic chart growth
     const { data } = await supabase
       .from('symptom_logs')
       .select('date, wellness_index')
       .eq('user_id', user.id)
-      .order('date', { ascending: false })
-      .limit(15); // Changed from 7 to 15 for chart
+      .order('date', { ascending: false });
 
     if (data) {
       setHistory(data);
@@ -583,7 +583,14 @@ const Energy = () => {
       .filter(Boolean) as any[];
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    today.setHours(0, 0, 0, 0);
+    
+    // Add today's data point as transition between actual and predicted
+    const todayData = {
+      date: format(today, 'dd.MM', { locale: ru }),
+      wellness: historicalData.length > 0 ? historicalData[historicalData.length - 1].wellness : 50,
+      type: 'actual',
+    };
     
     const predictedData = predictions.map((p, idx) => {
       const futureDate = new Date(today);
@@ -596,7 +603,16 @@ const Energy = () => {
       };
     });
 
-    return [...historicalData, ...predictedData];
+    // Combine all data with proper connection point
+    const allData = [...historicalData];
+    
+    // Add transition point only if we have predictions
+    if (predictedData.length > 0) {
+      allData.push(todayData);
+      allData.push(...predictedData);
+    }
+
+    return allData;
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -922,7 +938,9 @@ const Energy = () => {
                     <h1 className="text-2xl font-bold text-foreground">
                       Энергетический баланс
                     </h1>
-                    <p className="text-sm text-muted-foreground mt-1">15 дней истории и 30-дневный прогноз</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {history.length > 0 ? `${history.length} ${history.length === 1 ? 'день' : history.length < 5 ? 'дня' : 'дней'} истории` : 'Нет истории'} и {predictions.length}-дневный прогноз
+                    </p>
                   </div>
                 </div>
 
@@ -946,8 +964,8 @@ const Energy = () => {
                       </div>
                      ) : (
                       <>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <AreaChart data={getChartData()} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                         <ResponsiveContainer width="100%" height={400}>
+                          <ComposedChart data={getChartData()} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4}/>
@@ -976,31 +994,45 @@ const Energy = () => {
                             />
                             <Tooltip content={<CustomTooltip />} />
                             
-                            {/* Actual - Solid Blue line */}
+                            {/* Area fills */}
                             <Area
+                              type="monotone"
+                              dataKey="wellness"
+                              data={getChartData().filter(d => d.type === 'actual')}
+                              stroke="none"
+                              fill="url(#gradientActual)"
+                            />
+                            <Area
+                              type="monotone"
+                              dataKey="wellness"
+                              data={getChartData().filter(d => d.type === 'predicted')}
+                              stroke="none"
+                              fill="url(#gradientPredicted)"
+                            />
+                            
+                            {/* Actual - Solid Blue line */}
+                            <Line
                               type="monotone"
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'actual')}
                               stroke="#3B82F6"
                               strokeWidth={2.5}
-                              fill="url(#gradientActual)"
                               dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
                               activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
                             />
                             
                             {/* Predicted - Dashed Purple line */}
-                            <Area
+                            <Line
                               type="monotone"
                               dataKey="wellness"
                               data={getChartData().filter(d => d.type === 'predicted')}
                               stroke="#8B5CF6"
                               strokeWidth={2.5}
                               strokeDasharray="8 4"
-                              fill="url(#gradientPredicted)"
                               dot={{ r: 3, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
                               activeDot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
                             />
-                          </AreaChart>
+                          </ComposedChart>
                         </ResponsiveContainer>
                         
                         <div className="flex items-center justify-center gap-8 mt-3 pb-2">
