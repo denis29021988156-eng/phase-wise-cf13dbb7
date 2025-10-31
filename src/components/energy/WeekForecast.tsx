@@ -1,5 +1,12 @@
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 interface DayForecast {
   date: string;
@@ -13,6 +20,8 @@ interface WeekForecastProps {
 }
 
 export function WeekForecast({ forecast }: WeekForecastProps) {
+  const [eventsOpen, setEventsOpen] = useState(false);
+  
   const getPhaseColor = (phase?: string) => {
     const colors: Record<string, string> = {
       menstrual: 'text-red-500',
@@ -136,72 +145,85 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
         })}
       </div>
       
-      {/* Hot Events list - Compact */}
-      <div className="space-y-1.5">
-        <h4 className="text-xs font-semibold flex items-center gap-1.5">
-          🔥 Ключевые события недели
-        </h4>
+      {/* Key Events - Collapsible */}
+      {(() => {
+        // Collect all events with their dates
+        const allEventsWithDates = weekForecast
+          .slice(0, 7)
+          .filter(day => day.events && day.events.length > 0 && day.date)
+          .flatMap(day => {
+            const dayDate = new Date(day.date);
+            if (isNaN(dayDate.getTime())) return [];
+            const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
+            
+            return (day.events || []).map(event => ({
+              ...event,
+              dayOfWeek,
+              date: day.date
+            }));
+          });
+
+        if (allEventsWithDates.length === 0) return null;
+
+        // Sort by impact
+        const sortedEvents = [...allEventsWithDates].sort((a, b) => a.impact - b.impact);
         
-        <div className="grid grid-cols-2 gap-1.5">
-          {(() => {
-            // Collect all events with their dates
-            const allEventsWithDates = weekForecast
-              .slice(0, 7)
-              .filter(day => day.events && day.events.length > 0 && day.date)
-              .flatMap(day => {
-                const dayDate = new Date(day.date);
-                if (isNaN(dayDate.getTime())) return [];
-                const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
-                
-                return (day.events || []).map(event => ({
-                  ...event,
-                  dayOfWeek,
-                  date: day.date
-                }));
-              });
+        // Get most energy-draining (lowest/most negative impact)
+        const mostDraining = sortedEvents.slice(0, 2);
+        
+        // Get most beneficial (highest/most positive impact)
+        const mostBeneficial = sortedEvents.slice(-2).reverse();
+        
+        // Combine
+        const keyEvents = [...mostDraining, ...mostBeneficial];
 
-            if (allEventsWithDates.length === 0) {
-              return (
-                <p className="text-[10px] text-muted-foreground text-center py-2 bg-muted/30 rounded-xl border border-border/50 col-span-2">
-                  Ключевых событий на этой неделе нет
-                </p>
-              );
-            }
-
-            // Sort by impact
-            const sortedEvents = [...allEventsWithDates].sort((a, b) => a.impact - b.impact);
-            
-            // Get 2 most energy-draining (lowest/most negative impact)
-            const mostDraining = sortedEvents.slice(0, 2);
-            
-            // Get 2 most beneficial (highest/most positive impact)
-            const mostBeneficial = sortedEvents.slice(-2).reverse();
-            
-            // Combine
-            const keyEvents = [...mostDraining, ...mostBeneficial];
-
-            return keyEvents.map((event, idx) => (
-              <div
-                key={`${event.date}-${event.name}-${idx}`}
-                className={`p-2 rounded-xl text-[10px] border-2 shadow-sm ${
-                  event.impact < 0
-                    ? 'bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300'
-                    : 'bg-green-500/10 border-green-500/30 text-green-900 dark:text-green-300'
-                }`}
-              >
-                <span className="mr-1">
-                  {event.impact < 0 ? '⚠️' : '✅'}
-                </span>
-                <span className="font-semibold">{event.dayOfWeek}:</span>{' '}
-                <span className="truncate inline-block max-w-[60%]">{event.name}</span>
-                <span className={`ml-1 font-bold ${event.impact < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  {event.impact > 0 ? '+' : ''}{event.impact}
-                </span>
-              </div>
-            ));
-          })()}
-        </div>
-      </div>
+        return (
+          <Collapsible open={eventsOpen} onOpenChange={setEventsOpen}>
+            <div className="space-y-2">
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors">
+                  <span className="text-sm font-medium">🔥 Ключевые события недели</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{keyEvents.length} событий</span>
+                    {eventsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="space-y-2 mt-2">
+                  {keyEvents.map((event, idx) => (
+                    <div
+                      key={`${event.date}-${event.name}-${idx}`}
+                      className="bg-card p-3 rounded-lg border-l-4 border-primary shadow-sm"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          📅 {event.dayOfWeek}
+                        </span>
+                      </div>
+                      <div className="text-sm font-semibold truncate mb-2 text-foreground">{event.name}</div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm font-bold ${
+                          event.impact > 0 ? 'text-green-600' : event.impact < 0 ? 'text-red-600' : 'text-orange-600'
+                        }`}>
+                          {event.impact > 0 ? '+' : ''}{event.impact}
+                        </span>
+                        <span className={`text-lg ${
+                          event.impact > 0 ? 'text-green-600' : event.impact < 0 ? 'text-red-600' : 'text-orange-600'
+                        }`}>
+                          {event.impact > 0 ? '↑' : event.impact < 0 ? '↓' : '→'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        );
+      })()}
     </div>
   );
 }
