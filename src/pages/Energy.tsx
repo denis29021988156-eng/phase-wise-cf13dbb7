@@ -896,209 +896,230 @@ const Energy = () => {
         </div>
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
-          {/* Desktop Layout with 3 Columns */}
-          <div className="hidden lg:grid lg:grid-cols-[288px_1fr_371px] lg:h-screen lg:overflow-hidden">
-            {/* COLUMN 1: LEFT SIDEBAR - Fixed scrollable */}
-            <aside className="border-r border-border bg-card/50 overflow-y-auto">
-              <EnergySidebar
-                wellnessIndex={wellnessIndex}
-                currentLog={currentLog}
-                onUpdate={setCurrentLog}
-                onSave={handleSave}
-                loading={loading}
-                physicalOptions={physicalOptions}
-                moodOptions={moodOptions}
-                phase={energyBreakdown.cyclePhase || 'follicular'}
-              />
-            </aside>
+          {/* Desktop Layout - Unified Scrollable Dashboard */}
+          <div className="hidden lg:block">
+            {/* Centered container with max-width 95% */}
+            <div className="max-w-[95%] mx-auto py-10 px-8">
+              {/* Page Header */}
+              <div className="mb-10">
+                <h1 className="text-4xl font-bold text-foreground mb-2">
+                  Энергия
+                </h1>
+                <p className="text-base text-muted-foreground">
+                  Управляйте своим самочувствием и отслеживайте энергетический баланс
+                </p>
+              </div>
 
-            {/* COLUMN 2: MAIN CONTENT - Graph and forecasts */}
-            <main className="overflow-y-auto border-r border-border">
-              <div className="p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-2xl font-bold text-foreground">
-                      Энергетический баланс
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">15 дней истории и 30-дневный прогноз</p>
-                  </div>
-                </div>
-
-                <Card className="w-full overflow-hidden border shadow-lg bg-card">
-                  <CardHeader className="pb-2 pt-4 px-4">
-                    <p className="text-xs text-muted-foreground">График энергии</p>
+              {/* Input Controls Section */}
+              <div className="mb-12">
+                <Card className="border-2 bg-card/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl">Как вы себя чувствуете сегодня?</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-0">
-                     {isLoadingPredictions ? (
-                      <div className="h-[250px] flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                        <p className="text-sm text-foreground font-medium">Загрузка прогноза...</p>
-                      </div>
-                    ) : history.length === 0 ? (
-                      <div className="h-[250px] flex flex-col items-center justify-center gap-2 text-center px-4">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
-                          <Brain className="w-8 h-8 text-primary" />
-                        </div>
-                        <p className="text-sm text-foreground font-medium">Начните добавлять данные</p>
-                        <p className="text-xs text-muted-foreground">График появится после первой записи</p>
-                      </div>
-                     ) : (
-                      <>
-                        <ResponsiveContainer width="100%" height={400}>
-                          <AreaChart data={getChartData()} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                            <defs>
-                              <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4}/>
-                                <stop offset="50%" stopColor="#3B82F6" stopOpacity={0.2}/>
-                                <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.05}/>
-                              </linearGradient>
-                              <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                                <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.15}/>
-                                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.2} />
-                            <XAxis 
-                              dataKey="date" 
-                              stroke="hsl(var(--muted-foreground))"
-                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                              tickLine={{ stroke: 'hsl(var(--border))' }}
-                            />
-                            <YAxis 
-                              domain={[0, 100]} 
-                              ticks={[0, 25, 50, 75, 100]}
-                              stroke="hsl(var(--muted-foreground))"
-                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                              tickLine={{ stroke: 'hsl(var(--border))' }}
-                            />
-                            <Tooltip content={<CustomTooltip />} />
-                            
-                            {/* Actual - Solid Blue line */}
-                            <Area
-                              type="monotone"
-                              dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'actual')}
-                              stroke="#3B82F6"
-                              strokeWidth={2.5}
-                              fill="url(#gradientActual)"
-                              dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
-                              activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
-                            />
-                            
-                            {/* Predicted - Dashed Purple line */}
-                            <Area
-                              type="monotone"
-                              dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'predicted')}
-                              stroke="#8B5CF6"
-                              strokeWidth={2.5}
-                              strokeDasharray="8 4"
-                              fill="url(#gradientPredicted)"
-                              dot={{ r: 3, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
-                              activeDot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
-                            />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                        
-                        <div className="flex items-center justify-center gap-8 mt-3 pb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-10 h-1.5 rounded-full bg-blue-500" />
-                            <span className="text-sm text-foreground font-medium">Было</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-purple-500" />
-                            <span className="text-sm text-foreground font-medium">Прогноз</span>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                  <CardContent>
+                    <EnergySidebar
+                      wellnessIndex={wellnessIndex}
+                      currentLog={currentLog}
+                      onUpdate={setCurrentLog}
+                      onSave={handleSave}
+                      loading={loading}
+                      physicalOptions={physicalOptions}
+                      moodOptions={moodOptions}
+                      phase={energyBreakdown.cyclePhase || 'follicular'}
+                    />
                   </CardContent>
                 </Card>
+              </div>
 
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => setIsReportDialogOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
-                  >
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Отчет за неделю
-                  </Button>
+              {/* Main Dashboard Grid */}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+                {/* Left Column: Charts and Forecasts (2/3 width on XL screens) */}
+                <div className="xl:col-span-2 space-y-10">
+                  {/* Energy Chart */}
+                  <Card className="w-full overflow-hidden border-2 shadow-lg bg-card">
+                    <CardHeader className="pb-4 pt-6 px-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-2xl mb-2">Энергетический баланс</CardTitle>
+                          <p className="text-sm text-muted-foreground">15 дней истории и 30-дневный прогноз</p>
+                        </div>
+                        <Button
+                          onClick={() => setIsReportDialogOpen(true)}
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                        >
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          Отчет за неделю
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-6 pb-6">
+                       {isLoadingPredictions ? (
+                        <div className="h-[350px] flex flex-col items-center justify-center gap-3">
+                          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                          <p className="text-sm text-foreground font-medium">Загрузка прогноза...</p>
+                        </div>
+                      ) : history.length === 0 ? (
+                        <div className="h-[350px] flex flex-col items-center justify-center gap-2 text-center px-4">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+                            <Brain className="w-8 h-8 text-primary" />
+                          </div>
+                          <p className="text-sm text-foreground font-medium">Начните добавлять данные</p>
+                          <p className="text-xs text-muted-foreground">График появится после первой записи</p>
+                        </div>
+                       ) : (
+                        <>
+                          <ResponsiveContainer width="100%" height={450}>
+                            <AreaChart data={getChartData()} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="gradientActual" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4}/>
+                                  <stop offset="50%" stopColor="#3B82F6" stopOpacity={0.2}/>
+                                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.05}/>
+                                </linearGradient>
+                                <linearGradient id="gradientPredicted" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                                  <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.15}/>
+                                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.2} />
+                              <XAxis 
+                                dataKey="date" 
+                                stroke="hsl(var(--muted-foreground))"
+                                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                                tickLine={{ stroke: 'hsl(var(--border))' }}
+                              />
+                              <YAxis 
+                                domain={[0, 100]} 
+                                ticks={[0, 25, 50, 75, 100]}
+                                stroke="hsl(var(--muted-foreground))"
+                                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                                tickLine={{ stroke: 'hsl(var(--border))' }}
+                              />
+                              <Tooltip content={<CustomTooltip />} />
+                              
+                              {/* Actual - Solid Blue line */}
+                              <Area
+                                type="monotone"
+                                dataKey="wellness"
+                                data={getChartData().filter(d => d.type === 'actual')}
+                                stroke="#3B82F6"
+                                strokeWidth={2.5}
+                                fill="url(#gradientActual)"
+                                dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
+                                activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
+                              />
+                              
+                              {/* Predicted - Dashed Purple line */}
+                              <Area
+                                type="monotone"
+                                dataKey="wellness"
+                                data={getChartData().filter(d => d.type === 'predicted')}
+                                stroke="#8B5CF6"
+                                strokeWidth={2.5}
+                                strokeDasharray="8 4"
+                                fill="url(#gradientPredicted)"
+                                dot={{ r: 3, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
+                                activeDot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                          
+                          <div className="flex items-center justify-center gap-8 mt-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-1.5 rounded-full bg-blue-500" />
+                              <span className="text-sm text-foreground font-medium">Было</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-purple-500" />
+                              <span className="text-sm text-foreground font-medium">Прогноз</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Week Forecast */}
+                  {weekForecast && weekForecast.length > 0 && (
+                    <WeekForecast forecast={weekForecast} />
+                  )}
+
+                  {/* Key Events */}
+                  {energyBreakdown.events && energyBreakdown.events.length > 0 && (
+                    <Card className="border-2">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                          <Zap className="w-6 h-6" />
+                          Ключевые события дня
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <EventsImpactSection
+                          events={energyBreakdown.events}
+                          cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
-                {weekForecast && weekForecast.length > 0 && (
-                  <WeekForecast forecast={weekForecast} />
-                )}
-
-                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-                  <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Zap className="w-5 h-5" />
-                        Ключевые события дня
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <EventsImpactSection
-                        events={energyBreakdown.events}
-                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
+                {/* Right Column: Wellness Indicators (1/3 width on XL screens) */}
+                <div className="space-y-8">
+                  {/* Energy Gauge */}
+                  <Card className="border-2 bg-card">
+                    <CardContent className="pt-6">
+                      <EnergyGauge 
+                        score={wellnessIndex}
+                        phase={energyBreakdown.cyclePhase || 'follicular'}
+                        date={energyBreakdown.today}
                       />
                     </CardContent>
                   </Card>
-                )}
-              </div>
-            </main>
 
-            {/* COLUMN 3: RIGHT SIDEBAR - Wellness info */}
-            <aside className="overflow-y-auto bg-card/30">
-              <div className="p-6 space-y-6">
-                <EnergyGauge 
-                  score={wellnessIndex}
-                  phase={energyBreakdown.cyclePhase || 'follicular'}
-                  date={energyBreakdown.today}
-                />
+                  {/* Energy Balance */}
+                  <EnergyBalanceCard
+                    baseEnergy={energyBreakdown.calculation.base}
+                    eventsImpact={energyBreakdown.calculation.events}
+                    sleepModifier={energyBreakdown.calculation.sleep}
+                    stressModifier={energyBreakdown.calculation.stress}
+                    finalEnergy={energyBreakdown.finalEnergy}
+                    events={energyBreakdown.events || []}
+                  />
 
-                <EnergyBalanceCard
-                  baseEnergy={energyBreakdown.calculation.base}
-                  eventsImpact={energyBreakdown.calculation.events}
-                  sleepModifier={energyBreakdown.calculation.sleep}
-                  stressModifier={energyBreakdown.calculation.stress}
-                  finalEnergy={energyBreakdown.finalEnergy}
-                  events={energyBreakdown.events || []}
-                />
-
-                {/* Energy Spent Card */}
-                <Card className="border-2 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Zap className="w-5 h-5 text-red-600 dark:text-red-400" />
-                      Затрачено энергии
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-baseline gap-2 mb-3">
-                      <span className="text-4xl font-bold text-red-600 dark:text-red-400">
-                        {currentLog.physical_symptoms.reduce((total, symptomId) => {
-                          const symptom = physicalOptions.find(s => s.id === symptomId);
-                          return total + Math.abs(symptom?.value || 0);
-                        }, 0)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">баллов</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Низкий</span>
-                        <span className="text-muted-foreground">0-2</span>
+                  {/* Energy Spent */}
+                  <Card className="border-2 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Zap className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        Затрачено энергии
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-baseline gap-2 mb-3">
+                        <span className="text-4xl font-bold text-red-600 dark:text-red-400">
+                          {currentLog.physical_symptoms.reduce((total, symptomId) => {
+                            const symptom = physicalOptions.find(s => s.id === symptomId);
+                            return total + Math.abs(symptom?.value || 0);
+                          }, 0)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">баллов</span>
                       </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Высокий</span>
-                        <span className="text-muted-foreground">3-5</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Низкий</span>
+                          <span className="text-muted-foreground">0-2</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Высокий</span>
+                          <span className="text-muted-foreground">3-5</span>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </aside>
+            </div>
           </div>
 
           {/* Mobile Layout - Vertical */}
