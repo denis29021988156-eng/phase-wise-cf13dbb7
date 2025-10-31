@@ -165,13 +165,12 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
           energy: day.wellness_index
         }));
 
-      // Используем фактическую энергию из energyBreakdown вместо прогноза
-      const actualEnergy = energyBreakdown?.finalEnergy || energyBreakdown?.totalEnergy || mostCostlyEvent.currentDayEnergy;
-
+      // Используем энергию конкретного дня события из weekForecast
+      // mostCostlyEvent.currentDayEnergy уже содержит wellness_index для дня события
       const recommendation = {
         eventId: mostCostlyEvent.id,
         eventTitle: mostCostlyEvent.title,
-        currentDayEnergy: actualEnergy,
+        currentDayEnergy: mostCostlyEvent.currentDayEnergy,
         energyCost: mostCostlyEvent.energyCost,
         currentDate: mostCostlyEvent.eventDate,
         suggestedSlots: topSlots
