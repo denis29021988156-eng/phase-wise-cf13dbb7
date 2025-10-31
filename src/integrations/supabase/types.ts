@@ -224,6 +224,56 @@ export type Database = {
         }
         Relationships: []
       }
+      event_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          event_id: string
+          id: string
+          metadata: Json | null
+          new_end_time: string | null
+          new_start_time: string | null
+          old_end_time: string | null
+          old_start_time: string | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          event_id: string
+          id?: string
+          metadata?: Json | null
+          new_end_time?: string | null
+          new_start_time?: string | null
+          old_end_time?: string | null
+          old_start_time?: string | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          metadata?: Json | null
+          new_end_time?: string | null
+          new_start_time?: string | null
+          old_end_time?: string | null
+          old_start_time?: string | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_actions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_ai_suggestions: {
         Row: {
           created_at: string | null

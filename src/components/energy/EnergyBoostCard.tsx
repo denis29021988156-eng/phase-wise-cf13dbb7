@@ -229,6 +229,29 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
 
       if (updateError) throw updateError;
 
+      // Записать действие Boost для AI
+      await supabase
+        .from('event_actions')
+        .insert({
+          event_id: recommendation.eventId,
+          user_id: userId,
+          action_type: 'boost_moved',
+          old_start_time: event.start_time,
+          new_start_time: newStartTime,
+          old_end_time: event.end_time,
+          new_end_time: newEndTime,
+          reason: i18n.language === 'ru' 
+            ? `Автоматическая оптимизация: перенос с дня с низкой энергией (${recommendation.currentDayEnergy}) на день с лучшим прогнозом (${targetSlot.energy})`
+            : `Automatic optimization: moved from low energy day (${recommendation.currentDayEnergy}) to better forecast day (${targetSlot.energy})`,
+          metadata: {
+            from_date: recommendation.currentDate,
+            to_date: targetSlot.date,
+            energy_before: recommendation.currentDayEnergy,
+            energy_after: targetSlot.energy,
+            energy_cost: recommendation.energyCost
+          }
+        });
+
       toast({
         title: i18n.language === 'ru' ? '✅ Событие перенесено' : '✅ Event moved',
         description: i18n.language === 'ru' 

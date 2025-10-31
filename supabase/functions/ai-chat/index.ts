@@ -281,6 +281,58 @@ ${eventsList}
       console.log('No calendar events found for user, proceeding without events context');
     }
 
+    // Get recent Boost optimizations
+    let boostContext = '';
+    try {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      
+      const { data: recentBoostActions } = await supabaseClient
+        .from('event_actions')
+        .select(`
+          *,
+          events (
+            title
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('action_type', 'boost_moved')
+        .gte('created_at', threeDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentBoostActions && recentBoostActions.length > 0) {
+        const actionsList = recentBoostActions.map(action => {
+          const oldDate = new Date(action.old_start_time!).toLocaleDateString('ru-RU', { 
+            day: 'numeric', 
+            month: 'long' 
+          });
+          const newDate = new Date(action.new_start_time!).toLocaleDateString('ru-RU', { 
+            day: 'numeric', 
+            month: 'long' 
+          });
+          const eventTitle = (action.events as any)?.title || 'событие';
+          const energyBefore = action.metadata?.energy_before || '?';
+          const energyAfter = action.metadata?.energy_after || '?';
+          
+          return `  • "${eventTitle}": перенесено с ${oldDate} (энергия ${energyBefore}) на ${newDate} (энергия ${energyAfter})`;
+        }).join('\n');
+
+        boostContext = `
+🔥 Недавние автоматические оптимизации (Boost):
+${actionsList}
+
+ВАЖНО: Эти события были автоматически перенесены системой Boost для оптимизации энергии пользователя. 
+- НЕ предлагай перенести эти события обратно на старые даты
+- Учитывай, что пользователь уже оптимизировал свой календарь
+- Если пользователь спрашивает про эти события, объясни, что они были перенесены для лучшего самочувствия
+- Можешь предложить дополнительные улучшения, но не отменяй уже сделанную оптимизацию
+`;
+      }
+    } catch (error) {
+      console.log('No Boost actions found, proceeding without Boost context');
+    }
+
     // Build system prompt with user profile data
     const isEnglish = language === 'en';
     let systemPrompt = isEnglish 
@@ -303,7 +355,9 @@ ${cycleContext}
 
 ${symptomContext}
 
-${eventsContext}`
+${eventsContext}
+
+${boostContext}`
       : `Ты — Gaia, продвинутый и заботливый виртуальный помощник по женскому здоровью с глубоким пониманием менструального цикла и общего самочувствия женщин. Твоя главная задача — давать компетентные, подробные и персонализированные рекомендации на основе текущей фазы цикла и состояния пользовательницы.
 
 Твои возможности:
@@ -323,7 +377,9 @@ ${cycleContext}
 
 ${symptomContext}
 
-${eventsContext}`;
+${eventsContext}
+
+${boostContext}`;
 
     // Add user profile data if available
     if (profile.age || profile.height || profile.weight) {
