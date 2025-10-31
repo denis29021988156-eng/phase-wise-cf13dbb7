@@ -316,16 +316,28 @@ export function EnergySidebar({
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm">❤️ Секс</span>
                   </div>
-                  <button
-                    onClick={() => onUpdate({ ...currentLog, had_sex: !currentLog.had_sex })}
-                    className={`w-full px-3 py-2 rounded-lg text-sm transition-all ${
-                      currentLog.had_sex
-                        ? 'bg-primary/10 border border-primary/30 text-primary font-medium'
-                        : 'bg-muted/30 hover:bg-muted/50 text-muted-foreground'
-                    }`}
-                  >
-                    {currentLog.had_sex ? '✓ Да' : 'Нет'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onUpdate({ ...currentLog, had_sex: true })}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
+                        currentLog.had_sex
+                          ? 'bg-primary/10 border border-primary/30 text-primary font-medium'
+                          : 'bg-muted/30 hover:bg-muted/50 text-muted-foreground'
+                      }`}
+                    >
+                      Да
+                    </button>
+                    <button
+                      onClick={() => onUpdate({ ...currentLog, had_sex: false })}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
+                        !currentLog.had_sex
+                          ? 'bg-primary/10 border border-primary/30 text-primary font-medium'
+                          : 'bg-muted/30 hover:bg-muted/50 text-muted-foreground'
+                      }`}
+                    >
+                      Нет
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </CollapsibleContent>
