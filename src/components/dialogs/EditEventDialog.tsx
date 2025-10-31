@@ -95,6 +95,106 @@ const EditEventDialog = ({ open, onOpenChange, event, onEventUpdated }: EditEven
         if (updateError) throw updateError;
       }
 
+      // Пересчитать AI рекомендацию если изменилось время или дата
+      const oldStartTime = new Date(event.start_time);
+      const timeOrDateChanged = 
+        oldStartTime.getTime() !== startDateTime.getTime() ||
+        oldStartTime.toDateString() !== startDateTime.toDateString();
+
+      if (timeOrDateChanged) {
+        try {
+          // Получить данные цикла пользователя
+          const { data: cycleData } = await supabase
+            .from('user_cycles')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (cycleData) {
+            // Вычислить день цикла для новой даты
+            const newEventDate = startDateTime;
+            const startDate = new Date(cycleData.start_date);
+            const diffInDays = Math.floor((newEventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+            const cycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+            const adjustedCycleDay = cycleDay > 0 ? cycleDay : cycleData.cycle_length + cycleDay;
+
+            // Получить timezone и language из профиля
+            const { data: userProfile } = await supabase
+              .from('user_profiles')
+              .select('timezone, language')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            const userTimezone = userProfile?.timezone || 'Europe/Moscow';
+            const language = userProfile?.language || 'ru';
+
+            // Вызвать функцию генерации новой рекомендации
+            const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
+              body: {
+                event: {
+                  id: event.id,
+                  title: formData.title,
+                  start_time: startDateTime.toISOString(),
+                  end_time: endDateTime.toISOString(),
+                  start_time_local: startDateTime.toLocaleTimeString(language === 'ru' ? 'ru-RU' : 'en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: userTimezone
+                  })
+                },
+                cycleData: {
+                  cycleDay: adjustedCycleDay,
+                  cycleLength: cycleData.cycle_length,
+                  menstrualLength: cycleData.menstrual_length || 5,
+                  language: language,
+                  start_date: cycleData.start_date
+                },
+                timezone: userTimezone,
+                healthDataSynced: false
+              }
+            });
+
+            if (!suggestionError && suggestionData?.suggestion) {
+              // Обновить рекомендацию
+              await supabase
+                .from('event_ai_suggestions')
+                .upsert({
+                  event_id: event.id,
+                  suggestion: suggestionData.suggestion,
+                  justification: suggestionData.justification || `AI для ${adjustedCycleDay} дня цикла после ручного редактирования`,
+                  decision: 'regenerated'
+                }, {
+                  onConflict: 'event_id'
+                });
+
+              console.log('AI recommendation updated after manual edit');
+            }
+          }
+        } catch (aiError) {
+          console.error('Error regenerating AI recommendation:', aiError);
+          // Не блокируем редактирование события из-за ошибки AI
+        }
+      }
+
+      // Записать действие пользователя в историю
+      await supabase
+        .from('event_actions')
+        .insert({
+          event_id: event.id,
+          user_id: user.id,
+          action_type: 'manual_moved',
+          old_start_time: event.start_time,
+          new_start_time: startDateTime.toISOString(),
+          old_end_time: event.end_time,
+          new_end_time: endDateTime.toISOString(),
+          reason: t('editEvent.manualEdit'),
+          metadata: {
+            title_changed: event.title !== formData.title,
+            old_title: event.title,
+            new_title: formData.title
+          }
+        });
+
       toast({
         title: t('editEvent.updated'),
         description: t('editEvent.updatedDesc'),
