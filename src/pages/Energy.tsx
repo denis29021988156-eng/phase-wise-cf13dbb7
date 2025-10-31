@@ -896,25 +896,27 @@ const Energy = () => {
         </div>
       ) : energyBreakdown && energyBreakdown.today && energyBreakdown.calculation ? (
         <>
-          {/* Desktop Layout with 3 Columns */}
-          <div className="hidden lg:grid lg:grid-cols-[288px_1fr_371px] lg:h-screen lg:overflow-hidden">
-            {/* COLUMN 1: LEFT SIDEBAR - Fixed scrollable */}
-            <aside className="border-r border-border bg-card/50 overflow-y-auto">
-              <EnergySidebar
-                wellnessIndex={wellnessIndex}
-                currentLog={currentLog}
-                onUpdate={setCurrentLog}
-                onSave={handleSave}
-                loading={loading}
-                physicalOptions={physicalOptions}
-                moodOptions={moodOptions}
-                phase={energyBreakdown.cyclePhase || 'follicular'}
-              />
-            </aside>
+          {/* Desktop Layout - Single Scroll */}
+          <div className="hidden lg:block">
+            <div className="max-w-[95%] mx-auto py-8 px-8">
+              <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr_400px] gap-8">
+                {/* COLUMN 1: LEFT SIDEBAR */}
+                <aside className="border border-border bg-card/50 rounded-lg p-4">
+                  <EnergySidebar
+                    wellnessIndex={wellnessIndex}
+                    currentLog={currentLog}
+                    onUpdate={setCurrentLog}
+                    onSave={handleSave}
+                    loading={loading}
+                    physicalOptions={physicalOptions}
+                    moodOptions={moodOptions}
+                    phase={energyBreakdown.cyclePhase || 'follicular'}
+                  />
+                </aside>
 
-            {/* COLUMN 2: MAIN CONTENT - Graph and forecasts */}
-            <main className="overflow-y-auto border-r border-border">
-              <div className="p-6 space-y-6">
+                {/* COLUMN 2: MAIN CONTENT - Graph and forecasts */}
+                <main>
+                  <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <h1 className="text-2xl font-bold text-foreground">
@@ -1046,12 +1048,12 @@ const Energy = () => {
                     </CardContent>
                   </Card>
                 )}
-              </div>
-            </main>
+                  </div>
+                </main>
 
-            {/* COLUMN 3: RIGHT SIDEBAR - Wellness info */}
-            <aside className="overflow-y-auto bg-card/30">
-              <div className="p-6 space-y-6">
+                {/* COLUMN 3: RIGHT SIDEBAR - Wellness info */}
+                <aside className="bg-card/30 border border-border rounded-lg p-4">
+                  <div className="space-y-6">
                 <EnergyGauge 
                   score={wellnessIndex}
                   phase={energyBreakdown.cyclePhase || 'follicular'}
@@ -1097,8 +1099,10 @@ const Energy = () => {
                     </div>
                   </CardContent>
                 </Card>
+                  </div>
+                </aside>
               </div>
-            </aside>
+            </div>
           </div>
 
           {/* Mobile Layout - Vertical */}
