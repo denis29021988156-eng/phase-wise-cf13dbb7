@@ -1132,6 +1132,7 @@ const Energy = () => {
                   eventsImpact={energyBreakdown.calculation.events}
                   sleepModifier={energyBreakdown.calculation.sleep}
                   stressModifier={energyBreakdown.calculation.stress}
+                  wellnessModifier={energyBreakdown.calculation.wellness}
                   finalEnergy={energyBreakdown.finalEnergy}
                   events={energyBreakdown.events || []}
                 />
@@ -1199,6 +1200,7 @@ const Energy = () => {
               eventsImpact={energyBreakdown.calculation.events}
               sleepModifier={energyBreakdown.calculation.sleep}
               stressModifier={energyBreakdown.calculation.stress}
+              wellnessModifier={energyBreakdown.calculation.wellness}
               finalEnergy={energyBreakdown.finalEnergy}
               events={energyBreakdown.events || []}
             />

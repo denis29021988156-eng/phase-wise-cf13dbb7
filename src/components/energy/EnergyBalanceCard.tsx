@@ -13,6 +13,7 @@ interface EnergyBalanceCardProps {
   eventsImpact: number;
   sleepModifier: number;
   stressModifier: number;
+  wellnessModifier?: number;
   finalEnergy: number;
   events: Array<{ title: string; energyImpact: number; start_time: string }>;
 }
@@ -22,6 +23,7 @@ export function EnergyBalanceCard({
   eventsImpact,
   sleepModifier,
   stressModifier,
+  wellnessModifier = 0,
   finalEnergy,
   events
 }: EnergyBalanceCardProps) {
@@ -106,7 +108,7 @@ export function EnergyBalanceCard({
             </Collapsible>
           )}
 
-          {(sleepModifier !== 0 || stressModifier !== 0) && (
+          {(sleepModifier !== 0 || stressModifier !== 0 || wellnessModifier !== 0) && (
             <div className="space-y-1">
               {sleepModifier !== 0 && (
                 <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
@@ -121,6 +123,14 @@ export function EnergyBalanceCard({
                   <span className="font-medium">Уровень стресса</span>
                   <span className={`font-semibold ${stressModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {stressModifier > 0 ? '+' : ''}{stressModifier}
+                  </span>
+                </div>
+              )}
+              {wellnessModifier !== 0 && (
+                <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
+                  <span className="font-medium">Индекс самочувствия</span>
+                  <span className={`font-semibold ${wellnessModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {wellnessModifier > 0 ? '+' : ''}{wellnessModifier}
                   </span>
                 </div>
               )}

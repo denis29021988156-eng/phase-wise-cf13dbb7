@@ -171,14 +171,17 @@ serve(async (req) => {
     // 6. Calculate modifiers from symptoms (in points)
     let sleepModifier = 0;
     let stressModifier = 0;
+    let wellnessModifier = 0;
 
     if (todaySymptoms) {
       sleepModifier = Math.round(((todaySymptoms.sleep_quality || 3) - 3) * 5);
       stressModifier = Math.round(((todaySymptoms.stress_level || 3) - 3) * -3);
+      // Wellness index as modifier: (wellness_index - 60) × 0.3
+      wellnessModifier = Math.round(((todaySymptoms.wellness_index || 60) - 60) * 0.3);
     }
 
     // 7. Calculate final energy (0-100 scale)
-    const rawFinalEnergy = baseEnergy + totalEnergyImpact + sleepModifier + stressModifier;
+    const rawFinalEnergy = baseEnergy + totalEnergyImpact + sleepModifier + stressModifier + wellnessModifier;
     const finalEnergy = Math.max(0, Math.min(100, Math.round(rawFinalEnergy)));
 
     // 8. Calculate confidence
@@ -201,15 +204,18 @@ serve(async (req) => {
       totalStressImpact: totalStressImpact,
       sleepModifier: sleepModifier,
       stressModifier: stressModifier,
+      wellnessModifier: wellnessModifier,
       finalEnergy: finalEnergy,
       confidence: Math.round(confidence),
       symptoms: todaySymptoms?.physical_symptoms || [],
+      wellnessIndex: todaySymptoms?.wellness_index || null,
       calculation: {
         base: baseEnergy,
         events: totalEnergyImpact,
         sleep: sleepModifier,
         stress: stressModifier,
-        formula: `${baseEnergy} ${totalEnergyImpact >= 0 ? '+' : ''} ${totalEnergyImpact} ${sleepModifier >= 0 ? '+' : ''} ${sleepModifier} ${stressModifier >= 0 ? '+' : ''} ${stressModifier} = ${finalEnergy}`
+        wellness: wellnessModifier,
+        formula: `${baseEnergy} ${totalEnergyImpact >= 0 ? '+' : ''} ${totalEnergyImpact} ${sleepModifier >= 0 ? '+' : ''} ${sleepModifier} ${stressModifier >= 0 ? '+' : ''} ${stressModifier} ${wellnessModifier >= 0 ? '+' : ''} ${wellnessModifier} = ${finalEnergy}`
       }
     };
 

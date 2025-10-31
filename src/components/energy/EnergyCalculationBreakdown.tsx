@@ -6,6 +6,7 @@ interface CalculationData {
   events: number;
   sleep: number;
   stress: number;
+  wellness?: number;
   formula: string;
 }
 
@@ -15,7 +16,7 @@ interface EnergyCalculationBreakdownProps {
 }
 
 export function EnergyCalculationBreakdown({ calculation, confidence }: EnergyCalculationBreakdownProps) {
-  const total = calculation.base + calculation.events + calculation.sleep + calculation.stress;
+  const total = calculation.base + calculation.events + calculation.sleep + calculation.stress + (calculation.wellness || 0);
 
   return (
     <Card className="border-2">
@@ -42,7 +43,7 @@ export function EnergyCalculationBreakdown({ calculation, confidence }: EnergyCa
           </div>
           
           {/* Sleep and Stress */}
-          {(calculation.sleep !== 0 || calculation.stress !== 0) && (
+          {(calculation.sleep !== 0 || calculation.stress !== 0 || (calculation.wellness && calculation.wellness !== 0)) && (
             <div className="space-y-1">
               {calculation.sleep !== 0 && (
                 <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
@@ -57,6 +58,14 @@ export function EnergyCalculationBreakdown({ calculation, confidence }: EnergyCa
                   <span className="font-medium">Уровень стресса</span>
                   <span className={`font-semibold ${calculation.stress > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {calculation.stress > 0 ? '+' : ''}{calculation.stress.toFixed(1)}
+                  </span>
+                </div>
+              )}
+              {calculation.wellness !== undefined && calculation.wellness !== 0 && (
+                <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
+                  <span className="font-medium">Индекс самочувствия</span>
+                  <span className={`font-semibold ${calculation.wellness > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {calculation.wellness > 0 ? '+' : ''}{calculation.wellness.toFixed(1)}
                   </span>
                 </div>
               )}
