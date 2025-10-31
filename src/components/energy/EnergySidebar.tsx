@@ -82,6 +82,7 @@ export function EnergySidebar({
           <div className="relative w-32 h-32">
             {/* Circular progress */}
             <svg className="w-32 h-32 transform -rotate-90">
+              {/* Background circle - more visible */}
               <circle
                 cx="64"
                 cy="64"
@@ -89,28 +90,45 @@ export function EnergySidebar({
                 stroke="currentColor"
                 strokeWidth="8"
                 fill="none"
-                className="text-muted/20"
+                className="text-muted"
+                opacity="0.3"
               />
+              {/* Progress circle with color gradient based on value */}
               <circle
                 cx="64"
                 cy="64"
                 r="56"
-                stroke="url(#gradient-energy)"
+                stroke={
+                  wellnessIndex <= 20 ? '#EF4444' : // red
+                  wellnessIndex <= 40 ? '#F97316' : // orange
+                  wellnessIndex <= 60 ? '#EAB308' : // yellow
+                  wellnessIndex <= 80 ? '#84CC16' : // lime
+                  '#22C55E' // green
+                }
                 strokeWidth="8"
                 fill="none"
                 strokeDasharray={`${(wellnessIndex / 100) * 351.86} 351.86`}
                 strokeLinecap="round"
                 className="transition-all duration-1000 ease-out"
+                style={{
+                  filter: `drop-shadow(0 0 6px ${
+                    wellnessIndex <= 20 ? '#EF444440' :
+                    wellnessIndex <= 40 ? '#F9731640' :
+                    wellnessIndex <= 60 ? '#EAB30840' :
+                    wellnessIndex <= 80 ? '#84CC1640' :
+                    '#22C55E40'
+                  })`
+                }}
               />
-              <defs>
-                <linearGradient id="gradient-energy" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#8B5CF6" />
-                  <stop offset="100%" stopColor="#EC4899" />
-                </linearGradient>
-              </defs>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-4xl font-bold bg-gradient-to-br from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="text-4xl font-bold" style={{
+                color: wellnessIndex <= 20 ? '#EF4444' :
+                       wellnessIndex <= 40 ? '#F97316' :
+                       wellnessIndex <= 60 ? '#EAB308' :
+                       wellnessIndex <= 80 ? '#84CC16' :
+                       '#22C55E'
+              }}>
                 {wellnessIndex}
               </span>
             </div>
