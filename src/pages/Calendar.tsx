@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, ChevronLeft, ChevronRight, CalendarDays, ChevronDown, ChevronUp, Trash2, Edit, Droplet, CloudCog, ArrowRightLeft } from 'lucide-react';
@@ -11,6 +11,7 @@ import AddEventDialog from '@/components/dialogs/AddEventDialog';
 import EditEventDialog from '@/components/dialogs/EditEventDialog';
 import MoveEventDialog from '@/components/dialogs/MoveEventDialog';
 import PeriodTrackingDialog from '@/components/dialogs/PeriodTrackingDialog';
+import Navigation from '@/components/layout/Navigation';
 import { format } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +40,7 @@ const Calendar = () => {
   const { user, session, linkGoogleIdentity, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [events, setEvents] = useState<EventWithSuggestion[]>([]);
@@ -57,6 +59,22 @@ const Calendar = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const eventsRef = useState<HTMLDivElement | null>(null)[0];
   const [periodTrackingOpen, setPeriodTrackingOpen] = useState(false);
+
+  const handleTabChange = (tab: string) => {
+    switch (tab) {
+      case 'calendar':
+        navigate('/dashboard');
+        break;
+      case 'all-events':
+      case 'profile':
+      case 'chat':
+        navigate('/dashboard');
+        break;
+      case 'energy':
+        navigate('/energy');
+        break;
+    }
+  };
 
   // Handle URL date parameter
   useEffect(() => {
@@ -870,7 +888,7 @@ const Calendar = () => {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 pb-24">
       {/* Action Buttons */}
       <div className="flex items-center justify-center gap-2 w-full">
         <Button
@@ -1332,6 +1350,10 @@ const Calendar = () => {
           loadEvents();
         }}
       />
+
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <Navigation activeTab="calendar" onTabChange={handleTabChange} />
+      </div>
     </div>
   );
 };
