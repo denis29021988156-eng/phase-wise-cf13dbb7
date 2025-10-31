@@ -673,12 +673,12 @@ const Energy = () => {
       const isPredicted = data.type === 'predicted';
       
       return (
-        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border p-2 rounded-lg shadow-lg" style={{ borderColor: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
-          <div className="flex items-center gap-1.5 mb-1">
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border p-3 rounded-lg shadow-lg max-w-[200px]" style={{ borderColor: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
+          <div className="flex items-center gap-1.5 mb-1.5">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isPredicted ? '#8B5CF6' : '#3B82F6' }} />
             <p className="text-xs font-semibold text-foreground">{data.date}</p>
           </div>
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-baseline gap-1.5 mb-1">
             <span className="text-lg font-bold" style={{ color: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
               {data.wellness}
             </span>
@@ -691,6 +691,11 @@ const Energy = () => {
               </>
             )}
           </div>
+          {isPredicted && data.note && (
+            <p className="text-xs text-muted-foreground mt-1.5 pt-1.5 border-t border-border leading-tight">
+              💡 {data.note}
+            </p>
+          )}
         </div>
       );
     }
