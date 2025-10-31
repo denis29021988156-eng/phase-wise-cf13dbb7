@@ -16,6 +16,7 @@ interface EnergyBalanceCardProps {
   wellnessModifier?: number;
   finalEnergy: number;
   events: Array<{ title: string; energyImpact: number; start_time: string }>;
+  cyclePhase: string;
 }
 
 export function EnergyBalanceCard({
@@ -25,9 +26,17 @@ export function EnergyBalanceCard({
   stressModifier,
   wellnessModifier = 0,
   finalEnergy,
-  events
+  events,
+  cyclePhase
 }: EnergyBalanceCardProps) {
   const [eventsOpen, setEventsOpen] = useState(false);
+  
+  const phaseLabels: Record<string, string> = {
+    menstrual: 'Менструация',
+    follicular: 'Фолликулярная',
+    ovulation: 'Овуляция',
+    luteal: 'Лютеиновая'
+  };
   
   const getEnergyColor = (value: number) => {
     if (value >= 70) return 'text-green-600';
@@ -59,7 +68,7 @@ export function EnergyBalanceCard({
         {/* Main calculation */}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg">
-            <span className="text-sm font-medium">Базовая энергия (фаза цикла)</span>
+            <span className="text-sm font-medium">Базовая энергия ({phaseLabels[cyclePhase] || cyclePhase})</span>
             <span className="text-lg font-bold">{baseEnergy}</span>
           </div>
 

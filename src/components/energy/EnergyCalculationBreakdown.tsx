@@ -13,10 +13,18 @@ interface CalculationData {
 interface EnergyCalculationBreakdownProps {
   calculation: CalculationData;
   confidence: number;
+  cyclePhase: string;
 }
 
-export function EnergyCalculationBreakdown({ calculation, confidence }: EnergyCalculationBreakdownProps) {
+export function EnergyCalculationBreakdown({ calculation, confidence, cyclePhase }: EnergyCalculationBreakdownProps) {
   const total = calculation.base + calculation.events + calculation.sleep + calculation.stress + (calculation.wellness || 0);
+  
+  const phaseLabels: Record<string, string> = {
+    menstrual: 'Менструация',
+    follicular: 'Фолликулярная',
+    ovulation: 'Овуляция',
+    luteal: 'Лютеиновая'
+  };
 
   return (
     <Card className="border-2">
@@ -30,7 +38,7 @@ export function EnergyCalculationBreakdown({ calculation, confidence }: EnergyCa
         <div className="space-y-3">
           {/* Base Energy */}
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <span className="text-sm font-medium">Базовая энергия (фаза)</span>
+            <span className="text-sm font-medium">Базовая энергия ({phaseLabels[cyclePhase] || cyclePhase})</span>
             <span className="text-lg font-bold text-green-600">+{calculation.base.toFixed(1)}</span>
           </div>
           

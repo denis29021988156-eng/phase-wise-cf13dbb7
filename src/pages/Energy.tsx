@@ -1135,6 +1135,7 @@ const Energy = () => {
                   wellnessModifier={energyBreakdown.calculation.wellness}
                   finalEnergy={energyBreakdown.finalEnergy}
                   events={energyBreakdown.events || []}
+                  cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
                 />
 
 
@@ -1203,6 +1204,7 @@ const Energy = () => {
               wellnessModifier={energyBreakdown.calculation.wellness}
               finalEnergy={energyBreakdown.finalEnergy}
               events={energyBreakdown.events || []}
+              cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
             />
             
             
