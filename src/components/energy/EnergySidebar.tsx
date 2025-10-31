@@ -369,6 +369,15 @@ export function EnergySidebar({
           </Card>
         </Collapsible>
 
+        {/* Save Button */}
+        <Button
+          onClick={handleSave}
+          disabled={loading}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+        >
+          {loading ? 'Сохранение...' : 'Сохранить'}
+        </Button>
+
         {/* Charts */}
         <Collapsible open={chartsOpen} onOpenChange={setChartsOpen}>
           <Card className="border-border/50">
@@ -396,15 +405,6 @@ export function EnergySidebar({
             </CollapsibleContent>
           </Card>
         </Collapsible>
-
-        {/* Save Button */}
-        <Button
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
-        >
-          {loading ? 'Сохранение...' : 'Сохранить'}
-        </Button>
       </div>
     </div>
   );
