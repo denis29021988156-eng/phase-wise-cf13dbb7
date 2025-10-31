@@ -638,6 +638,16 @@ const Energy = () => {
 
   const handleDownloadPDF = async () => {
     try {
+      // Validate data
+      if (!history || history.length === 0) {
+        toast({
+          title: 'Нет данных',
+          description: 'Недостаточно данных для создания отчета',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       toast({
         title: 'Генерация PDF...',
         description: 'Подождите, создаем ваш отчет',
@@ -648,33 +658,35 @@ const Energy = () => {
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '0';
+      container.style.width = '1200px';
       document.body.appendChild(container);
 
       const reportData = {
-        history: history,
-        predictions: predictions,
-        physicalSymptoms: currentLog.physical_symptoms,
-        moodSymptoms: currentLog.mood,
-        sleepQuality: currentLog.sleep_quality,
-        stressLevel: currentLog.stress_level,
+        history: history || [],
+        predictions: predictions || [],
+        physicalSymptoms: currentLog.physical_symptoms || [],
+        moodSymptoms: currentLog.mood || [],
+        sleepQuality: currentLog.sleep_quality || 3,
+        stressLevel: currentLog.stress_level || 3,
       };
 
       // Create the report HTML element
-      container.innerHTML = `
-        <div id="weekly-report-pdf" style="
-          width: 1200px;
-          height: 800px;
-          background: white;
-          padding: 60px 80px;
-          font-family: Arial, sans-serif;
-          color: #0d4d4d;
-        ">
-          ${generateReportHTML(reportData)}
-        </div>
+      const reportDiv = document.createElement('div');
+      reportDiv.id = 'weekly-report-pdf';
+      reportDiv.style.cssText = `
+        width: 1200px;
+        height: auto;
+        min-height: 800px;
+        background: white;
+        padding: 60px 80px;
+        font-family: Arial, sans-serif;
+        color: #0d4d4d;
       `;
+      reportDiv.innerHTML = generateReportHTML(reportData);
+      container.appendChild(reportDiv);
 
       // Wait for rendering
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Capture the rendered component
       const element = document.getElementById('weekly-report-pdf');
@@ -686,17 +698,22 @@ const Energy = () => {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 1200,
       });
 
       // Create PDF
-      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 297; // A4 width in mm (landscape)
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
       const pdf = new jsPDF({
         orientation: 'landscape',
-        unit: 'px',
-        format: [canvas.width / 2, canvas.height / 2],
+        unit: 'mm',
+        format: 'a4',
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       
       // Save PDF
       const fileName = `Energy-Report-${format(new Date(), 'dd-MM-yyyy')}.pdf`;
@@ -713,7 +730,7 @@ const Energy = () => {
       console.error('Error generating PDF:', error);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось создать PDF. Попробуйте еще раз.',
+        description: `Не удалось создать PDF: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`,
         variant: 'destructive'
       });
     }
@@ -722,14 +739,17 @@ const Energy = () => {
   const generateReportHTML = (data: any) => {
     // Calculate monthly averages
     const monthlyData: { [key: string]: { sum: number; count: number } } = {};
-    data.history.forEach((day: any) => {
-      const monthKey = format(new Date(day.date), 'MMM', { locale: ru });
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { sum: 0, count: 0 };
-      }
-      monthlyData[monthKey].sum += day.wellness_index;
-      monthlyData[monthKey].count += 1;
-    });
+    
+    if (data.history && data.history.length > 0) {
+      data.history.forEach((day: any) => {
+        const monthKey = format(new Date(day.date), 'MMM', { locale: ru });
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { sum: 0, count: 0 };
+        }
+        monthlyData[monthKey].sum += day.wellness_index;
+        monthlyData[monthKey].count += 1;
+      });
+    }
 
     const monthlyAverages = Object.entries(monthlyData).slice(-5).map(([month, { sum, count }]) => ({
       month,
@@ -743,7 +763,7 @@ const Energy = () => {
     const rest = 100 - activities;
 
     // Get forecast data
-    const forecastData = data.predictions.slice(0, 7).map((pred: any) => ({
+    const forecastData = (data.predictions || []).slice(0, 7).map((pred: any) => ({
       date: format(new Date(pred.date), 'dd.MM', { locale: ru }),
       value: pred.wellness_index,
     }));
@@ -762,7 +782,7 @@ const Energy = () => {
             <div style="width: 60px; height: 60px; margin: 0 auto 15px; border: 3px solid #0d5858; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">
               💡
             </div>
-            <h2 style="fontSize: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Energy Consumption</h2>
+            <h2 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Energy Consumption</h2>
             <h3 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Trends</h3>
           </div>
 
@@ -774,12 +794,12 @@ const Energy = () => {
               </tr>
             </thead>
             <tbody>
-              ${monthlyAverages.map((row) => `
+              ${monthlyAverages.length > 0 ? monthlyAverages.map((row) => `
                 <tr style="border-bottom: 1px solid #e0e0e0;">
                   <td style="padding: 12px 4px; font-weight: bold;">${row.month}</td>
                   <td style="padding: 12px 4px; text-align: center;">${row.avg}</td>
                 </tr>
-              `).join('')}
+              `).join('') : '<tr><td colspan="2" style="padding: 12px; text-align: center;">Нет данных</td></tr>'}
             </tbody>
           </table>
         </div>
@@ -822,6 +842,7 @@ const Energy = () => {
             <h3 style="font-size: 18px; font-weight: bold; color: #0d4d4d; margin: 0;">Forecast</h3>
           </div>
 
+          ${forecastData.length > 0 ? `
           <div style="width: 100%; height: 180px; position: relative; margin-top: 20px;">
             <svg width="100%" height="180" viewBox="0 0 300 180">
               <line x1="40" y1="20" x2="40" y2="150" stroke="#e0e0e0" stroke-width="1" />
@@ -847,6 +868,7 @@ const Energy = () => {
               }).join('')}
             </svg>
           </div>
+          ` : '<div style="text-align: center; padding: 40px; color: #999;">Нет прогнозных данных</div>'}
         </div>
       </div>
     `;
