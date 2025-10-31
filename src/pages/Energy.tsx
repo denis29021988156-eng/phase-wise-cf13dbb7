@@ -742,7 +742,8 @@ const Energy = () => {
     
     if (data.history && data.history.length > 0) {
       data.history.forEach((day: any) => {
-        const monthKey = format(new Date(day.date), 'MMM', { locale: ru });
+        try {
+          const monthKey = format(new Date(day.date), 'MMM', { locale: ru });
         if (!monthlyData[monthKey]) {
           monthlyData[monthKey] = { sum: 0, count: 0 };
         }
