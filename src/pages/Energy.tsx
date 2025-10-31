@@ -1017,13 +1017,6 @@ const Energy = () => {
                                 stroke="#FCD34D"
                                 strokeWidth={3}
                                 strokeDasharray="0"
-                                label={{
-                                  value: `Средний прогноз: ${getAveragePrediction()}`,
-                                  position: 'insideTopRight',
-                                  fill: '#F59E0B',
-                                  fontSize: 12,
-                                  fontWeight: 'bold',
-                                }}
                               />
                             )}
                             
