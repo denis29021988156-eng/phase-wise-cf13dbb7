@@ -30,6 +30,7 @@ export function EnergyBalanceCard({
   cyclePhase
 }: EnergyBalanceCardProps) {
   const [eventsOpen, setEventsOpen] = useState(false);
+  const [metricsOpen, setMetricsOpen] = useState(false);
   
   const phaseLabels: Record<string, string> = {
     menstrual: 'Менструация',
@@ -118,32 +119,50 @@ export function EnergyBalanceCard({
           )}
 
           {(sleepModifier !== 0 || stressModifier !== 0 || wellnessModifier !== 0) && (
-            <div className="space-y-1">
-              {sleepModifier !== 0 && (
-                <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
-                  <span className="font-medium">Качество сна</span>
-                  <span className={`font-semibold ${sleepModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {sleepModifier > 0 ? '+' : ''}{sleepModifier}
-                  </span>
-                </div>
-              )}
-              {stressModifier !== 0 && (
-                <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
-                  <span className="font-medium">Уровень стресса</span>
-                  <span className={`font-semibold ${stressModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {stressModifier > 0 ? '+' : ''}{stressModifier}
-                  </span>
-                </div>
-              )}
-              {wellnessModifier !== 0 && (
-                <div className="flex items-center justify-between p-2 bg-muted/20 rounded text-xs">
-                  <span className="font-medium">Индекс самочувствия</span>
-                  <span className={`font-semibold ${wellnessModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {wellnessModifier > 0 ? '+' : ''}{wellnessModifier}
-                  </span>
-                </div>
-              )}
-            </div>
+            <Collapsible open={metricsOpen} onOpenChange={setMetricsOpen}>
+              <div className="space-y-2">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors">
+                    <span className="text-sm font-medium">Ключевые показатели:</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg font-bold ${(sleepModifier + stressModifier + wellnessModifier) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(sleepModifier + stressModifier + wellnessModifier) > 0 ? '+' : ''}{sleepModifier + stressModifier + wellnessModifier}
+                      </span>
+                      {metricsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <div className="space-y-2 mt-2">
+                    {sleepModifier !== 0 && (
+                      <div className="flex items-center justify-between p-3 bg-card rounded-lg border-l-4 border-primary shadow-sm ml-2">
+                        <span className="text-sm font-medium">Качество сна</span>
+                        <span className={`text-lg font-bold ${sleepModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {sleepModifier > 0 ? '+' : ''}{sleepModifier}
+                        </span>
+                      </div>
+                    )}
+                    {stressModifier !== 0 && (
+                      <div className="flex items-center justify-between p-3 bg-card rounded-lg border-l-4 border-primary shadow-sm ml-2">
+                        <span className="text-sm font-medium">Уровень стресса</span>
+                        <span className={`text-lg font-bold ${stressModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stressModifier > 0 ? '+' : ''}{stressModifier}
+                        </span>
+                      </div>
+                    )}
+                    {wellnessModifier !== 0 && (
+                      <div className="flex items-center justify-between p-3 bg-card rounded-lg border-l-4 border-primary shadow-sm ml-2">
+                        <span className="text-sm font-medium">Индекс самочувствия</span>
+                        <span className={`text-lg font-bold ${wellnessModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {wellnessModifier > 0 ? '+' : ''}{wellnessModifier}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           )}
 
           {/* Final result */}
