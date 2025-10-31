@@ -607,12 +607,31 @@ const Energy = () => {
       type: 'actual',
     };
     
+    // Create a map of future dates to weekForecast data for event-adjusted forecast
+    const forecastMap = new Map();
+    if (weekForecast && weekForecast.length > 0) {
+      weekForecast.forEach((dayForecast: any) => {
+        const forecastDate = new Date(dayForecast.date);
+        forecastDate.setHours(0, 0, 0, 0);
+        const dateKey = format(forecastDate, 'dd.MM', { locale: ru });
+        forecastMap.set(dateKey, {
+          wellness_with_events: dayForecast.wellness_index,
+          base_wellness: dayForecast.base_wellness,
+          events_impact: dayForecast.events_impact
+        });
+      });
+    }
+    
     const predictedData = predictions.map((p, idx) => {
       const futureDate = new Date(today);
       futureDate.setDate(today.getDate() + idx + 1);
+      const dateKey = format(futureDate, 'dd.MM', { locale: ru });
+      const forecastData = forecastMap.get(dateKey);
+      
       return {
-        date: format(futureDate, 'dd.MM', { locale: ru }),
+        date: dateKey,
         wellness: p.wellness,
+        wellnessWithEvents: forecastData ? forecastData.wellness_with_events : p.wellness,
         type: 'predicted',
         note: p.note
       };
@@ -648,12 +667,20 @@ const Energy = () => {
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: isPredicted ? '#8B5CF6' : '#3B82F6' }} />
             <p className="font-semibold text-foreground">{data.date}</p>
           </div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 mb-1">
             <span className="text-2xl font-bold" style={{ color: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
               {data.wellness}
             </span>
             <span className="text-sm text-muted-foreground">/ 100</span>
           </div>
+          {isPredicted && data.wellnessWithEvents && (
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-xs text-muted-foreground">Event прогноз:</span>
+              <span className="text-lg font-bold text-emerald-500">
+                {data.wellnessWithEvents}
+              </span>
+            </div>
+          )}
           {isPredicted && data.note && (
             <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
               💡 {data.note}
@@ -1084,10 +1111,34 @@ const Energy = () => {
                               connectNulls
                               dot={false}
                             />
+                            
+                            {/* Event-adjusted forecast line */}
+                            <Line
+                              type="monotone"
+                              dataKey={(entry: any) => entry.type === 'predicted' && entry.wellnessWithEvents ? entry.wellnessWithEvents : null}
+                              stroke="#10b981"
+                              strokeWidth={2.5}
+                              strokeDasharray="8 4"
+                              connectNulls
+                              dot={(props: any) => {
+                                const { cx, cy, payload } = props;
+                                if (!payload || payload.type !== 'predicted' || !payload.wellnessWithEvents) return null;
+                                return (
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={3}
+                                    fill="#10b981"
+                                    strokeWidth={2}
+                                    stroke="#fff"
+                                  />
+                                );
+                              }}
+                            />
                           </ComposedChart>
                         </ResponsiveContainer>
                         
-                        <div className="flex items-center justify-center gap-8 mt-3 pb-2">
+                        <div className="flex items-center justify-center gap-6 mt-3 pb-2 flex-wrap">
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-1.5 rounded-full bg-blue-500" />
                             <span className="text-sm text-foreground font-medium">Было</span>
@@ -1095,6 +1146,10 @@ const Energy = () => {
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-purple-500" />
                             <span className="text-sm text-foreground font-medium">Прогноз</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-emerald-500" />
+                            <span className="text-sm text-foreground font-medium">Event прогноз</span>
                           </div>
                           {getAveragePrediction() !== null && (
                             <div className="flex items-center gap-2">
