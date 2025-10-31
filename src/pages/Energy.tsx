@@ -994,43 +994,63 @@ const Energy = () => {
                             />
                             <Tooltip content={<CustomTooltip />} />
                             
-                            {/* Area fills */}
+                            {/* Gradient background for actual data */}
                             <Area
                               type="monotone"
                               dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'actual')}
                               stroke="none"
                               fill="url(#gradientActual)"
-                            />
-                            <Area
-                              type="monotone"
-                              dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'predicted')}
-                              stroke="none"
-                              fill="url(#gradientPredicted)"
+                              fillOpacity={1}
                             />
                             
-                            {/* Actual - Solid Blue line */}
+                            {/* Main line with dynamic styling */}
                             <Line
                               type="monotone"
                               dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'actual')}
                               stroke="#3B82F6"
                               strokeWidth={2.5}
-                              dot={{ r: 4, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
-                              activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
+                              connectNulls
+                              dot={(props: any) => {
+                                const { cx, cy, payload } = props;
+                                if (!payload) return null;
+                                const isPredicted = payload.type === 'predicted';
+                                return (
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={isPredicted ? 3 : 4}
+                                    fill={isPredicted ? '#8B5CF6' : '#3B82F6'}
+                                    strokeWidth={2}
+                                    stroke="#fff"
+                                  />
+                                );
+                              }}
+                              activeDot={(props: any) => {
+                                const { cx, cy, payload } = props;
+                                if (!payload) return null;
+                                const isPredicted = payload.type === 'predicted';
+                                return (
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={isPredicted ? 5 : 6}
+                                    fill={isPredicted ? '#8B5CF6' : '#3B82F6'}
+                                    strokeWidth={2}
+                                    stroke="#fff"
+                                  />
+                                );
+                              }}
                             />
                             
-                            {/* Predicted - Dashed Purple line */}
+                            {/* Dashed line overlay for predicted section */}
                             <Line
                               type="monotone"
-                              dataKey="wellness"
-                              data={getChartData().filter(d => d.type === 'predicted')}
+                              dataKey={(entry: any) => entry.type === 'predicted' ? entry.wellness : null}
                               stroke="#8B5CF6"
                               strokeWidth={2.5}
                               strokeDasharray="8 4"
-                              dot={{ r: 3, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
-                              activeDot={{ r: 5, fill: '#8B5CF6', strokeWidth: 2, stroke: '#fff' }}
+                              connectNulls
+                              dot={false}
                             />
                           </ComposedChart>
                         </ResponsiveContainer>
