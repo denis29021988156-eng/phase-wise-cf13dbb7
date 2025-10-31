@@ -158,8 +158,19 @@ const Energy = () => {
           filter: `user_id=eq.${user.id}`
         },
         async (payload) => {
-          console.log('Event changed:', payload);
+          console.log('Event changed - updating forecast:', payload);
+          // Force reload both today's breakdown and week forecast
           await loadEnergyBreakdown();
+          // Also reload week forecast explicitly
+          try {
+            const { data: forecastData, error: forecastError } = await supabase.functions.invoke('get-week-forecast-with-events');
+            if (!forecastError && forecastData) {
+              console.log('Week forecast updated after event change:', forecastData);
+              setWeekForecast(forecastData.forecast || []);
+            }
+          } catch (error) {
+            console.error('Error updating week forecast:', error);
+          }
         }
       )
       .subscribe();
