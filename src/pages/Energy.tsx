@@ -744,11 +744,14 @@ const Energy = () => {
       data.history.forEach((day: any) => {
         try {
           const monthKey = format(new Date(day.date), 'MMM', { locale: ru });
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { sum: 0, count: 0 };
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { sum: 0, count: 0 };
+          }
+          monthlyData[monthKey].sum += day.wellness_index;
+          monthlyData[monthKey].count += 1;
+        } catch (error) {
+          // Skip invalid dates
         }
-        monthlyData[monthKey].sum += day.wellness_index;
-        monthlyData[monthKey].count += 1;
       });
     }
 
@@ -764,10 +767,20 @@ const Energy = () => {
     const rest = 100 - activities;
 
     // Get forecast data
-    const forecastData = (data.predictions || []).slice(0, 7).map((pred: any) => ({
-      date: format(new Date(pred.date), 'dd.MM', { locale: ru }),
-      value: pred.wellness_index,
-    }));
+    const forecastData = (data.predictions || [])
+      .slice(0, 7)
+      .map((pred: any) => {
+        try {
+          return {
+            date: format(new Date(pred.date), 'dd.MM', { locale: ru }),
+            value: pred.wellness_index || 0,
+          };
+        } catch (error) {
+          // Skip invalid dates
+          return null;
+        }
+      })
+      .filter((item): item is { date: string; value: number } => item !== null);
 
     return `
       <div style="text-align: center; margin-bottom: 50px;">
