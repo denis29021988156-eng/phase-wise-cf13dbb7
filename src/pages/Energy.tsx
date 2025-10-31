@@ -1209,13 +1209,21 @@ const Energy = () => {
 
 
                 {/* Boost Card */}
-                {user && energyBreakdown && (
-                  <EnergyBoostCard 
-                    userId={user.id}
-                    weekForecast={weekForecast}
-                    onEventMoved={loadEnergyBreakdown}
-                  />
-                )}
+                {user && energyBreakdown && (() => {
+                  console.log('🔥🔥🔥 Energy.tsx: Rendering EnergyBoostCard', {
+                    userId: user.id,
+                    weekForecastLength: weekForecast.length,
+                    weekForecast: weekForecast,
+                    energyBreakdown: energyBreakdown
+                  });
+                  return (
+                    <EnergyBoostCard 
+                      userId={user.id}
+                      weekForecast={weekForecast}
+                      onEventMoved={loadEnergyBreakdown}
+                    />
+                  );
+                })()}
                   </div>
                 </aside>
               </div>

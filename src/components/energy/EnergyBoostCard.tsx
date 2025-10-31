@@ -108,6 +108,8 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         // Найти влияние этого события на энергию
         const eventImpact = dayData?.events?.find((e: any) => e.name === event.title)?.impact || 0;
         
+        console.log('🔥 Event:', event.title, 'dayData:', dayData, 'eventImpact:', eventImpact, 'events in day:', dayData?.events);
+        
         return {
           ...event,
           eventDate,
@@ -116,6 +118,7 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
           currentDayEnergy: dayData?.wellness_index || 50
         };
       });
+      console.log('🔥 Events with cost:', eventsWithCost);
 
       // 4. Фильтр: только события с energyCost > 5 и длительностью <= 180 минут
       const movableEvents = eventsWithCost.filter(e => {
