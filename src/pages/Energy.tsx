@@ -16,7 +16,7 @@ import i18n from '@/i18n/config';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { EnergyGauge } from '@/components/energy/EnergyGauge';
-import { EventsImpactSection } from '@/components/energy/EventsImpactSection';
+
 import { WeekForecast } from '@/components/energy/WeekForecast';
 import { SymptomsInput } from '@/components/energy/SymptomsInput';
 import { EnergyBalanceCard } from '@/components/energy/EnergyBalanceCard';
@@ -1121,23 +1121,6 @@ const Energy = () => {
                   events={energyBreakdown.events || []}
                 />
 
-                {/* Key Events of the Day */}
-                {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-                  <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Zap className="w-5 h-5" />
-                        Ключевые события дня
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <EventsImpactSection
-                        events={energyBreakdown.events}
-                        cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Energy Spent Card */}
                 <Card className="border-2 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20">
@@ -1205,22 +1188,6 @@ const Energy = () => {
               events={energyBreakdown.events || []}
             />
             
-            {energyBreakdown.events && energyBreakdown.events.length > 0 && (
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Zap className="w-5 h-5" />
-                    Ключевые события дня
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <EventsImpactSection
-                    events={energyBreakdown.events}
-                    cyclePhase={energyBreakdown.cyclePhase || 'follicular'}
-                  />
-                </CardContent>
-              </Card>
-            )}
             
             {weekForecast && weekForecast.length > 0 && (
               <WeekForecast forecast={weekForecast} />
