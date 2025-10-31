@@ -252,6 +252,80 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
           }
         });
 
+      // Пересчитать AI рекомендацию для нового времени события
+      try {
+        // Получить данные цикла пользователя
+        const { data: cycleData } = await supabase
+          .from('user_cycles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (cycleData) {
+          // Вычислить день цикла для новой даты
+          const newEventDate = parseISO(targetSlot.date);
+          const startDate = parseISO(cycleData.start_date);
+          const diffInDays = Math.floor((newEventDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const cycleDay = ((diffInDays % cycleData.cycle_length) + 1);
+          const adjustedCycleDay = cycleDay > 0 ? cycleDay : cycleData.cycle_length + cycleDay;
+
+          // Получить timezone и healthDataSynced из профиля
+          const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('timezone, language')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          const userTimezone = userProfile?.timezone || 'Europe/Moscow';
+
+          // Вызвать функцию генерации новой рекомендации
+          const { data: suggestionData, error: suggestionError } = await supabase.functions.invoke('generate-ai-suggestion', {
+            body: {
+              event: {
+                ...event,
+                start_time: newStartTime,
+                end_time: newEndTime,
+                start_time_local: new Date(newStartTime).toLocaleTimeString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: userTimezone
+                })
+              },
+              cycleData: {
+                cycleDay: adjustedCycleDay,
+                cycleLength: cycleData.cycle_length,
+                menstrualLength: cycleData.menstrual_length || 5,
+                language: userProfile?.language || 'ru',
+                start_date: cycleData.start_date
+              },
+              timezone: userTimezone,
+              healthDataSynced: false
+            }
+          });
+
+          if (!suggestionError && suggestionData?.suggestion) {
+            // Обновить или создать рекомендацию
+            const { error: updateError } = await supabase
+              .from('event_ai_suggestions')
+              .upsert({
+                event_id: recommendation.eventId,
+                suggestion: suggestionData.suggestion,
+                justification: suggestionData.justification || `AI для ${adjustedCycleDay} дня цикла после переноса Boost`,
+                decision: 'regenerated'
+              }, {
+                onConflict: 'event_id'
+              });
+
+            if (!updateError) {
+              console.log('AI recommendation updated after Boost move');
+            }
+          }
+        }
+      } catch (aiError) {
+        console.error('Error regenerating AI recommendation:', aiError);
+        // Не блокируем перенос события из-за ошибки AI
+      }
+
       toast({
         title: i18n.language === 'ru' ? '✅ Событие перенесено' : '✅ Event moved',
         description: i18n.language === 'ru' 
