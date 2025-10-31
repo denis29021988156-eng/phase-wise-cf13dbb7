@@ -230,7 +230,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
           </div>
 
           {weightData.some(d => d.value !== null) ? (
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={141}>
               <AreaChart 
                 data={weightData}
                 margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
@@ -307,7 +307,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
           </div>
 
           {bpData.some(d => d.systolic !== null || d.diastolic !== null) ? (
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={141}>
               <AreaChart 
                 data={bpData}
                 margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
@@ -409,7 +409,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
 
           {/* Chart */}
           {sexData.some(d => d.value !== null) ? (
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={141}>
               <AreaChart 
                 data={sexData}
                 margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
