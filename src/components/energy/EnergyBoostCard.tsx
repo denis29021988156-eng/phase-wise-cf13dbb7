@@ -145,14 +145,17 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
       );
       console.log('🔥 High energy days (>70):', highEnergyDays);
 
+      // 7. Подобрать слоты: если нет дней >70, берём лучшие доступные будущие дни
+      let slotsSource = 'high';
+      let slots = highEnergyDays;
       if (highEnergyDays.length === 0) {
-        console.log('🔥 No high energy days available - hiding boost');
-        setRecommendation(null);
-        return;
+        console.log('🔥 No high energy days (>70). Using best available future days as fallback');
+        const futureDays = weekForecast.filter(d => d.date > mostCostlyEvent.eventDate);
+        slots = futureDays;
+        slotsSource = 'fallback';
       }
 
-      // 7. Взять топ-3 лучших дня
-      const topSlots = highEnergyDays
+      const topSlots = [...slots]
         .sort((a, b) => b.wellness_index - a.wellness_index)
         .slice(0, 3)
         .map(day => ({
@@ -168,7 +171,7 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         currentDate: mostCostlyEvent.eventDate,
         suggestedSlots: topSlots
       };
-      console.log('🔥 Final recommendation:', recommendation);
+      console.log('🔥 Final recommendation (source=', slotsSource, '):', recommendation);
       setRecommendation(recommendation);
 
     } catch (error) {
@@ -326,8 +329,8 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
           <div className="space-y-2">
             <p className="text-sm">
               {i18n.language === 'ru'
-                ? 'Перегруженных дней пока нет. Мы подскажем, когда появятся варианты переноса.'
-                : 'No overloaded days yet. We will suggest moves when options appear.'}
+                ? 'Перегруженные дни есть, но подходящих слотов пока нет. Мы подскажем, когда появятся лучшие варианты.'
+                : 'There are overloaded days, but no suitable slots yet. We will suggest when better options appear.'}
             </p>
             <Button size="sm" onClick={findBoostCandidate}>
               {i18n.language === 'ru' ? 'Обновить' : 'Refresh'}
@@ -369,21 +372,29 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
             📅 {i18n.language === 'ru' ? 'Предлагаемые варианты переноса:' : 'Suggested move options:'}
           </p>
           <div className="space-y-2">
-            {recommendation.suggestedSlots.map((slot, index) => (
-              <div 
-                key={slot.date}
-                className="flex items-center justify-between bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 border"
-              >
-                <span className="text-sm">
-                  {format(parseISO(slot.date), i18n.language === 'ru' ? 'EEE, d MMMM' : 'EEE, MMMM d', { 
-                    locale: i18n.language === 'ru' ? ru : undefined 
-                  })}
-                </span>
-                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                  {i18n.language === 'ru' ? 'прогноз энергии' : 'energy forecast'} {slot.energy}
-                </span>
-              </div>
-            ))}
+            {recommendation.suggestedSlots.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {i18n.language === 'ru'
+                  ? 'На этой неделе нет лучших дней для переноса. Попробуйте позже или выберите дату вручную.'
+                  : 'No better days this week. Try later or choose a date manually.'}
+              </p>
+            ) : (
+              recommendation.suggestedSlots.map((slot, index) => (
+                <div 
+                  key={slot.date}
+                  className="flex items-center justify-between bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 border"
+                >
+                  <span className="text-sm">
+                    {format(parseISO(slot.date), i18n.language === 'ru' ? 'EEE, d MMMM' : 'EEE, MMMM d', { 
+                      locale: i18n.language === 'ru' ? ru : undefined 
+                    })}
+                  </span>
+                  <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                    {i18n.language === 'ru' ? 'прогноз энергии' : 'energy forecast'} {slot.energy}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -391,7 +402,7 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         <div className="flex gap-2 pt-2">
           <Button
             onClick={handleMoveEvent}
-            disabled={moving}
+            disabled={moving || recommendation.suggestedSlots.length === 0}
             className="flex-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
           >
             {moving ? (
