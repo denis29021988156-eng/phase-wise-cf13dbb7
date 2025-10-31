@@ -35,19 +35,26 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
+    console.log('🔥 Boost Card: userId=', userId, 'weekForecast=', weekForecast);
     if (userId && weekForecast.length > 0) {
+      console.log('🔥 Boost Card: Starting findBoostCandidate');
       findBoostCandidate();
+    } else {
+      console.log('🔥 Boost Card: Not running - missing data');
     }
   }, [userId, weekForecast]);
 
   const findBoostCandidate = async () => {
     try {
       setLoading(true);
+      console.log('🔥 Finding boost candidate, weekForecast:', weekForecast);
 
       // 1. Найти дни с перегрузкой (wellness_index < 55)
       const overloadedDays = weekForecast.filter(d => d.wellness_index < 55);
+      console.log('🔥 Overloaded days (<55):', overloadedDays);
       
       if (overloadedDays.length === 0) {
+        console.log('🔥 No overloaded days found - hiding boost');
         setRecommendation(null);
         return;
       }
@@ -66,7 +73,10 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         .order('start_time');
 
       if (error) throw error;
+      console.log('🔥 Events from DB:', events);
+      
       if (!events || events.length === 0) {
+        console.log('🔥 No events found - hiding boost');
         setRecommendation(null);
         return;
       }
@@ -76,8 +86,10 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         const eventDate = event.start_time.split('T')[0];
         return overloadedDates.includes(eventDate);
       });
+      console.log('🔥 Filtered events for overloaded dates:', filteredEvents);
 
       if (filteredEvents.length === 0) {
+        console.log('🔥 No events in overloaded days - hiding boost');
         setRecommendation(null);
         return;
       }
@@ -104,12 +116,14 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         };
       });
 
-      // 4. Фильтр: только события с energyCost > 10 и длительностью <= 180 минут
+      // 4. Фильтр: только события с energyCost > 5 и длительностью <= 180 минут
       const movableEvents = eventsWithCost.filter(e => {
         return e.energyCost > 5 && e.durationMinutes <= 180;
       });
+      console.log('🔥 Movable events (cost>5, duration<=180min):', movableEvents);
 
       if (movableEvents.length === 0) {
+        console.log('🔥 No movable events - hiding boost');
         setRecommendation(null);
         return;
       }
@@ -118,14 +132,17 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
       const mostCostlyEvent = movableEvents.reduce((max, event) => 
         event.energyCost > max.energyCost ? event : max
       );
+      console.log('🔥 Most costly event:', mostCostlyEvent);
 
       // 6. Найти дни с высоким запасом энергии (wellness_index > 70)
       const highEnergyDays = weekForecast.filter(d => 
         d.wellness_index > 70 && 
         d.date > mostCostlyEvent.eventDate // только будущие дни
       );
+      console.log('🔥 High energy days (>70):', highEnergyDays);
 
       if (highEnergyDays.length === 0) {
+        console.log('🔥 No high energy days available - hiding boost');
         setRecommendation(null);
         return;
       }
@@ -139,17 +156,19 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
           energy: day.wellness_index
         }));
 
-      setRecommendation({
+      const recommendation = {
         eventId: mostCostlyEvent.id,
         eventTitle: mostCostlyEvent.title,
         currentDayEnergy: mostCostlyEvent.currentDayEnergy,
         energyCost: mostCostlyEvent.energyCost,
         currentDate: mostCostlyEvent.eventDate,
         suggestedSlots: topSlots
-      });
+      };
+      console.log('🔥 Final recommendation:', recommendation);
+      setRecommendation(recommendation);
 
     } catch (error) {
-      console.error('Error finding boost candidate:', error);
+      console.error('🔥 Error finding boost candidate:', error);
       setRecommendation(null);
     } finally {
       setLoading(false);
@@ -258,8 +277,11 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
   }
 
   if (!recommendation || hidden) {
+    console.log('🔥 Not showing boost: recommendation=', recommendation, 'hidden=', hidden);
     return null;
   }
+
+  console.log('🔥 Rendering boost card with recommendation:', recommendation);
 
   return (
     <Card className="border-2 bg-gradient-to-br from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20 shadow-lg">
