@@ -899,7 +899,7 @@ const Energy = () => {
           {/* Desktop Layout - Single Scroll */}
           <div className="hidden lg:block">
             <div className="max-w-[98%] mx-auto py-4 px-4">
-              <div className="grid grid-cols-1 xl:grid-cols-[minmax(320px,20%)_1fr_minmax(450px,50%)] gap-4">
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(280px,15%)_minmax(600px,60%)_minmax(320px,25%)] gap-4">
                 {/* COLUMN 1: LEFT SIDEBAR */}
                 <aside className="border border-border bg-card/50 rounded-lg p-4">
                   <EnergySidebar
