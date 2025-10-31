@@ -40,7 +40,7 @@ export function EnergySidebar({
   moodOptions,
   phase = 'follicular'
 }: EnergySidebarProps) {
-  const [physicalOpen, setPhysicalOpen] = useState(true);
+  const [physicalOpen, setPhysicalOpen] = useState(false);
   const [moodOpen, setMoodOpen] = useState(false);
 
   const getPhaseLabel = (phase: string) => {
