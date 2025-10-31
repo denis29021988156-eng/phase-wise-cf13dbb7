@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Flame, Calendar, Loader2 } from 'lucide-react';
+import { Flame, Calendar, Loader2, Sparkles } from 'lucide-react';
 import { format, addDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 interface BoostRecommendation {
   eventId: string;
@@ -30,6 +31,7 @@ interface EnergyBoostCardProps {
 export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEventMoved }: EnergyBoostCardProps) {
   const { toast } = useToast();
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const [recommendation, setRecommendation] = useState<BoostRecommendation | null>(null);
   const [loading, setLoading] = useState(true);
   const [moving, setMoving] = useState(false);
@@ -358,6 +360,27 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
     }
   };
 
+  const handleGaiaAdvice = () => {
+    if (!recommendation) return;
+    
+    // Формируем контекст для чата
+    const context = {
+      eventTitle: recommendation.eventTitle,
+      currentDate: recommendation.currentDate,
+      currentEnergy: recommendation.currentDayEnergy,
+      energyCost: recommendation.energyCost,
+      suggestedSlots: recommendation.suggestedSlots
+    };
+    
+    // Переходим в чат с контекстом
+    navigate('/chat', { 
+      state: { 
+        boostContext: context,
+        autoSend: true
+      } 
+    });
+  };
+
   // Проверить, не скрыто ли сегодня для именно этого события
   useEffect(() => {
     if (!recommendation) return;
@@ -509,13 +532,23 @@ export function EnergyBoostCard({ userId, weekForecast, energyBreakdown, onEvent
           </div>
         </div>
 
-        {/* Кнопка Пропустить */}
-        <div className="pt-2">
+        {/* Кнопки действий */}
+        <div className="pt-2 flex gap-2">
+          <Button
+            onClick={handleGaiaAdvice}
+            variant="default"
+            disabled={moving}
+            className="flex-1 bg-primary hover:bg-primary/90"
+            size="sm"
+          >
+            <Sparkles className="w-4 h-4 mr-1" />
+            {i18n.language === 'ru' ? 'Gaia совет' : 'Gaia advice'}
+          </Button>
           <Button
             onClick={handleSkip}
             variant="outline"
             disabled={moving}
-            className="w-full"
+            className="flex-1"
             size="sm"
           >
             {i18n.language === 'ru' ? 'Пропустить' : 'Skip'}

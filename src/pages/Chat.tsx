@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import EmailPreviewDialog from '@/components/dialogs/EmailPreviewDialog';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface Message {
   id: string;
@@ -29,6 +32,7 @@ const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
+  const location = useLocation();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +46,7 @@ const Chat = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
+  const [boostContextProcessed, setBoostContextProcessed] = useState(false);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -190,6 +195,29 @@ const Chat = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // Handle Boost context from navigation
+  useEffect(() => {
+    if (!user || !location.state?.boostContext || boostContextProcessed || loadingHistory) return;
+    
+    const { boostContext, autoSend } = location.state as any;
+    
+    if (autoSend && boostContext) {
+      setBoostContextProcessed(true);
+      
+      // Формируем контекстное сообщение
+      const contextMessage = i18n.language === 'ru' 
+        ? `Boost рекомендует перенести событие «${boostContext.eventTitle}» с ${format(new Date(boostContext.currentDate), 'd MMMM', { locale: ru })} (энергия ${boostContext.currentEnergy}/100). Стоимость события: ${boostContext.energyCost} единиц энергии.\n\nПредлагаемые дни для переноса:\n${boostContext.suggestedSlots.map((slot: any, i: number) => `${i + 1}. ${format(new Date(slot.date), 'd MMMM', { locale: ru })} (энергия ${slot.energy}/100)`).join('\n')}\n\nЧто ты думаешь об этой рекомендации? Стоит ли переносить событие?`
+        : `Boost recommends moving event "${boostContext.eventTitle}" from ${format(new Date(boostContext.currentDate), 'MMMM d')} (energy ${boostContext.currentEnergy}/100). Event cost: ${boostContext.energyCost} energy units.\n\nSuggested days:\n${boostContext.suggestedSlots.map((slot: any, i: number) => `${i + 1}. ${format(new Date(slot.date), 'MMMM d')} (energy ${slot.energy}/100)`).join('\n')}\n\nWhat do you think about this recommendation? Should I move the event?`;
+      
+      setMessage(contextMessage);
+      
+      // Автоматически отправить через небольшую задержку
+      setTimeout(() => {
+        handleSendMessage();
+      }, 500);
+    }
+  }, [user, location.state, boostContextProcessed, loadingHistory]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !user) return;
