@@ -90,8 +90,8 @@ export function EnergySidebar({
                 stroke="currentColor"
                 strokeWidth="8"
                 fill="none"
-                className="text-muted"
-                opacity="0.3"
+                className="text-muted-foreground"
+                opacity="0.6"
               />
               {/* Progress circle with color gradient based on value */}
               <circle
