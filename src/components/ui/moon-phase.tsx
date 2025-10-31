@@ -6,12 +6,12 @@ interface MoonPhaseProps {
 }
 
 export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
-  // Градация цвета: красный -> желтый -> зеленый
+  // Gradient color from red to green based on value
   const getColor = (val: number) => {
-    if (val <= 30) return '#EF4444'; // red
-    if (val <= 50) return '#F59E0B'; // orange
-    if (val <= 70) return '#EAB308'; // yellow
-    if (val <= 85) return '#84CC16'; // lime
+    if (val <= 20) return '#EF4444'; // red
+    if (val <= 40) return '#F97316'; // orange
+    if (val <= 60) return '#EAB308'; // yellow
+    if (val <= 80) return '#84CC16'; // lime
     return '#22C55E'; // green
   };
 
@@ -26,37 +26,40 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
         viewBox="0 0 200 200"
         className="w-full h-full transform -rotate-90"
       >
-        {/* Внешняя темная обводка */}
+        {/* Outer border circle */}
         <circle
           cx="100"
           cy="100"
           r="93"
           fill="none"
-          stroke="#D1D5DB"
+          stroke="hsl(var(--border))"
           strokeWidth="2"
+          opacity="0.5"
         />
         
-        {/* Внутренняя темная обводка */}
+        {/* Inner border circle */}
         <circle
           cx="100"
           cy="100"
           r="77"
           fill="none"
-          stroke="#D1D5DB"
+          stroke="hsl(var(--border))"
           strokeWidth="2"
+          opacity="0.5"
         />
         
-        {/* Фоновое кольцо с четкой границей */}
+        {/* Background ring - more visible */}
         <circle
           cx="100"
           cy="100"
           r="85"
           fill="none"
-          stroke="#E5E7EB"
+          stroke="hsl(var(--muted))"
           strokeWidth="16"
+          opacity="0.3"
         />
         
-        {/* Заполненное кольцо (прогресс) */}
+        {/* Progress ring with gradient color */}
         <circle
           cx="100"
           cy="100"
@@ -69,6 +72,7 @@ export const MoonPhase = ({ value, className }: MoonPhaseProps) => {
           strokeLinecap="round"
           style={{
             transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease',
+            filter: `drop-shadow(0 0 8px ${color}40)`,
           }}
         />
       </svg>
