@@ -269,6 +269,11 @@ export function EnergySidebar({
                   </div>
                 </div>
 
+                {/* Tracking Data Header */}
+                <div className="pt-2 border-t border-border/50">
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-3">Данные для динамики</h4>
+                </div>
+
                 {/* Weight */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
