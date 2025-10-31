@@ -65,7 +65,7 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
       // Создаем фильтр для start_time в нужных датах
       const startDateFilters = overloadedDates.map(date => `start_time.gte.${date}T00:00:00,start_time.lt.${date}T23:59:59`);
       
-      const { data: events, error } = await supabase
+      const { data: eventsRaw, error } = await supabase
         .from('events')
         .select('*')
         .eq('user_id', userId)
@@ -73,6 +73,7 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
         .order('start_time');
 
       if (error) throw error;
+      const events = (eventsRaw as any[]) || [];
       console.log('🔥 Events from DB:', events);
       
       if (!events || events.length === 0) {
@@ -242,18 +243,21 @@ export function EnergyBoostCard({ userId, weekForecast, onEventMoved }: EnergyBo
 
   const handleSkip = () => {
     setHidden(true);
-    // Сохранить в localStorage чтобы не показывать сегодня
-    localStorage.setItem(`boost-hidden-${userId}`, new Date().toISOString().split('T')[0]);
+    // Сохранить в localStorage чтобы не показывать сегодня для конкретного события
+    const today = new Date().toISOString().split('T')[0];
+    if (recommendation) {
+      localStorage.setItem(`boost-hidden-${userId}-${recommendation.eventId}-${today}`, '1');
+    }
   };
 
-  // Проверить, не скрыто ли сегодня
+  // Проверить, не скрыто ли сегодня для именно этого события
   useEffect(() => {
-    const hiddenDate = localStorage.getItem(`boost-hidden-${userId}`);
+    if (!recommendation) return;
     const today = new Date().toISOString().split('T')[0];
-    if (hiddenDate === today) {
-      setHidden(true);
-    }
-  }, [userId]);
+    const key = `boost-hidden-${userId}-${recommendation.eventId}-${today}`;
+    const hiddenFlag = localStorage.getItem(key);
+    setHidden(hiddenFlag === '1');
+  }, [userId, recommendation?.eventId]);
 
   if (loading) {
     return (
