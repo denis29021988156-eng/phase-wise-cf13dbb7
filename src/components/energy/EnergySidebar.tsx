@@ -51,6 +51,7 @@ export function EnergySidebar({
   const [parametersOpen, setParametersOpen] = useState(false);
   const [chartsOpen, setChartsOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 
   // Get user ID
   useEffect(() => {
@@ -60,6 +61,12 @@ export function EnergySidebar({
       }
     });
   }, []);
+
+  const handleSave = () => {
+    onSave();
+    // Trigger chart refresh after save
+    setChartRefreshTrigger(prev => prev + 1);
+  };
 
   const getPhaseLabel = (phase: string) => {
     switch (phase) {
@@ -379,7 +386,7 @@ export function EnergySidebar({
             <CollapsibleContent>
               <CardContent className="px-4 pb-4">
                 {userId ? (
-                  <HealthMetricsCharts userId={userId} />
+                  <HealthMetricsCharts userId={userId} refreshTrigger={chartRefreshTrigger} />
                 ) : (
                   <div className="text-center py-4 text-muted-foreground text-sm">
                     Загрузка...
@@ -392,7 +399,7 @@ export function EnergySidebar({
 
         {/* Save Button */}
         <Button
-          onClick={onSave}
+          onClick={handleSave}
           disabled={loading}
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
         >

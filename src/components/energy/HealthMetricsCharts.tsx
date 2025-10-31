@@ -11,7 +11,7 @@ interface ChartDataPoint {
   diastolic?: number;
 }
 
-export function HealthMetricsCharts({ userId }: { userId: string }) {
+export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string; refreshTrigger?: number }) {
   const [weightData, setWeightData] = useState<ChartDataPoint[]>([]);
   const [pressureData, setPressureData] = useState<ChartDataPoint[]>([]);
   const [sexData, setSexData] = useState<ChartDataPoint[]>([]);
@@ -19,7 +19,7 @@ export function HealthMetricsCharts({ userId }: { userId: string }) {
 
   useEffect(() => {
     fetchHistoricalData();
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
   const fetchHistoricalData = async () => {
     try {
