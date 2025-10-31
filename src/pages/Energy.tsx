@@ -673,30 +673,24 @@ const Energy = () => {
       const isPredicted = data.type === 'predicted';
       
       return (
-        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-2 p-4 rounded-2xl shadow-2xl animate-scale-in" style={{ borderColor: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: isPredicted ? '#8B5CF6' : '#3B82F6' }} />
-            <p className="font-semibold text-foreground">{data.date}</p>
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border p-2 rounded-lg shadow-lg" style={{ borderColor: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isPredicted ? '#8B5CF6' : '#3B82F6' }} />
+            <p className="text-xs font-semibold text-foreground">{data.date}</p>
           </div>
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-2xl font-bold" style={{ color: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-bold" style={{ color: isPredicted ? '#8B5CF6' : '#3B82F6' }}>
               {data.wellness}
             </span>
-            <span className="text-sm text-muted-foreground">/ 100</span>
+            {isPredicted && data.wellnessWithEvents && data.wellnessWithEvents !== data.wellness && (
+              <>
+                <span className="text-xs text-muted-foreground">→</span>
+                <span className="text-lg font-bold text-emerald-500">
+                  {data.wellnessWithEvents}
+                </span>
+              </>
+            )}
           </div>
-          {isPredicted && data.wellnessWithEvents && (
-            <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-xs text-muted-foreground">Event прогноз:</span>
-              <span className="text-lg font-bold text-emerald-500">
-                {data.wellnessWithEvents}
-              </span>
-            </div>
-          )}
-          {isPredicted && data.note && (
-            <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-              💡 {data.note}
-            </p>
-          )}
         </div>
       );
     }
@@ -1052,7 +1046,10 @@ const Energy = () => {
                               tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                               tickLine={{ stroke: 'hsl(var(--border))' }}
                             />
-                            <Tooltip content={<CustomTooltip />} />
+                            <Tooltip 
+                              content={<CustomTooltip />} 
+                              offset={15}
+                            />
                             
                             {/* Gradient background for actual data */}
                             <Area
