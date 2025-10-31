@@ -66,8 +66,8 @@ serve(async (req) => {
       .eq('user_id', userId)
       .single();
 
-    // Get events for next 7 days
-    const weekDays = Array.from({ length: 7 }, (_, i) => {
+    // Get events for next 14 days (increased from 7 for better Boost recommendations)
+    const weekDays = Array.from({ length: 14 }, (_, i) => {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       return date.toISOString().split('T')[0];
