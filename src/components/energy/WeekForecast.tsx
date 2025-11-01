@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import {
   Collapsible,
@@ -24,6 +25,8 @@ interface WeekForecastProps {
 export function WeekForecast({ forecast }: WeekForecastProps) {
   const [eventsOpen, setEventsOpen] = useState(false);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'ru' ? ru : enUS;
   
   const getPhaseColor = (phase?: string) => {
     const colors: Record<string, string> = {
@@ -67,7 +70,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
 
   return (
     <div className="w-full">
-      <h3 className="text-base font-semibold mb-2">Прогноз на неделю</h3>
+      <h3 className="text-base font-semibold mb-2">{t('energy.weekForecast')}</h3>
       
       {/* 7-column grid for week forecast - Compact */}
       <div className="grid grid-cols-7 gap-1.5 mb-3">
@@ -77,7 +80,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
           const dayDate = new Date(day.date);
           if (isNaN(dayDate.getTime())) return null;
           
-          const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
+          const dayOfWeek = format(dayDate, 'EEE', { locale });
           const dateShort = format(dayDate, 'dd.MM');
           const hasEvents = day.events && day.events.length > 0;
           const wellness = Math.round(day.wellness_index || 0);
@@ -157,7 +160,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
           .flatMap(day => {
             const dayDate = new Date(day.date);
             if (isNaN(dayDate.getTime())) return [];
-            const dayOfWeek = format(dayDate, 'EEE', { locale: ru });
+            const dayOfWeek = format(dayDate, 'EEE', { locale });
             
             return (day.events || []).map(event => ({
               ...event,
@@ -185,9 +188,9 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
             <div className="space-y-2">
               <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors">
-                  <span className="text-sm font-medium">🔥 Ключевые события недели</span>
+                  <span className="text-sm font-medium">🔥 {t('energy.keyEventsWeek')}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{keyEvents.length} событий</span>
+                    <span className="text-xs text-muted-foreground">{t('energy.eventsCount', { count: keyEvents.length })}</span>
                     {eventsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </div>
                 </div>
@@ -227,7 +230,7 @@ export function WeekForecast({ forecast }: WeekForecastProps) {
                           className="h-8 text-xs"
                         >
                           <Calendar className="w-3 h-3 mr-1" />
-                          В календарь
+                          {t('energy.goToCalendar')}
                         </Button>
                       </div>
                     </div>

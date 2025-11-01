@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Battery, TrendingDown, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,12 +32,13 @@ export function EnergyBalanceCard({
 }: EnergyBalanceCardProps) {
   const [eventsOpen, setEventsOpen] = useState(false);
   const [metricsOpen, setMetricsOpen] = useState(false);
+  const { t } = useTranslation();
   
   const phaseLabels: Record<string, string> = {
-    menstrual: 'Менструация',
-    follicular: 'Фолликулярная',
-    ovulation: 'Овуляция',
-    luteal: 'Лютеиновая'
+    menstrual: t('energy.menstrual'),
+    follicular: t('energy.follicular'),
+    ovulation: t('energy.ovulation'),
+    luteal: t('energy.luteal')
   };
   
   const getEnergyColor = (value: number) => {
@@ -62,14 +64,14 @@ export function EnergyBalanceCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Battery className="w-5 h-5" />
-          Энергобаланс дня
+          {t('energy.energyBalance')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Main calculation */}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg">
-            <span className="text-sm font-medium">Базовая энергия ({phaseLabels[cyclePhase] || cyclePhase})</span>
+            <span className="text-sm font-medium">{t('energy.baseEnergy')} ({phaseLabels[cyclePhase] || cyclePhase})</span>
             <span className="text-lg font-bold">{baseEnergy}</span>
           </div>
 
@@ -78,7 +80,7 @@ export function EnergyBalanceCard({
               <div className="space-y-2">
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors">
-                    <span className="text-sm font-medium">События дня:</span>
+                    <span className="text-sm font-medium">{t('energy.eventsOfDay')}:</span>
                     <div className="flex items-center gap-2">
                       <span className={`text-lg font-bold ${eventsImpact < 0 ? 'text-red-600' : 'text-green-600'}`}>
                         {eventsImpact > 0 ? '+' : ''}{eventsImpact}
@@ -123,7 +125,7 @@ export function EnergyBalanceCard({
               <div className="space-y-2">
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors">
-                    <span className="text-sm font-medium">Ключевые показатели:</span>
+                    <span className="text-sm font-medium">{t('energy.keyMetrics')}:</span>
                     <div className="flex items-center gap-2">
                       <span className={`text-lg font-bold ${(sleepModifier + stressModifier + wellnessModifier) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {(sleepModifier + stressModifier + wellnessModifier) > 0 ? '+' : ''}{sleepModifier + stressModifier + wellnessModifier}
@@ -137,7 +139,7 @@ export function EnergyBalanceCard({
                   <div className="space-y-2 mt-2">
                     {sleepModifier !== 0 && (
                       <div className="flex items-center justify-between p-3 bg-card rounded-lg border-l-4 border-primary shadow-sm ml-2">
-                        <span className="text-sm font-medium">Качество сна</span>
+                        <span className="text-sm font-medium">{t('energy.sleepQuality')}</span>
                         <span className={`text-lg font-bold ${sleepModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {sleepModifier > 0 ? '+' : ''}{sleepModifier}
                         </span>
@@ -145,7 +147,7 @@ export function EnergyBalanceCard({
                     )}
                     {stressModifier !== 0 && (
                       <div className="flex items-center justify-between p-3 bg-card rounded-lg border-l-4 border-primary shadow-sm ml-2">
-                        <span className="text-sm font-medium">Уровень стресса</span>
+                        <span className="text-sm font-medium">{t('energy.stressLevel')}</span>
                         <span className={`text-lg font-bold ${stressModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {stressModifier > 0 ? '+' : ''}{stressModifier}
                         </span>
@@ -153,7 +155,7 @@ export function EnergyBalanceCard({
                     )}
                     {wellnessModifier !== 0 && (
                       <div className="flex items-center justify-between p-3 bg-card rounded-lg border-l-4 border-primary shadow-sm ml-2">
-                        <span className="text-sm font-medium">Индекс самочувствия</span>
+                        <span className="text-sm font-medium">{t('energy.wellnessIndex')}</span>
                         <span className={`text-lg font-bold ${wellnessModifier > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {wellnessModifier > 0 ? '+' : ''}{wellnessModifier}
                         </span>
@@ -173,7 +175,7 @@ export function EnergyBalanceCard({
               ) : (
                 <TrendingDown className="w-5 h-5 text-red-600" />
               )}
-              <span className="font-semibold">Итоговая энергия</span>
+              <span className="font-semibold">{t('energy.finalEnergy')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-2xl font-bold ${getEnergyColor(finalEnergy)}`}>
@@ -192,9 +194,9 @@ export function EnergyBalanceCard({
               />
             </div>
             <p className="text-xs text-muted-foreground text-center">
-              {finalEnergy >= 70 && 'Отличный уровень энергии! 💪'}
-              {finalEnergy >= 40 && finalEnergy < 70 && 'Умеренный уровень энергии'}
-              {finalEnergy < 40 && 'Энергия на исходе, нужен отдых 😴'}
+              {finalEnergy >= 70 && t('energy.excellentEnergy')}
+              {finalEnergy >= 40 && finalEnergy < 70 && t('energy.moderateEnergy')}
+              {finalEnergy < 40 && t('energy.lowEnergy')}
             </p>
           </div>
         </div>

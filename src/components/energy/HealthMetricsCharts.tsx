@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays, addDays } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ChartDataPoint {
   date: string;
@@ -23,6 +24,8 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
   const [sexData, setSexData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current 2 weeks, -1 = previous, etc.
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'ru' ? ru : enUS;
 
   useEffect(() => {
     fetchHistoricalData();
@@ -92,19 +95,19 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
           
           // Sex data
           allDays.push({
-            date: format(currentDate, 'dd MMM', { locale: ru }),
+            date: format(currentDate, 'dd MMM', { locale }),
             value: dayData?.had_sex === true ? 1 : dayData?.had_sex === false ? 0 : null
           });
           
           // Weight data
           allWeightDays.push({
-            date: format(currentDate, 'dd MMM', { locale: ru }),
+            date: format(currentDate, 'dd MMM', { locale }),
             value: dayData?.weight ? Number(dayData.weight) : null
           });
           
           // Blood pressure data
           allBpDays.push({
-            date: format(currentDate, 'dd MMM', { locale: ru }),
+            date: format(currentDate, 'dd MMM', { locale }),
             systolic: dayData?.blood_pressure_systolic || null,
             diastolic: dayData?.blood_pressure_diastolic || null
           });
@@ -197,7 +200,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
         </Button>
         
         <span className="text-xs text-muted-foreground">
-          {weekOffset === 0 ? 'Последние 2 недели' : `${Math.abs(weekOffset * 2)} недели назад`}
+          {weekOffset === 0 ? t('energy.lastTwoWeeks') : t('energy.weeksAgo', { count: Math.abs(weekOffset * 2) })}
         </span>
         
         <Button
@@ -217,13 +220,13 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Вес
+                {t('energy.weight')}
               </h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground">
                   {currentWeight ? currentWeight.toFixed(1) : '—'}
                 </span>
-                <span className="text-sm text-muted-foreground">кг</span>
+                <span className="text-sm text-muted-foreground">{t('energy.kg')}</span>
               </div>
             </div>
             {renderTrendIcon(weightTrend)}
@@ -260,7 +263,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
                         <div className="bg-card border border-border rounded-lg px-2 py-1 shadow-lg">
                           <p className="text-xs font-medium text-foreground">{label}</p>
                           <p className="text-xs text-blue-500">
-                            {value ? `${Number(value).toFixed(1)} кг` : 'Нет данных'}
+                            {value ? `${Number(value).toFixed(1)} ${t('energy.kg')}` : t('energy.noDataPeriod')}
                           </p>
                         </div>
                       );
@@ -283,7 +286,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Нет данных за этот период
+              {t('energy.noDataPeriod')}
             </div>
           )}
         </div>
@@ -295,7 +298,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Давление
+                {t('energy.pressure')}
               </h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground">
@@ -341,12 +344,12 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
                           <p className="text-xs font-medium text-foreground">{label}</p>
                           {payload[0].value && (
                             <p className="text-xs text-orange-500">
-                              Сист: {payload[0].value}
+                              {t('energy.systolic')}: {payload[0].value}
                             </p>
                           )}
                           {payload[1]?.value && (
                             <p className="text-xs text-purple-500">
-                              Диаст: {payload[1].value}
+                              {t('energy.diastolic')}: {payload[1].value}
                             </p>
                           )}
                         </div>
@@ -380,7 +383,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Нет данных за этот период
+              {t('energy.noDataPeriod')}
             </div>
           )}
         </div>
@@ -393,14 +396,17 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Половая активность
+                {t('energy.sexualActivity')}
               </h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground">
                   {sexWeeklyCount}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {sexWeeklyCount === 1 ? 'раз' : sexWeeklyCount > 1 && sexWeeklyCount < 5 ? 'раза' : 'раз'}
+                  {i18n.language === 'ru' 
+                    ? (sexWeeklyCount === 1 ? 'раз' : sexWeeklyCount > 1 && sexWeeklyCount < 5 ? 'раза' : 'раз')
+                    : (sexWeeklyCount === 1 ? t('energy.time') : t('energy.times'))
+                  }
                 </span>
               </div>
             </div>
@@ -439,7 +445,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
                         <div className="bg-card border border-border rounded-lg px-2 py-1 shadow-lg">
                           <p className="text-xs font-medium text-foreground">{label}</p>
                           <p className="text-xs text-emerald-500">
-                            {value === 1 ? '✓ Да' : value === 0 ? '− Нет' : 'Нет данных'}
+                            {value === 1 ? `✓ ${t('energy.yes')}` : value === 0 ? `− ${t('energy.no')}` : t('energy.noDataPeriod')}
                           </p>
                         </div>
                       );
@@ -461,7 +467,7 @@ export function HealthMetricsCharts({ userId, refreshTrigger }: { userId: string
             </ResponsiveContainer>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Нет данных за этот период
+              {t('energy.noDataPeriod')}
             </div>
           )}
         </div>

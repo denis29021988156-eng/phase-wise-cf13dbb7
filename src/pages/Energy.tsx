@@ -717,16 +717,16 @@ const Energy = () => {
       // Validate data
       if (!history || history.length === 0) {
         toast({
-          title: 'Нет данных',
-          description: 'Недостаточно данных для создания отчета',
+          title: t('energy.noDataReport'),
+          description: t('energy.notEnoughData'),
           variant: 'destructive'
         });
         return;
       }
 
       toast({
-        title: 'Генерация PDF...',
-        description: 'Подождите, создаем ваш отчет',
+        title: t('energy.generatingPDF'),
+        description: t('energy.wait'),
       });
 
       // Create temporary container for PDF rendering
@@ -799,14 +799,14 @@ const Energy = () => {
       document.body.removeChild(container);
 
       toast({
-        title: 'Готово!',
-        description: 'PDF отчет успешно создан',
+        title: t('energy.pdfReady'),
+        description: t('energy.pdfCreated'),
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
-        title: 'Ошибка',
-        description: `Не удалось создать PDF: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`,
+        title: t('energy.pdfError'),
+        description: `${t('energy.pdfFailed')}: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive'
       });
     }
@@ -1155,20 +1155,20 @@ const Energy = () => {
                         <div className="flex items-center justify-center gap-6 mt-3 pb-2 flex-wrap">
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-1.5 rounded-full bg-blue-500" />
-                            <span className="text-sm text-foreground font-medium">Было</span>
+                            <span className="text-sm text-foreground font-medium">{t('energy.actualDataLabel')}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-purple-500" />
-                            <span className="text-sm text-foreground font-medium">Прогноз</span>
+                            <span className="text-sm text-foreground font-medium">{t('energy.prediction')}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-1.5 rounded-full border-t-2 border-dashed border-emerald-500" />
-                            <span className="text-sm text-foreground font-medium">Event прогноз</span>
+                            <span className="text-sm text-foreground font-medium">{t('energy.predictionWithEvents')}</span>
                           </div>
                           {getAveragePrediction() !== null && (
                             <div className="flex items-center gap-2">
                               <div className="w-10 h-1.5 rounded-full bg-yellow-400" />
-                              <span className="text-sm text-foreground font-medium">Среднее</span>
+                              <span className="text-sm text-foreground font-medium">{t('energy.average')}</span>
                             </div>
                           )}
                         </div>

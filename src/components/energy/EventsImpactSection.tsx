@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface EventWithImpact {
   id: string;
@@ -21,6 +22,7 @@ interface EventsImpactSectionProps {
 
 export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsImpactSectionProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const getImpactArrow = (impact: number) => {
     if (impact > 0.2) return '↑';
@@ -38,7 +40,7 @@ export function EventsImpactSection({ events, cyclePhase, onAddEvent }: EventsIm
     <div className="space-y-3">
       {events.length === 0 ? (
         <p className="text-xs text-muted-foreground py-2 text-center">
-          Нет событий
+          {t('energy.noEvents')}
         </p>
       ) : (
         <>

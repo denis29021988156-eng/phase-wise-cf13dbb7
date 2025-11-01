@@ -1,6 +1,7 @@
 import { MoonPhase } from '@/components/ui/moon-phase';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 interface EnergyGaugeProps {
   score: number;  // wellness_index from 0 to 100
@@ -9,18 +10,21 @@ interface EnergyGaugeProps {
 }
 
 export function EnergyGauge({ score, phase, date }: EnergyGaugeProps) {
+  const { t, i18n } = useTranslation();
+  
   const phaseLabels: Record<string, string> = {
-    menstrual: '🔴 Менструация',
-    follicular: '🔵 Фолликулярная',
-    ovulation: '🟡 Овуляция',
-    luteal: '🟣 Лютеиновая'
+    menstrual: `🔴 ${t('energy.menstrual')}`,
+    follicular: `🔵 ${t('energy.follicular')}`,
+    ovulation: `🟡 ${t('energy.ovulation')}`,
+    luteal: `🟣 ${t('energy.luteal')}`
   };
 
-  const formattedDate = date ? format(new Date(date), 'd MMMM', { locale: ru }) : 'Сегодня';
+  const locale = i18n.language === 'ru' ? ru : enUS;
+  const formattedDate = date ? format(new Date(date), 'd MMMM', { locale }) : (i18n.language === 'ru' ? 'Сегодня' : 'Today');
 
   return (
     <div className="flex flex-col items-center p-3 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-xl">
-      <h2 className="text-sm font-semibold mb-2">Индекс самочувствия</h2>
+      <h2 className="text-sm font-semibold mb-2">{t('energy.wellnessIndexTitle')}</h2>
       
       <div className="relative w-32 h-32 my-2">
         <MoonPhase 
